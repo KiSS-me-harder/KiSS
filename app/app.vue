@@ -32,6 +32,7 @@ useSeoMeta({
 </script>
 
 <template>
+  <ClientOnly>
   <UApp>
     <NuxtLoadingIndicator />
 
@@ -39,4 +40,5 @@ useSeoMeta({
       <NuxtPage />
     </NuxtLayout>
   </UApp>
+  </ClientOnly>
 </template>
