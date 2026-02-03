@@ -11,6 +11,8 @@ export default defineNuxtConfig({
     '@nuxt/test-utils'
   ],
 
+  ssr: false,
+
   devtools: {
     enabled: false
   },
