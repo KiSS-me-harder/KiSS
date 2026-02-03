@@ -1,3 +1,4 @@
+<!--
 <script setup lang="ts">
 import { sub } from 'date-fns'
 import type { DropdownMenuItem } from '@nuxt/ui'
@@ -52,7 +53,6 @@ const period = ref<Period>('daily')
 
       <UDashboardToolbar>
         <template #left>
-          <!-- NOTE: The `-ms-1` class is used to align with the `DashboardSidebarCollapse` button here. -->
           <HomeDateRangePicker v-model="range" class="-ms-1" />
 
           <HomePeriodSelect v-model="period" :range="range" />
@@ -67,3 +67,6 @@ const period = ref<Period>('daily')
     </template>
   </UDashboardPanel>
 </template>
+-->
+
+<template><div/></template>
