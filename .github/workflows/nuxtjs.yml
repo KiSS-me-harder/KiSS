@@ -54,7 +54,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuxt-build-
       - name: Install dependencies
-        run: pnpm i
+        run: pnpm i --frozen-lockfile
       - name: Static HTML export with Nuxt
         run: pnpm build --prerender
       - name: Upload artifact
