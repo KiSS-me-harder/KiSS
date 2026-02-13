@@ -12,7 +12,7 @@ const tabItems = [{
 }]
 const selectedTab = ref('all')
 
-const { data: mails } = {data:[]}
+const mails = ref<Mail[]>([])
 
 // Filter mails based on the selected tab
 const filteredMails = computed(() => {

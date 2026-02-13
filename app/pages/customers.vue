@@ -21,7 +21,8 @@ const columnFilters = ref([{
 const columnVisibility = ref()
 const rowSelection = ref({ 1: true })
 
-const { data, status } = {data:[],status:""}
+const data = ref<User[]>([])
+const status = ref('idle')
 
 function getRowItems(row: Row<User>) {
   return [

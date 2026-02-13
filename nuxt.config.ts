@@ -3,7 +3,6 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     '@nuxt/ui',
     '@vueuse/nuxt',
-    '@nuxt/content',
     '@nuxt/hints',
     '@nuxt/image',
     '@nuxt/scripts',
@@ -14,18 +13,12 @@ export default defineNuxtConfig({
     enabled: false
   },
   css: ['~/assets/css/main.css'],
-  content: {
-    experimental: {
-      nativeSqlite: true,
-      sqliteConnector: 'native'
-    }
-  },
   compatibilityDate: '2024-07-11',
   nitro: {
     preset: 'github_pages',
     prerender: {
       crawlLinks: true,
-      failOnError: false
+      failOnError: true
     }
   },
   telemetry: false,

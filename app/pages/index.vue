@@ -1,4 +1,3 @@
-<!--
 <script setup lang="ts">
 import { sub } from 'date-fns'
 import type { DropdownMenuItem } from '@nuxt/ui'
@@ -67,6 +66,3 @@ const period = ref<Period>('daily')
     </template>
   </UDashboardPanel>
 </template>
--->
-
-<template><div/></template>

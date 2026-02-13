@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Member } from '~/types'
 
-const { data: members } = {data:[]}
+const members = ref<Member[]>([])
 
 const q = ref('')
 
