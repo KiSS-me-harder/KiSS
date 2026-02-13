@@ -34,7 +34,7 @@ jobs:
       - uses: pnpm/action-setup@v4
         name: Install pnpm
         with:
-          cache: true
+          version: 10
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
@@ -54,7 +54,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuxt-build-
       - name: Install dependencies
-        run: pnpm i --frozen-lockfile
+        run: pnpm i -r --frozen-lockfile
       - name: Static HTML export with Nuxt
         run: pnpm build --prerender
       - name: Upload artifact
