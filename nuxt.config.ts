@@ -22,7 +22,11 @@ export default defineNuxtConfig({
   },
   compatibilityDate: '2024-07-11',
   nitro: {
-    preset: 'github_pages'
+    preset: 'github_pages',
+    prerender: {
+      crawlLinks: true,
+      failOnError: false
+    }
   },
   telemetry: false,
   eslint: {
