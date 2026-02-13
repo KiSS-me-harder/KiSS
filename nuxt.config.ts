@@ -1,4 +1,3 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
@@ -10,31 +9,22 @@ export default defineNuxtConfig({
     '@nuxt/scripts',
     '@nuxt/test-utils'
   ],
-
   ssr: false,
-
   devtools: {
     enabled: false
   },
-
   css: ['~/assets/css/main.css'],
-
   content: {
     experimental: {
       nativeSqlite: true,
       sqliteConnector: 'native'
     }
   },
-
-  routeRules: {
-    '/api/**': {
-      cors: true
-    }
-  },
-
   compatibilityDate: '2024-07-11',
+  nitro: {
+    preset: 'github_pages'
+  },
   telemetry: false,
-
   eslint: {
     config: {
       stylistic: {
