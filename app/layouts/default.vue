@@ -14,21 +14,63 @@ const links = [[{
     open.value = false
   }
 }, {
+  label: 'Degrees',
+  icon: 'i-lucide-graduation-cap',
+  to: '/degrees',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
+  label: 'Classes',
+  icon: 'i-lucide-book-text',
+  to: '/classes',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
+  label: 'Clubs',
+  icon: 'i-lucide-club',
+  to: '/clubs',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
+  label: 'Library',
+  icon: 'i-lucide-library',
+  to: '/library',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
+  label: 'Detention',
+  icon: 'i-lucide-angry',
+  to: '/detention',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
+  label: 'Teachers',
+  icon: 'i-lucide-university',
+  to: '/teachers',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
+  label: 'Students',
+  icon: 'i-lucide-user',
+  to: '/students',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
   label: 'Inbox',
   icon: 'i-lucide-inbox',
   to: '/inbox',
-  badge: '4',
+  badge: '0',
   onSelect: () => {
     open.value = false
   }
-}, {
-  label: 'Customers',
-  icon: 'i-lucide-users',
-  to: '/customers',
-  onSelect: () => {
-    open.value = false
-  }
-}, {
+}, /*{
   label: 'Settings',
   to: '/settings',
   icon: 'i-lucide-settings',
@@ -60,7 +102,7 @@ const links = [[{
       open.value = false
     }
   }]
-}], [{
+}*/], [{
   label: 'Feedback',
   icon: 'i-lucide-message-circle',
   to: 'https://github.com/nuxt-ui-templates/dashboard',

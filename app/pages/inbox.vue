@@ -12,16 +12,10 @@ const tabItems = [{
 }]
 const selectedTab = ref('all')
 
-const { data: mails } = await useFetch<Mail[]>('/api/mails', { default: () => [] })
+const mails: any = []
 
-// Filter mails based on the selected tab
-const filteredMails = computed(() => {
-  if (selectedTab.value === 'unread') {
-    return mails.value.filter(mail => !!mail.unread)
-  }
-
-  return mails.value
-})
+// Filter mails based on the selected tabmails
+const filteredMails: any = []
 
 const selectedMail = ref<Mail | null>()
 
@@ -80,11 +74,9 @@ const isMobile = breakpoints.smaller('lg')
     <UIcon name="i-lucide-inbox" class="size-32 text-dimmed" />
   </div>
 
-  <ClientOnly>
-    <USlideover v-if="isMobile" v-model:open="isMailPanelOpen">
-      <template #content>
-        <InboxMail v-if="selectedMail" :mail="selectedMail" @close="selectedMail = null" />
-      </template>
-    </USlideover>
-  </ClientOnly>
+  <USlideover v-if="isMobile" v-model:open="isMailPanelOpen">
+    <template #content>
+      <InboxMail v-if="selectedMail" :mail="selectedMail" @close="selectedMail = null" />
+    </template>
+  </USlideover>
 </template>
