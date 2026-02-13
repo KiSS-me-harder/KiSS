@@ -8,7 +8,7 @@ export default defineNuxtConfig({
     '@nuxt/scripts',
     '@nuxt/test-utils'
   ],
-  ssr: true,
+  ssr: false,
   devtools: {
     enabled: false
   },
