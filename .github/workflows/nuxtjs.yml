@@ -39,21 +39,10 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: "24"
-          cache: "pnpm"
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
           static_site_generator: nuxt
-      - run: cat nuxt.config.ts
-      - name: Restore cache
-        uses: actions/cache@v5
-        with:
-          path: |
-            dist
-            .nuxt
-          key: ${{ runner.os }}-nuxt-build-${{ hashFiles('dist') }}
-          restore-keys: |
-            ${{ runner.os }}-nuxt-build-
       - name: Install dependencies
         run: pnpm i -r --frozen-lockfile
       - name: Static HTML export with Nuxt
