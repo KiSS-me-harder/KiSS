@@ -19,6 +19,13 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
+  content: {
+    experimental: {
+      nativeSqlite: true,
+      sqliteConnector: 'native'
+    }
+  },
+
   routeRules: {
     '/api/**': {
       cors: true
@@ -26,13 +33,7 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: '2024-07-11',
-
-  content: {
-    experimental: {
-      nativeSqlite: true,
-      sqliteConnector: 'native'
-    },
-  },
+  telemetry: false,
 
   eslint: {
     config: {
