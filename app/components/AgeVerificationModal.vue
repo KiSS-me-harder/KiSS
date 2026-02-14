@@ -13,7 +13,7 @@ const onYes = () => {
 const onNo = () => {
   const ageCookie = useCookie('age-verification')
   ageCookie.value = undefined
-  window.location.href = 'https://google.com'
+  window.location.href = 'https://www.youtubekids.com'
 }
 </script>
 

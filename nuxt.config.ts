@@ -18,6 +18,9 @@ export default defineNuxtConfig({
     preset: 'github_pages'
   },
   telemetry: false,
+  app: {
+    baseURL: '/KiSS/'
+  },
   eslint: {
     config: {
       stylistic: {
