@@ -1,34 +1,38 @@
 <script setup lang="ts">
-import type { BreadcrumbItem, ButtonProps } from '@nuxt/ui'
+import type { BreadcrumbItem } from '@nuxt/ui'
 
 const route = useRoute()
-const id = route.params.id
-const { data: home } = await useAsyncData(() => queryCollection('content').path(`/degrees/${id}`).first())
-const title = home.value?.title
-const items = ref<BreadcrumbItem[]>([
+
+const id = computed(() => route.params.id as string)
+
+const { data: home } = await useAsyncData(
+  () => `degree-${id.value}`,
+  () => queryCollection('content')
+    .path(`/degrees/${id.value}`)
+    .first(),
+  {
+    watch: [id]
+  }
+)
+
+const title = computed(() => home.value?.title)
+
+const items = computed<BreadcrumbItem[]>(() => [
   {
     label: 'Degrees',
     icon: 'i-lucide-graduation-cap',
     to: '/degrees'
   },
   {
-    label: title,
-    to: `/degrees/${id}`
+    label: title.value,
+    to: `/degrees/${id.value}`
   }
 ])
 
 useSeoMeta({
-  title: title,
-  description: home.value?.description
+  title,
+  description: computed(() => home.value?.description)
 })
-
-const links = ref<ButtonProps[]>([
-  {
-    label: 'Enroll',
-    color: 'primary',
-    variant: 'subtle'
-  }
-])
 </script>
 
 <template>

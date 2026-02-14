@@ -27,9 +27,8 @@ const links = [[{
   label: 'Degrees',
   icon: 'i-lucide-graduation-cap',
   to: '/degrees',
-  defaultOpen: true,
+  defaultOpen: false,
   exact: true,
-  type: 'trigger',
   onSelect: () => {
     open.value = false
   },
