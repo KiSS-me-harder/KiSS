@@ -35,7 +35,7 @@ const cards = ref([
     description: 'Become a certified master of being an obedient little bitch.',
     to: '/docs/getting-started/integrations/color-mode',
     image: {
-      path: '/img/hypno.avif',
+      path: '/img/placeholder.webp',
       width: '356',
       height: '256'
     },

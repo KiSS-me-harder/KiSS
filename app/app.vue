@@ -1,4 +1,12 @@
 <script setup lang="ts">
+import { AgeVerificationModal } from '#components'
+
+const overlay = useOverlay()
+
+const modal = overlay.create(AgeVerificationModal)
+const ageCookie = useCookie('age-verification')
+const isAgeYes = computed(() => ageCookie.value === 'yes')
+
 const colorMode = useColorMode()
 
 const color = computed(() => colorMode.value === 'dark' ? '#1b1718' : 'white')
@@ -29,13 +37,19 @@ useSeoMeta({
   twitterImage: 'https://ui.nuxt.com/assets/templates/nuxt/dashboard-light.png',
   twitterCard: 'summary_large_image'
 })
+
+onMounted(() => {
+  if (ageCookie.value !== 'yes') {
+    modal.open()
+  }
+})
 </script>
 
 <template>
   <UApp>
     <NuxtLoadingIndicator />
 
-    <NuxtLayout>
+    <NuxtLayout v-if="isAgeYes">
       <NuxtPage />
     </NuxtLayout>
   </UApp>

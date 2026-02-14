@@ -3,7 +3,7 @@ const cards = ref([
   {
     title: 'Anal Slut',
     description: 'Become a certified master of being an obedient little bitch.',
-    to: '/docs/getting-started/integrations/color-mode',
+    to: '/degrees/anal-slut',
     image: {
       path: '/img/placeholder.webp',
       width: '356',
@@ -13,7 +13,7 @@ const cards = ref([
   }, {
     title: 'Cock Gobbler',
     description: 'Become a certified master of being an obedient little bitch.',
-    to: '/docs/getting-started/integrations/color-mode',
+    to: '/degrees/cock-gobbler',
     image: {
       path: '/img/placeholder.webp',
       width: '356',
@@ -23,7 +23,7 @@ const cards = ref([
   }, {
     title: 'Sissy',
     description: 'Become a certified master of being an obedient little bitch.',
-    to: '/docs/getting-started/integrations/color-mode',
+    to: '/degrees/sissy',
     image: {
       path: '/img/placeholder.webp',
       width: '356',
@@ -33,9 +33,9 @@ const cards = ref([
   }, {
     title: 'Hypnosub',
     description: 'Become a certified master of being an obedient little bitch.',
-    to: '/docs/getting-started/integrations/color-mode',
+    to: '/degrees/hypnosub',
     image: {
-      path: '/img/hypno.avif',
+      path: '/img/placeholder.webp',
       width: '356',
       height: '256'
     },
@@ -43,7 +43,7 @@ const cards = ref([
   }, {
     title: 'Cum Eater',
     description: 'Become a certified master of being an obedient little bitch.',
-    to: '/docs/getting-started/integrations/color-mode',
+    to: '/degrees/cum-eater',
     image: {
       path: '/img/placeholder.webp',
       width: '356',
@@ -53,7 +53,7 @@ const cards = ref([
   }, {
     title: 'Voyeur',
     description: 'Become a certified master of being an obedient little bitch.',
-    to: '/docs/getting-started/integrations/color-mode',
+    to: '/degrees/voyeur',
     image: {
       path: '/img/placeholder.webp',
       width: '356',
@@ -63,7 +63,7 @@ const cards = ref([
   }, {
     title: 'Chaste',
     description: 'Become a certified master of being an obedient little bitch.',
-    to: '/docs/getting-started/integrations/color-mode',
+    to: '/degrees/chaste',
     image: {
       path: '/img/placeholder.webp',
       width: '356',
@@ -73,7 +73,7 @@ const cards = ref([
   }, {
     title: 'Pet',
     description: 'Become a certified master of being an obedient little bitch.',
-    to: '/docs/getting-started/integrations/color-mode',
+    to: '/degrees/pet',
     image: {
       path: '/img/placeholder.webp',
       width: '356',
