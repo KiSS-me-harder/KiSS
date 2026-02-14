@@ -1,85 +1,15 @@
 <script setup lang="ts">
-const cards = ref([
+import type { BreadcrumbItem } from '@nuxt/ui'
+
+const { data: degrees } = await useAsyncData(() => queryCollection('degrees').all())
+
+const cards = ref(degrees.value?.map(item => ({ title: item.title, description: item.description, to: item.path, image: `/img/${item.stem}.webp`,
+  orientation: 'horizontal' as const })))
+const items = ref<BreadcrumbItem[]>([
   {
-    title: 'Anal Slut',
-    description: 'Become a certified master of being an obedient little bitch.',
-    to: '/degrees/anal-slut',
-    image: {
-      path: '/img/placeholder.webp',
-      width: '356',
-      height: '256'
-    },
-    orientation: 'horizontal' as const
-  }, {
-    title: 'Cock Gobbler',
-    description: 'Become a certified master of being an obedient little bitch.',
-    to: '/degrees/cock-gobbler',
-    image: {
-      path: '/img/placeholder.webp',
-      width: '356',
-      height: '256'
-    },
-    orientation: 'horizontal' as const
-  }, {
-    title: 'Sissy',
-    description: 'Become a certified master of being an obedient little bitch.',
-    to: '/degrees/sissy',
-    image: {
-      path: '/img/placeholder.webp',
-      width: '356',
-      height: '256'
-    },
-    orientation: 'horizontal' as const
-  }, {
-    title: 'Hypnosub',
-    description: 'Become a certified master of being an obedient little bitch.',
-    to: '/degrees/hypnosub',
-    image: {
-      path: '/img/placeholder.webp',
-      width: '356',
-      height: '256'
-    },
-    orientation: 'horizontal' as const
-  }, {
-    title: 'Cum Eater',
-    description: 'Become a certified master of being an obedient little bitch.',
-    to: '/degrees/cum-eater',
-    image: {
-      path: '/img/placeholder.webp',
-      width: '356',
-      height: '256'
-    },
-    orientation: 'horizontal' as const
-  }, {
-    title: 'Voyeur',
-    description: 'Become a certified master of being an obedient little bitch.',
-    to: '/degrees/voyeur',
-    image: {
-      path: '/img/placeholder.webp',
-      width: '356',
-      height: '256'
-    },
-    orientation: 'horizontal' as const
-  }, {
-    title: 'Chaste',
-    description: 'Become a certified master of being an obedient little bitch.',
-    to: '/degrees/chaste',
-    image: {
-      path: '/img/placeholder.webp',
-      width: '356',
-      height: '256'
-    },
-    orientation: 'horizontal' as const
-  }, {
-    title: 'Pet',
-    description: 'Become a certified master of being an obedient little bitch.',
-    to: '/degrees/pet',
-    image: {
-      path: '/img/placeholder.webp',
-      width: '356',
-      height: '256'
-    },
-    orientation: 'horizontal' as const
+    label: 'Degrees',
+    icon: 'i-lucide-graduation-cap',
+    to: '/degrees'
   }
 ])
 </script>
@@ -87,9 +17,10 @@ const cards = ref([
 <template>
   <UDashboardPanel id="customers">
     <template #header>
-      <UDashboardNavbar title="Degrees">
+      <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
+          <UBreadcrumb :items="items" />
         </template>
       </UDashboardNavbar>
     </template>
@@ -97,12 +28,17 @@ const cards = ref([
     <template #body>
       <UPageGrid>
         <UPageCard
-            v-for="(card, index) in cards"
-            :key="index"
-            v-bind="card"
-            reverse
+          v-for="(card, index) in cards"
+          :key="index"
+          v-bind="card"
+          reverse
         >
-          <NuxtImg v-if="card.image" :src="card.image.path" :width="card.image.width" :height="card.image.height" />
+          <NuxtImg
+            v-if="card.image"
+            :src="card.image"
+            width="356"
+            height="256"
+          />
         </UPageCard>
       </UPageGrid>
     </template>
