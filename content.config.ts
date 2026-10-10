@@ -8,7 +8,7 @@ export default defineContentConfig({
     }),
     degrees: defineCollection({
       type: 'page',
-      source: '**/degrees/**/*.md'
+      source: 'degrees/**/*.md'
     })
   }
 })

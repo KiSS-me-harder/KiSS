@@ -1,24 +1,69 @@
+<template>
+  <UDashboardGroup unit="rem">
+    <UDashboardSidebar
+      id="default"
+      v-model:open="open"
+      collapsible
+      resizable
+      class="bg-elevated/25"
+      :ui="{ footer: 'lg:border-t lg:border-default' }"
+    >
+
+      <template #default="{ collapsed }">
+        <UDashboardSearchButton
+          :collapsed="collapsed"
+          class="bg-transparent ring-default"
+          :ui="collapsed ? undefined : {
+            base: 'py-4 mt-2'
+          }"
+        />
+
+        <UNavigationMenu
+          :collapsed="collapsed"
+          :items="links[0]"
+          orientation="vertical"
+          tooltip
+          popover
+          :ui="collapsed ? undefined : {
+            linkLeadingIcon: 'size-7'
+          }"
+        />
+      </template>
+
+      <template #footer="{ collapsed }">
+        <UserMenu :collapsed="collapsed" />
+      </template>
+    </UDashboardSidebar>
+
+    <UDashboardSearch :groups="groups" />
+
+    <slot />
+
+    <NotificationsSlideover />
+  </UDashboardGroup>
+</template>
+
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 
 const open = ref(false)
+const route = useRoute()
 
 const { data: degrees } = await useAsyncData(() => queryCollection('degrees').all())
 
-const children = {
-  degrees:
-      degrees.value?.map(item => ({
-        label: item.title,
-        to: `/${item.stem}`,
-        onSelect: () => {
-          open.value = false
-        }
-      }))
-}
+const degreesChildren = computed(() =>
+  degrees.value?.map(item => ({
+    label: item.title,
+    to: `/${item.stem}`,
+    onSelect: () => {
+      open.value = false
+    }
+  }))
+)
 
-const links = [[{
-  label: 'Home',
-  icon: 'i-lucide-house',
+const links = computed(() => [[{
+  label: 'Today',
+  icon: 'i-lucide-calendar-days',
   to: '/',
   onSelect: () => {
     open.value = false
@@ -27,12 +72,12 @@ const links = [[{
   label: 'Degrees',
   icon: 'i-lucide-graduation-cap',
   to: '/degrees',
+  active: route.path.startsWith('/degrees'),
   defaultOpen: false,
-  exact: true,
   onSelect: () => {
     open.value = false
   },
-  children: children.degrees
+  children: degreesChildren.value
 }, {
   label: 'Classes',
   icon: 'i-lucide-book-text',
@@ -76,75 +121,17 @@ const links = [[{
     open.value = false
   }
 }, {
-  label: 'Inbox',
-  icon: 'i-lucide-inbox',
-  to: '/inbox',
-  badge: '0',
+  label: 'Flashcards',
+  icon: 'i-lucide-playing-cards-fan',
+  to: '/flashcards',
   onSelect: () => {
     open.value = false
   }
-}], [{
-  label: 'Feedback',
-  icon: 'i-lucide-message-circle',
-  to: 'https://github.com/nuxt-ui-templates/dashboard',
-  target: '_blank'
-}, {
-  label: 'Help & Support',
-  icon: 'i-lucide-info',
-  to: 'https://github.com/nuxt-ui-templates/dashboard',
-  target: '_blank'
-}]] satisfies NavigationMenuItem[][]
+}]] satisfies NavigationMenuItem[][])
 
 const groups = computed(() => [{
   id: 'links',
   label: 'Go to',
-  items: links.flat()
+  items: links.value.flat()
 }])
 </script>
-
-<template>
-  <UDashboardGroup unit="rem">
-    <UDashboardSidebar
-      id="default"
-      v-model:open="open"
-      collapsible
-      resizable
-      class="bg-elevated/25"
-      :ui="{ footer: 'lg:border-t lg:border-default' }"
-    >
-      <template #header="{ collapsed }">
-        <TeamsMenu :collapsed="collapsed" />
-      </template>
-
-      <template #default="{ collapsed }">
-        <UDashboardSearchButton :collapsed="collapsed" class="bg-transparent ring-default" />
-
-        <UNavigationMenu
-          :collapsed="collapsed"
-          :items="links[0]"
-          orientation="vertical"
-          tooltip
-          popover
-        />
-
-        <UNavigationMenu
-          :collapsed="collapsed"
-          :items="links[1]"
-          orientation="vertical"
-          tooltip
-          class="mt-auto"
-        />
-      </template>
-
-      <template #footer="{ collapsed }">
-        <UserMenu :collapsed="collapsed" />
-      </template>
-    </UDashboardSidebar>
-
-    <UDashboardSearch :groups="groups" />
-
-    <slot />
-
-    <NotificationsSlideover />
-  </UDashboardGroup>
-</template>

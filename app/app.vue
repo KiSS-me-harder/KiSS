@@ -1,3 +1,13 @@
+<template>
+  <UApp>
+    <NuxtLoadingIndicator />
+
+    <NuxtLayout v-if="isAgeYes">
+      <NuxtPage />
+    </NuxtLayout>
+  </UApp>
+</template>
+
 <script setup lang="ts">
 import { AgeVerificationModal } from '#components'
 
@@ -44,13 +54,3 @@ onMounted(() => {
   }
 })
 </script>
-
-<template>
-  <UApp>
-    <NuxtLoadingIndicator />
-
-    <NuxtLayout v-if="isAgeYes">
-      <NuxtPage />
-    </NuxtLayout>
-  </UApp>
-</template>
