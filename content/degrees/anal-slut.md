@@ -1,6 +1,32 @@
 ---
 title: "Anal Slut"
 description: "Do you want to take cock like a pro? Then this degree is for you!"
+levels:
+  - name: "Junior"
+    description: "Learn the fundamentals of anal play and endurance."
+    classes:
+      - slug: "anal-slut/anal-fundamentals"
+        maxLevel: 104
+      - slug: "anal-slut/rectal-endurance"
+        maxLevel: 104
+  - name: "Senior"
+    description: "Advance your anal skills with movement techniques."
+    classes:
+      - slug: "anal-slut/anal-fundamentals"
+        maxLevel: 204
+      - slug: "anal-slut/rectal-endurance"
+        maxLevel: 204
+      - slug: "anal-slut/pleasure-movement"
+        maxLevel: 104
+  - name: "Master"
+    description: "Master all aspects of anal performance."
+    classes:
+      - slug: "anal-slut/anal-fundamentals"
+        maxLevel: 304
+      - slug: "anal-slut/rectal-endurance"
+        maxLevel: 304
+      - slug: "anal-slut/pleasure-movement"
+        maxLevel: 204
 ---
 
 In this degree you'll be learning to be a proper anal slut.

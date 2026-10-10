@@ -10,54 +10,59 @@
     </template>
 
     <template #body>
-      <div v-if="degrees" class="grid grid-cols-3 gap-2">
+      <div v-if="degrees" class="grid grid-cols-3 gap-3">
         <NuxtLink
           v-for="degree in degrees"
           :key="degree.id"
           :to="degree.path"
-          class="relative aspect-square rounded-lg overflow-hidden group"
+          class="group relative aspect-square rounded-xl overflow-hidden border border-white/10 shadow-lg shadow-black/20 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/10 hover:border-white/20 hover:-translate-y-1"
         >
           <!-- Background Image -->
           <img
             :src="`/img/degrees/${degree.stem.split('/').pop()}.webp`"
             :alt="degree.title"
-            class="absolute inset-0 w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+            class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
 
-          <!-- Dark Overlay -->
-          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          <!-- Dark Overlay with gradient -->
+          <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
 
-          <!-- Title -->
-          <div class="absolute bottom-0 left-0 right-0 p-2">
-            <p class="text-white text-xs font-semibold leading-tight">
-              {{ degree.title }}
-            </p>
-          </div>
+          <!-- Shimmer effect on hover -->
+          <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-tr from-purple-500/10 via-transparent to-pink-500/10" />
 
           <!-- Badges -->
-          <div class="absolute top-1.5 left-1.5 flex flex-col gap-1">
+          <div class="absolute top-2 left-2 flex flex-col gap-1.5 z-10">
             <span
               v-if="degree.stem.endsWith('/sissy')"
-              class="px-1.5 py-0.5 rounded-sm bg-blue-500 text-white text-[10px] font-bold uppercase tracking-wide"
+              class="px-2 py-0.5 rounded-md bg-blue-500/90 backdrop-blur-sm text-white text-[9px] font-bold uppercase tracking-wider shadow-sm shadow-blue-500/30"
             >
               Active
             </span>
           </div>
 
-          <div class="absolute top-1.5 right-1.5">
+          <div class="absolute top-2 right-2 z-10">
             <span
               v-if="degree.stem.endsWith('/sissy')"
-              class="w-5 h-5 rounded-full bg-pink-500 flex items-center justify-center text-white text-[10px] font-bold"
+              class="w-6 h-6 rounded-full bg-pink-500/90 backdrop-blur-sm flex items-center justify-center text-white text-[10px] font-bold shadow-sm shadow-pink-500/30"
             >
               F
             </span>
           </div>
 
-          <!-- Subtitle -->
-          <div class="absolute bottom-6 left-2 right-2">
-            <p class="text-white/60 text-[10px]">
-              Metz.
+          <!-- Content Area -->
+          <div class="absolute bottom-0 left-0 right-0 p-4">
+            <!-- Title -->
+            <p class="text-white text-lg font-bold leading-tight tracking-tight drop-shadow-md">
+              {{ degree.title }}
             </p>
+
+            <!-- Description -->
+            <p v-if="degree.description" class="text-white/60 text-sm mt-1 line-clamp-2 leading-snug">
+              {{ degree.description }}
+            </p>
+
+            <!-- Hover indicator line -->
+            <div class="mt-2 h-0.5 w-0 group-hover:w-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500" />
           </div>
         </NuxtLink>
       </div>
@@ -71,9 +76,51 @@
 <script setup lang="ts">
 import type { BreadcrumbItem } from '@nuxt/ui'
 
+useHead({
+  title: 'Degrees'
+})
+
+useSeoMeta({
+  title: 'Degrees',
+  description: 'Explore the available degrees at KiSS Academy. Choose your path and begin your transformation journey.',
+  ogTitle: 'Degrees',
+  ogDescription: 'Explore the available degrees at KiSS Academy. Choose your path and begin your transformation journey.',
+  ogType: 'website'
+})
+
+useHead({
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': [
+          {
+            '@type': 'CollectionPage',
+            '@id': 'https://kiss-academy.github.io/KiSS/degrees/#webpage',
+            'url': 'https://kiss-academy.github.io/KiSS/degrees/',
+            'name': 'Degrees',
+            'description': 'Explore the available degrees at KiSS Academy. Choose your path and begin your transformation journey.',
+            'inLanguage': 'en',
+            'isPartOf': { '@id': 'https://kiss-academy.github.io/KiSS/#website' }
+          },
+          {
+            '@type': 'WebSite',
+            '@id': 'https://kiss-academy.github.io/KiSS/#website',
+            'url': 'https://kiss-academy.github.io/KiSS/',
+            'name': 'KiSS Academy',
+            'description': 'KiSS Academy - A gamified learning platform for personal transformation and self-improvement.',
+            'inLanguage': 'en'
+          }
+        ]
+      })
+    }
+  ]
+})
+
 const { data: degrees } = await useAsyncData('degrees', () => {
   return queryCollection('degrees').all()
-})
+}, { server: false })
 
 const items = ref<BreadcrumbItem[]>([
   {

@@ -1,6 +1,48 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
 
+useHead({
+  title: 'Dashboard'
+})
+
+useSeoMeta({
+  title: 'Dashboard',
+  description: 'Your personal dashboard for tracking progress, routines, and schedules at KiSS Academy.',
+  ogTitle: 'Dashboard',
+  ogDescription: 'Your personal dashboard for tracking progress, routines, and schedules at KiSS Academy.',
+  ogType: 'website'
+})
+
+useHead({
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': [
+          {
+            '@type': 'WebPage',
+            '@id': 'https://kiss-academy.github.io/KiSS/#webpage',
+            'url': 'https://kiss-academy.github.io/KiSS/',
+            'name': 'Dashboard',
+            'description': 'Your personal dashboard for tracking progress, routines, and schedules at KiSS Academy.',
+            'inLanguage': 'en',
+            'isPartOf': { '@id': 'https://kiss-academy.github.io/KiSS/#website' }
+          },
+          {
+            '@type': 'WebSite',
+            '@id': 'https://kiss-academy.github.io/KiSS/#website',
+            'url': 'https://kiss-academy.github.io/KiSS/',
+            'name': 'KiSS Academy',
+            'description': 'KiSS Academy - A gamified learning platform for personal transformation and self-improvement.',
+            'inLanguage': 'en'
+          }
+        ]
+      })
+    }
+  ]
+})
+
 const { isNotificationsSlideoverOpen } = useDashboard()
 
 const quickActions = [[{

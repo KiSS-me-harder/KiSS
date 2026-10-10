@@ -1,7 +1,10 @@
 <template>
   <div class="space-y-6">
     <HomeTodayStats />
-    <HomeTodaySchedule />
-    <HomeTodayTasks />
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <HomeTodaySchedule />
+      <HomeTodayTasks />
+    </div>
   </div>
 </template>

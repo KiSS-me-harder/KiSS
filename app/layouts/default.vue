@@ -35,10 +35,11 @@
       </template>
     </UDashboardSidebar>
 
-    <UDashboardSearch :groups="groups" />
+    <UDashboardSearch :groups="groups" :color-mode="false" />
 
     <slot />
 
+    <MediaPlayerWidget />
     <NotificationsSlideover />
   </UDashboardGroup>
 </template>
@@ -49,7 +50,11 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 const open = ref(false)
 const route = useRoute()
 
-const { data: degrees } = await useAsyncData(() => queryCollection('degrees').all())
+const { data: degrees } = await useAsyncData(() => queryCollection('degrees').all(), { server: false })
+const { data: allClasses } = await useAsyncData(() => queryCollection('classes').all(), { server: false })
+const { data: clubs } = await useAsyncData(() => queryCollection('clubs').all(), { server: false })
+const { data: punishments } = await useAsyncData(() => queryCollection('punishments').all(), { server: false })
+const { data: faculty } = await useAsyncData(() => queryCollection('faculty').all(), { server: false })
 
 const degreesChildren = computed(() =>
   degrees.value?.map(item => ({
@@ -61,10 +66,75 @@ const degreesChildren = computed(() =>
   }))
 )
 
+const classesChildren = computed(() => {
+  if (!allClasses.value) return []
+  const classMap = new Map<string, { label: string; to: string }>()
+  for (const item of allClasses.value) {
+    const parts = (item as any).stem?.split('/') || []
+    if (parts.length < 4) continue
+    const degree = parts[1]
+    const className = parts[2]
+    const classSlug = `${degree}/${className}`
+    if (!classMap.has(classSlug)) {
+      const classTitle = (item as any).meta?.class || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+      classMap.set(classSlug, {
+        label: classTitle,
+        to: `/classes/${classSlug}`
+      })
+    }
+  }
+  return Array.from(classMap.values())
+    .sort((a, b) => a.label.localeCompare(b.label))
+    .map(item => ({
+      ...item,
+      onSelect: () => {
+        open.value = false
+      }
+    }))
+})
+
+const clubsChildren = computed(() =>
+  clubs.value?.map(item => ({
+    label: item.title,
+    to: `/${item.stem}`,
+    onSelect: () => {
+      open.value = false
+    }
+  }))
+)
+
+const punishmentsChildren = computed(() =>
+  punishments.value?.map(item => ({
+    label: item.title,
+    to: `/${item.stem}`,
+    onSelect: () => {
+      open.value = false
+    }
+  }))
+)
+
+const facultyChildren = computed(() =>
+  faculty.value?.map(item => ({
+    label: item.title,
+    to: `/teachers/${(item as any).path.split('/').pop()}`,
+    onSelect: () => {
+      open.value = false
+    }
+  }))
+)
+
 const links = computed(() => [[{
   label: 'Today',
   icon: 'i-lucide-calendar-days',
   to: '/',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
+  label: 'Study Plan',
+  icon: 'i-lucide-git-branch',
+  to: '/study-plan',
+  active: route.path.startsWith('/study-plan'),
   onSelect: () => {
     open.value = false
   }
@@ -82,13 +152,48 @@ const links = computed(() => [[{
   label: 'Classes',
   icon: 'i-lucide-book-text',
   to: '/classes',
+  active: route.path.startsWith('/classes'),
+  defaultOpen: false,
   onSelect: () => {
     open.value = false
-  }
+  },
+  children: classesChildren.value
 }, {
   label: 'Clubs',
-  icon: 'i-lucide-club',
+  icon: 'i-lucide-users',
   to: '/clubs',
+  active: route.path.startsWith('/clubs'),
+  defaultOpen: false,
+  onSelect: () => {
+    open.value = false
+  },
+  children: clubsChildren.value
+}, {
+  label: 'Detention',
+  icon: 'i-lucide-angry',
+  to: '/detention',
+  active: route.path.startsWith('/detention'),
+  defaultOpen: false,
+  onSelect: () => {
+    open.value = false
+  },
+  children: punishmentsChildren.value
+}, {
+  label: 'Teachers',
+  icon: 'i-lucide-presentation',
+  to: '/teachers',
+  active: route.path.startsWith('/teachers'),
+  defaultOpen: false,
+  onSelect: () => {
+    open.value = false
+  },
+  children: facultyChildren.value
+}, {
+  label: 'Students',
+  icon: 'i-lucide-users',
+  to: '/students',
+  active: route.path.startsWith('/students'),
+  defaultOpen: false,
   onSelect: () => {
     open.value = false
   }
@@ -96,30 +201,48 @@ const links = computed(() => [[{
   label: 'Library',
   icon: 'i-lucide-library',
   to: '/library',
+  active: route.path.startsWith('/library'),
+  defaultOpen: false,
   onSelect: () => {
     open.value = false
-  }
-}, {
-  label: 'Detention',
-  icon: 'i-lucide-angry',
-  to: '/detention',
-  onSelect: () => {
-    open.value = false
-  }
-}, {
-  label: 'Teachers',
-  icon: 'i-lucide-university',
-  to: '/teachers',
-  onSelect: () => {
-    open.value = false
-  }
-}, {
-  label: 'Students',
-  icon: 'i-lucide-user',
-  to: '/students',
-  onSelect: () => {
-    open.value = false
-  }
+  },
+  children: [
+    {
+      label: 'All Media',
+      to: '/library',
+      onSelect: () => {
+        open.value = false
+      }
+    },
+    {
+      label: 'Videos',
+      to: '/library/videos',
+      onSelect: () => {
+        open.value = false
+      }
+    },
+    {
+      label: 'Images',
+      to: '/library/images',
+      onSelect: () => {
+        open.value = false
+      }
+    },
+    {
+      label: 'Audio',
+      to: '/library/audio',
+      onSelect: () => {
+        open.value = false
+      }
+    },
+    {
+      label: 'Books',
+      to: '/library/books',
+      onSelect: () => {
+        open.value = false
+      }
+    }
+  ]
 }, {
   label: 'Flashcards',
   icon: 'i-lucide-playing-cards-fan',

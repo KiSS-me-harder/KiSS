@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { BreadcrumbItem } from '@nuxt/ui'
+import { useEnrollmentStore } from '~/stores/enrollment'
 
 const route = useRoute()
 
@@ -11,9 +12,14 @@ const { data: home } = await useAsyncData(
     .path(`/degrees/${id.value}`)
     .first(),
   {
-    watch: [id]
+    watch: [id],
+    server: false
   }
 )
+
+const { data: allClasses } = await useAsyncData('all-classes-degree', () => {
+  return queryCollection('classes').all()
+}, { server: false })
 
 const title = computed(() => home.value?.title)
 const description = computed(() => home.value?.description)
@@ -36,113 +42,264 @@ useSeoMeta({
   description
 })
 
-// Mock data for mandatory courses per degree
-const mandatoryCourses = computed(() => {
-  const coursesByDegree: Record<string, { name: string; image: string; badge?: string; active?: boolean }[]> = {
-    'sissy': [
-      { name: 'Beauty Science', image: 'sissy', badge: 'F' },
-      { name: 'Crossdressing Studies', image: 'sissy', badge: 'F', active: true },
-      { name: 'Deportment Artistry', image: 'sissy', badge: 'F' },
-      { name: 'Bodyshaping Technology', image: 'sissy', badge: 'F' },
-    ],
-    'anal-slut': [
-      { name: 'Hygiene Fundamentals', image: 'anal-slut', badge: 'A' },
-      { name: 'Rectal Endurance', image: 'anal-slut', badge: 'A', active: true },
-      { name: 'Lubricant Science', image: 'anal-slut', badge: 'A' },
-      { name: 'Performance Techniques', image: 'anal-slut', badge: 'A' },
-    ],
-    'cum-eater': [
-      { name: 'Oral Basics', image: 'cum-eater', badge: 'C' },
-      { name: 'Swallowing Techniques', image: 'cum-eater', badge: 'C', active: true },
-      { name: 'Endurance Training', image: 'cum-eater', badge: 'C' },
-      { name: 'Aftercare Protocols', image: 'cum-eater', badge: 'C' },
-    ],
-    'cock-gobbler': [
-      { name: 'Deep Throat 101', image: 'cock-gobbler', badge: 'C' },
-      { name: 'Breath Control', image: 'cock-gobbler', badge: 'C', active: true },
-      { name: 'Speed Training', image: 'cock-gobbler', badge: 'C' },
-      { name: 'Advanced Gobbler', image: 'cock-gobbler', badge: 'C' },
-    ],
-    'chaste': [
-      { name: 'Chastity Mindset', image: 'chaste', badge: 'Ch' },
-      { name: 'Device Care', image: 'chaste', badge: 'Ch', active: true },
-      { name: 'Denial Techniques', image: 'chaste', badge: 'Ch' },
-      { name: 'Submission Training', image: 'chaste', badge: 'Ch' },
-    ],
-    'hypnosub': [
-      { name: 'Trance Induction', image: 'hypnosub', badge: 'H' },
-      { name: 'Suggestion Response', image: 'hypnosub', badge: 'H', active: true },
-      { name: 'Deep Sleep Training', image: 'hypnosub', badge: 'H' },
-      { name: 'Trigger Conditioning', image: 'hypnosub', badge: 'H' },
-    ],
-    'pet': [
-      { name: 'Animal Behavior', image: 'pet', badge: 'P' },
-      { name: 'Basic Commands', image: 'pet', badge: 'P', active: true },
-      { name: 'Trick Training', image: 'pet', badge: 'P' },
-      { name: 'Pack Dynamics', image: 'pet', badge: 'P' },
-    ],
-    'voyeur': [
-      { name: 'Observation Skills', image: 'voyeur', badge: 'V' },
-      { name: 'Stealth Techniques', image: 'voyeur', badge: 'V', active: true },
-      { name: 'Memory Training', image: 'voyeur', badge: 'V' },
-      { name: 'Reporting Protocols', image: 'voyeur', badge: 'V' },
-    ],
-  }
-  return coursesByDegree[id.value] || []
+useHead({
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: computed(() => JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': [
+          {
+            '@type': 'Course',
+            '@id': `https://kiss-academy.github.io/KiSS/degrees/${id.value}#course`,
+            'url': `https://kiss-academy.github.io/KiSS/degrees/${id.value}`,
+            'name': title.value,
+            'description': description.value,
+            'inLanguage': 'en',
+            'provider': {
+              '@type': 'Organization',
+              'name': 'KiSS Academy',
+              'url': 'https://kiss-academy.github.io/KiSS/'
+            }
+          },
+          {
+            '@type': 'WebPage',
+            '@id': `https://kiss-academy.github.io/KiSS/degrees/${id.value}#webpage`,
+            'url': `https://kiss-academy.github.io/KiSS/degrees/${id.value}`,
+            'name': title.value,
+            'description': description.value,
+            'inLanguage': 'en',
+            'isPartOf': { '@id': 'https://kiss-academy.github.io/KiSS/#website' }
+          },
+          {
+            '@type': 'WebSite',
+            '@id': 'https://kiss-academy.github.io/KiSS/#website',
+            'url': 'https://kiss-academy.github.io/KiSS/',
+            'name': 'KiSS Academy',
+            'description': 'KiSS Academy - A gamified learning platform for personal transformation and self-improvement.',
+            'inLanguage': 'en'
+          }
+        ]
+      }))
+    }
+  ]
 })
 
-// Mock data for final exams per degree
-const finalExams = computed(() => {
-  const examsByDegree: Record<string, { name: string; duration: string; tasks: number; steps: number }[]> = {
-    'sissy': [
-      { name: 'Femme Foundations', duration: '~6 h', tasks: 11, steps: 24 },
-      { name: 'Feminine Immersion', duration: '~12 h', tasks: 22, steps: 24 },
-      { name: 'Feminine Lifestyle', duration: '~2 days, 6 h', tasks: 59, steps: 24 },
-    ],
-    'anal-slut': [
-      { name: 'Endurance Exam', duration: '~4 h', tasks: 8, steps: 16 },
-      { name: 'Hygiene Certification', duration: '~2 h', tasks: 5, steps: 12 },
-      { name: 'Final Performance', duration: '~8 h', tasks: 15, steps: 32 },
-    ],
-    'cum-eater': [
-      { name: 'Volume Test', duration: '~3 h', tasks: 10, steps: 20 },
-      { name: 'Speed Challenge', duration: '~2 h', tasks: 6, steps: 12 },
-      { name: 'Endurance Final', duration: '~6 h', tasks: 18, steps: 28 },
-    ],
-    'cock-gobbler': [
-      { name: 'Depth Certification', duration: '~3 h', tasks: 9, steps: 18 },
-      { name: 'Speed Gobbler Exam', duration: '~2 h', tasks: 7, steps: 14 },
-      { name: 'Master Gobbler', duration: '~5 h', tasks: 14, steps: 26 },
-    ],
-    'chaste': [
-      { name: '30-Day Lockup', duration: '~30 days', tasks: 30, steps: 30 },
-      { name: 'Denial Endurance', duration: '~7 days', tasks: 7, steps: 14 },
-      { name: 'Submission Trial', duration: '~14 days', tasks: 14, steps: 21 },
-    ],
-    'hypnosub': [
-      { name: 'Deep Trance Exam', duration: '~4 h', tasks: 12, steps: 20 },
-      { name: 'Trigger Response Test', duration: '~2 h', tasks: 8, steps: 16 },
-      { name: 'Total Surrender', duration: '~8 h', tasks: 20, steps: 30 },
-    ],
-    'pet': [
-      { name: 'Obedience Trial', duration: '~3 h', tasks: 10, steps: 18 },
-      { name: 'Trick Showcase', duration: '~2 h', tasks: 6, steps: 12 },
-      { name: 'Pack Leader Approval', duration: '~5 h', tasks: 15, steps: 24 },
-    ],
-    'voyeur': [
-      { name: 'Observation Exam', duration: '~4 h', tasks: 12, steps: 20 },
-      { name: 'Stealth Certification', duration: '~3 h', tasks: 8, steps: 16 },
-      { name: 'Final Report', duration: '~6 h', tasks: 16, steps: 24 },
-    ],
-  }
-  return examsByDegree[id.value] || []
+// --- Enrollment Store ---
+const store = useEnrollmentStore()
+
+// --- Target Levels from degree frontmatter ---
+interface DegreeLevelClass {
+  slug: string
+  maxLevel: number
+}
+
+interface DegreeLevel {
+  name: string
+  description: string
+  classes: DegreeLevelClass[]
+}
+
+const degreeLevels = computed<DegreeLevel[]>(() => {
+  return home.value?.meta?.levels || []
 })
 
-// Mock progress values
-const courseProgress = 0
-const examProgress = 0
-const finalGrade = 0
-const isEnrolled = false
+// Selected target level index
+const selectedLevelIndex = ref(0)
+
+const selectedLevel = computed<DegreeLevel | null>(() => {
+  if (degreeLevels.value.length === 0) return null
+  const idx = Math.min(selectedLevelIndex.value, degreeLevels.value.length - 1)
+  return degreeLevels.value[idx]
+})
+
+// --- Build class info for the selected target level ---
+interface ClassInfo {
+  slug: string
+  degree: string
+  className: string
+  classTitle: string
+  maxLevel: number
+  availableLevels: number[]
+  isEnrolled: boolean
+  completedLevels: number
+  totalLevels: number
+  image: string
+  degreeLabel: string
+  isCrossDegree: boolean
+}
+
+const classInfos = computed<ClassInfo[]>(() => {
+  if (!selectedLevel.value || !allClasses.value) return []
+
+  const result: ClassInfo[] = []
+  const seenSlugs = new Set<string>()
+
+  for (const dc of selectedLevel.value.classes) {
+    if (seenSlugs.has(dc.slug)) continue
+    seenSlugs.add(dc.slug)
+
+    const [degree, className] = dc.slug.split('/')
+    const degreeLabel = degree.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    const isCrossDegree = degree !== id.value
+
+    // Find all levels for this class
+    const prefix = `classes/${dc.slug}/`
+    const classLevels = allClasses.value
+      .filter(item => (item as any).stem?.startsWith(prefix))
+      .map(item => ({
+        level: parseInt((item as any).meta?.level, 10),
+        title: (item as any).title,
+        classTitle: (item as any).meta?.class
+      }))
+      .filter(item => !isNaN(item.level))
+      .sort((a, b) => a.level - b.level)
+
+    // Filter to maxLevel
+    const availableLevels = classLevels
+      .filter(item => item.level <= dc.maxLevel)
+      .map(item => item.level)
+
+    // Get class title from first level
+    const classTitle = classLevels[0]?.classTitle || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+
+    // Check enrollment
+    const isEnrolled = store.isEnrolled(dc.slug)
+    const enrollment = store.getEnrollment(dc.slug)
+    const completedLevels = enrollment
+      ? enrollment.levels.filter((l: { completed: boolean }) => l.completed).length
+      : 0
+
+    result.push({
+      slug: dc.slug,
+      degree,
+      className,
+      classTitle,
+      maxLevel: dc.maxLevel,
+      availableLevels,
+      isEnrolled,
+      completedLevels,
+      totalLevels: availableLevels.length,
+      image: `/img/degrees/${degree}.webp`,
+      degreeLabel,
+      isCrossDegree
+    })
+  }
+
+  return result
+})
+
+// --- Overall degree enrollment status ---
+// Check if ALL classes for the selected title are enrolled
+const isDegreeFullyEnrolled = computed(() => {
+  if (classInfos.value.length === 0) return false
+  return classInfos.value.every(c => c.isEnrolled)
+})
+
+// Check if ANY class for the selected title is enrolled (for partial enrollment state)
+const isDegreePartiallyEnrolled = computed(() => {
+  return classInfos.value.some(c => c.isEnrolled)
+})
+
+// --- Progress calculation ---
+const overallProgress = computed(() => {
+  if (classInfos.value.length === 0) return 0
+  const totalLevels = classInfos.value.reduce((sum, c) => sum + c.totalLevels, 0)
+  const completedLevels = classInfos.value.reduce((sum, c) => sum + c.completedLevels, 0)
+  if (totalLevels === 0) return 0
+  return Math.round((completedLevels / totalLevels) * 100)
+})
+
+// --- Enrollment actions ---
+function handleEnrollInDegree() {
+  if (!selectedLevel.value) return
+
+  for (const dc of selectedLevel.value.classes) {
+    if (!store.isEnrolled(dc.slug)) {
+      // Find available levels for this class up to maxLevel
+      const prefix = `classes/${dc.slug}/`
+      const levels = allClasses.value!
+        .filter(item => (item as any).stem?.startsWith(prefix))
+        .map(item => parseInt((item as any).meta?.level, 10))
+        .filter(l => !isNaN(l) && l <= dc.maxLevel)
+        .sort((a, b) => a - b)
+
+      const [degree, className] = dc.slug.split('/')
+      store.enrollInClass(dc.slug, className, degree, levels)
+    }
+  }
+}
+
+function handleUnenrollFromDegree() {
+  if (!selectedLevel.value) return
+
+  for (const dc of selectedLevel.value.classes) {
+    if (store.isEnrolled(dc.slug)) {
+      store.unenrollFromClass(dc.slug)
+    }
+  }
+}
+
+// --- Title completion check ---
+// Check if all classes for a title are fully completed
+function isTitleCompleted(titleIndex: number): boolean {
+  if (titleIndex >= degreeLevels.value.length) return false
+  const title = degreeLevels.value[titleIndex]
+  if (!title || !allClasses.value) return false
+
+  for (const dc of title.classes) {
+    // Check if this class is enrolled
+    if (!store.isEnrolled(dc.slug)) return false
+
+    // Check if all levels up to maxLevel are completed
+    const prefix = `classes/${dc.slug}/`
+    const levels = allClasses.value
+      .filter(item => (item as any).stem?.startsWith(prefix))
+      .map(item => parseInt((item as any).meta?.level, 10))
+      .filter(l => !isNaN(l) && l <= dc.maxLevel)
+      .sort((a, b) => a - b)
+
+    for (const level of levels) {
+      if (!store.isLevelCompleted(dc.slug, level)) return false
+    }
+  }
+  return true
+}
+
+// Get the highest completed title index
+const highestCompletedTitleIndex = computed(() => {
+  for (let i = degreeLevels.value.length - 1; i >= 0; i--) {
+    if (isTitleCompleted(i)) return i
+  }
+  return -1
+})
+
+// --- Level tier colors ---
+function getTierColor(maxLevel: number) {
+  if (maxLevel >= 300) return 'bg-red-500'
+  if (maxLevel >= 200) return 'bg-blue-500'
+  return 'bg-green-500'
+}
+
+function getTierLabel(maxLevel: number) {
+  if (maxLevel >= 300) return 'Tier 3'
+  if (maxLevel >= 200) return 'Tier 2'
+  return 'Tier 1'
+}
+
+// --- Level name colors ---
+const levelNameColors = [
+  'text-amber-400',
+  'text-blue-400',
+  'text-purple-400'
+]
+
+const levelBadgeColors = [
+  'bg-amber-500/20 text-amber-400 border-amber-500/30',
+  'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  'bg-purple-500/20 text-purple-400 border-purple-500/30'
+]
+
 </script>
 
 <template>
@@ -158,168 +315,357 @@ const isEnrolled = false
 
     <template #body>
       <div v-if="home" class="space-y-4">
-        <!-- Hero Image -->
-        <div class="relative rounded-lg overflow-hidden">
-          <img
-            :src="`/img/degrees/${id}.webp`"
-            :alt="title"
-            class="w-full aspect-video object-cover"
-          />
-        </div>
-
-        <!-- Title & Description -->
-        <div>
-          <h1 class="text-xl font-semibold text-white mb-2">
-            {{ title }}
-          </h1>
-          <p class="text-sm text-muted leading-relaxed">
-            {{ description }}
-          </p>
-        </div>
-
-        <!-- Body Content -->
-        <div v-if="body" class="text-sm text-muted/80 leading-relaxed">
-          <ContentRenderer :value="home" />
-        </div>
-
-        <!-- Enroll Button -->
-        <div class="pt-1">
-          <UButton
-            :variant="isEnrolled ? 'solid' : 'outline'"
-            :color="isEnrolled ? 'primary' : 'secondary'"
-            size="md"
-            class="w-full sm:w-auto"
-          >
-            {{ isEnrolled ? 'Enrolled' : 'Enroll' }}
-          </UButton>
-        </div>
-
-        <!-- Mandatory Courses Section -->
-        <UCard>
-          <template #header>
-            <div class="text-center">
-              <h2 class="text-base font-semibold">Mandatory Courses</h2>
-              <p class="text-xs text-muted mt-0.5">(complete at least 3)</p>
-            </div>
-          </template>
-
-          <!-- Course Cards -->
-          <div class="grid grid-cols-2 gap-2 mb-3">
-            <NuxtLink
-              v-for="course in mandatoryCourses"
-              :key="course.name"
-              :to="`/classes/${course.name.toLowerCase().replace(/\s+/g, '-')}`"
-              class="relative aspect-[3/4] rounded-lg overflow-hidden group"
-            >
+        <!-- Two-column layout: image on left, content on right (desktop) -->
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <!-- Left Column: Hero Image (spans 2 columns on desktop) -->
+          <div class="lg:col-span-2">
+            <div class="relative rounded-lg overflow-hidden sticky top-4">
               <img
-                :src="`/img/degrees/${course.image}.webp`"
-                :alt="course.name"
-                class="absolute inset-0 w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+                :src="`/img/degrees/${id}.webp`"
+                :alt="title"
+                class="w-full object-cover"
               />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+            </div>
+          </div>
 
-              <!-- Badge -->
-              <div class="absolute top-1 right-1">
-                <span class="w-4 h-4 rounded-full bg-pink-500 flex items-center justify-center text-white text-[8px] font-bold">
-                  {{ course.badge }}
-                </span>
+          <!-- Right Column: Content (spans 3 columns on desktop) -->
+          <div class="lg:col-span-3 space-y-4">
+            <!-- Title & Description -->
+            <div>
+              <h1 class="text-xl font-semibold text-white mb-2">
+                {{ title }}
+              </h1>
+              <p class="text-sm text-muted leading-relaxed">
+                {{ description }}
+              </p>
+            </div>
+
+            <!-- Body Content -->
+            <div v-if="body" class="text-sm text-muted/80 leading-relaxed">
+              <ContentRenderer :value="home" />
+            </div>
+
+            <!-- Target Title Selector -->
+            <UCard v-if="degreeLevels.length">
+              <template #header>
+                <div class="flex items-center gap-2">
+                  <UIcon name="i-lucide-target" class="size-4 text-purple-400" />
+                  <h2 class="text-base font-semibold">Target Title</h2>
+                </div>
+              </template>
+
+              <p class="text-xs text-muted mb-3">
+                Choose your target title for this degree. Each title represents a milestone with specific class requirements.
+              </p>
+
+              <div class="space-y-2">
+                <button
+                  v-for="(level, index) in degreeLevels"
+                  :key="level.name"
+                  type="button"
+                  @click="selectedLevelIndex = index"
+                  class="w-full text-left p-3 rounded-lg border transition-all duration-200"
+                  :class="selectedLevelIndex === index
+                    ? 'border-purple-500/50 bg-purple-500/10 shadow-lg shadow-purple-500/10'
+                    : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'"
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold shrink-0"
+                      :class="[levelBadgeColors[index]]"
+                    >
+                      {{ level.name.charAt(0) }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold" :class="levelNameColors[index]">
+                          {{ level.name }}
+                        </span>
+                        <span class="text-[10px] text-muted">
+                          {{ level.classes.length }} class{{ level.classes.length !== 1 ? 'es' : '' }}
+                        </span>
+                        <!-- Completed badge -->
+                        <UIcon
+                          v-if="isTitleCompleted(index)"
+                          name="i-lucide-trophy"
+                          class="size-3.5 text-amber-400 shrink-0"
+                        />
+                        <!-- Locked indicator if previous title not completed -->
+                        <UIcon
+                          v-else-if="index > 0 && !isTitleCompleted(index - 1) && !isTitleCompleted(index)"
+                          name="i-lucide-lock"
+                          class="size-3.5 text-muted/60 shrink-0"
+                        />
+                      </div>
+                      <p class="text-[11px] text-muted mt-0.5 line-clamp-1">
+                        {{ level.description }}
+                      </p>
+                    </div>
+                    <UIcon
+                      v-if="selectedLevelIndex === index"
+                      name="i-lucide-check-circle"
+                      class="size-4 text-purple-400 shrink-0"
+                    />
+                  </div>
+                </button>
+              </div>
+            </UCard>
+
+            <!-- Target Goal Details -->
+            <UCard v-if="selectedLevel">
+              <template #header>
+                <div class="flex items-center gap-2">
+                  <UIcon name="i-lucide-flag" class="size-4 text-amber-400" />
+                  <h2 class="text-base font-semibold">
+                    {{ selectedLevel.name }} — Target Goal
+                  </h2>
+                </div>
+              </template>
+
+              <p class="text-xs text-muted mb-3">
+                To earn the <strong class="text-white">{{ selectedLevel.name }}</strong> title, you need to complete all the following classes:
+              </p>
+
+              <!-- Class Requirements List -->
+              <div class="space-y-2">
+                <div
+                  v-for="classInfo in classInfos"
+                  :key="classInfo.slug"
+                  class="flex items-center gap-3 p-2.5 rounded-lg border border-white/10 bg-white/5"
+                >
+                  <!-- Class Image -->
+                  <div class="w-12 h-12 rounded-lg overflow-hidden shrink-0">
+                    <img
+                      :src="classInfo.image"
+                      :alt="classInfo.classTitle"
+                      class="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <!-- Class Info -->
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm font-semibold text-white truncate">
+                        {{ classInfo.classTitle }}
+                      </span>
+                      <span
+                        v-if="classInfo.isCrossDegree"
+                        class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-purple-500/20 text-purple-400 border border-purple-500/30 shrink-0"
+                      >
+                        {{ classInfo.degreeLabel }}
+                      </span>
+                    </div>
+                    <div class="flex items-center gap-2 text-[10px] text-muted mt-0.5">
+                      <span class="px-1.5 py-0.5 rounded font-bold" :class="getTierColor(classInfo.maxLevel)">
+                        {{ getTierLabel(classInfo.maxLevel) }}
+                      </span>
+                      <span>·</span>
+                      <span>Levels up to {{ classInfo.maxLevel }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Status Icon -->
+                  <div class="shrink-0">
+                    <template v-if="classInfo.isEnrolled">
+                      <UIcon
+                        v-if="classInfo.completedLevels === classInfo.totalLevels"
+                        name="i-lucide-check-circle-2"
+                        class="size-5 text-emerald-400"
+                      />
+                      <UIcon
+                        v-else
+                        name="i-lucide-clock"
+                        class="size-5 text-amber-400"
+                      />
+                    </template>
+                    <UIcon
+                      v-else
+                      name="i-lucide-circle"
+                      class="size-5 text-muted/40"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <!-- Active Badge -->
-              <div v-if="course.active" class="absolute top-1 left-1">
-                <span class="px-1 py-0.5 rounded-sm bg-blue-500 text-white text-[8px] font-bold uppercase">
-                  Active
-                </span>
+              <!-- Title Progress Summary -->
+              <div class="mt-3 pt-3 border-t border-white/10">
+                <div class="flex items-center justify-between text-xs text-muted">
+                  <span>Title progress</span>
+                  <span>
+                    <strong class="text-white">{{ classInfos.filter(c => c.isEnrolled && c.completedLevels === c.totalLevels).length }}</strong>
+                    /{{ classInfos.length }} classes completed
+                  </span>
+                </div>
+                <UProgress
+                  :model-value="(classInfos.filter(c => c.isEnrolled && c.completedLevels === c.totalLevels).length / classInfos.length) * 100"
+                  :animated="false"
+                  color="success"
+                  size="xs"
+                />
+              </div>
+            </UCard>
+
+            <!-- Classes for Selected Level -->
+            <UCard v-if="selectedLevel && classInfos.length">
+              <template #header>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <UIcon name="i-lucide-book-open" class="size-4 text-blue-400" />
+                    <h2 class="text-base font-semibold">
+                      {{ selectedLevel.name }} Curriculum
+                    </h2>
+                  </div>
+                  <UBadge variant="subtle" size="xs" color="neutral">
+                    {{ classInfos.length }} classes
+                  </UBadge>
+                </div>
+              </template>
+
+              <!-- Class Cards -->
+              <div class="space-y-3">
+                <div
+                  v-for="classInfo in classInfos"
+                  :key="classInfo.slug"
+                  class="relative rounded-lg overflow-hidden border border-white/10 group"
+                >
+                  <NuxtLink
+                    :to="`/classes/${classInfo.slug}`"
+                    class="flex items-center gap-3 p-3 hover:bg-white/5 transition-colors"
+                  >
+                    <!-- Class Image -->
+                    <div class="w-16 h-16 rounded-lg overflow-hidden shrink-0">
+                      <img
+                        :src="classInfo.image"
+                        :alt="classInfo.classTitle"
+                        class="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    <!-- Class Info -->
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2 mb-0.5">
+                        <span class="text-sm font-semibold text-white truncate">
+                          {{ classInfo.classTitle }}
+                        </span>
+                        <span
+                          v-if="classInfo.isCrossDegree"
+                          class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-purple-500/20 text-purple-400 border border-purple-500/30 shrink-0"
+                        >
+                          {{ classInfo.degreeLabel }}
+                        </span>
+                      </div>
+
+                      <div class="flex items-center gap-2 text-[10px] text-muted">
+                        <span class="px-1.5 py-0.5 rounded font-bold" :class="getTierColor(classInfo.maxLevel)">
+                          {{ getTierLabel(classInfo.maxLevel) }}
+                        </span>
+                        <span>·</span>
+                        <span>{{ classInfo.totalLevels }} levels</span>
+                      </div>
+
+                      <!-- Progress bar for enrolled classes -->
+                      <div v-if="classInfo.isEnrolled" class="mt-2">
+                        <div class="flex items-center justify-between text-[10px] text-muted mb-0.5">
+                          <span>Progress</span>
+                          <span>{{ classInfo.completedLevels }}/{{ classInfo.totalLevels }}</span>
+                        </div>
+                        <UProgress
+                          :model-value="(classInfo.completedLevels / classInfo.totalLevels) * 100"
+                          :animated="false"
+                          color="success"
+                          size="xs"
+                        />
+                      </div>
+                    </div>
+
+                    <!-- Enrollment Status -->
+                    <div class="shrink-0">
+                      <UIcon
+                        v-if="classInfo.isEnrolled"
+                        name="i-lucide-check-circle-2"
+                        class="size-5 text-emerald-400"
+                      />
+                      <UIcon
+                        v-else
+                        name="i-lucide-circle"
+                        class="size-5 text-muted/40"
+                      />
+                    </div>
+                  </NuxtLink>
+                </div>
               </div>
 
-              <!-- Course Name -->
-              <div class="absolute bottom-0 left-0 right-0 p-1.5">
-                <p class="text-white text-[10px] font-semibold leading-tight">
-                  {{ course.name }}
+              <!-- Overall Progress -->
+              <div class="mt-4 pt-3 border-t border-white/10">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs text-muted">Overall progress</span>
+                  <span class="text-xs text-muted">
+                    {{ overallProgress }}%
+                    <span v-if="overallProgress === 0" class="text-red-400 font-bold">F</span>
+                    <span v-else-if="overallProgress >= 90" class="text-emerald-400 font-bold">A+</span>
+                    <span v-else-if="overallProgress >= 80" class="text-green-400 font-bold">A</span>
+                    <span v-else-if="overallProgress >= 70" class="text-blue-400 font-bold">B</span>
+                    <span v-else-if="overallProgress >= 60" class="text-yellow-400 font-bold">C</span>
+                  </span>
+                </div>
+                <UProgress :model-value="overallProgress" :animated="false" color="success" size="sm" />
+              </div>
+            </UCard>
+
+            <!-- Enroll/Unenroll Button -->
+            <div class="pt-1 space-y-2">
+              <UButton
+                v-if="!isDegreeFullyEnrolled"
+                size="md"
+                color="primary"
+                class="w-full sm:w-auto"
+                @click="handleEnrollInDegree"
+              >
+                <template #leading>
+                  <UIcon name="i-lucide-plus" class="size-4" />
+                </template>
+                {{ isDegreePartiallyEnrolled ? 'Complete Enrollment for' : 'Enroll in' }} {{ selectedLevel?.name || 'this title' }}
+              </UButton>
+              <UButton
+                v-if="isDegreePartiallyEnrolled"
+                variant="outline"
+                color="error"
+                size="md"
+                class="w-full sm:w-auto"
+                @click="handleUnenrollFromDegree"
+              >
+                <template #leading>
+                  <UIcon name="i-lucide-minus" class="size-4" />
+                </template>
+                Unenroll from all classes
+              </UButton>
+              <p v-if="isDegreePartiallyEnrolled && !isDegreeFullyEnrolled" class="text-[11px] text-muted">
+                You're partially enrolled. Click above to enroll in the remaining classes.
+              </p>
+            </div>
+
+            <!-- Final Grade Section -->
+            <UCard>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-sm font-semibold">Final Grade</span>
+                  <span class="text-xs text-muted">
+                    {{ overallProgress }}%
+                    <span v-if="overallProgress === 0" class="text-red-400 font-bold">F</span>
+                    <span v-else-if="overallProgress >= 90" class="text-emerald-400 font-bold">A+</span>
+                    <span v-else-if="overallProgress >= 80" class="text-green-400 font-bold">A</span>
+                    <span v-else-if="overallProgress >= 70" class="text-blue-400 font-bold">B</span>
+                    <span v-else-if="overallProgress >= 60" class="text-yellow-400 font-bold">C</span>
+                  </span>
+                </div>
+                <UProgress :model-value="overallProgress" :animated="false" color="success" size="sm" class="mb-2" />
+                <p class="text-xs text-muted text-center">
+                  Complete all classes at your target level to earn your grade
                 </p>
               </div>
-            </NuxtLink>
+            </UCard>
           </div>
-
-          <!-- Course Progress Bar -->
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-xs text-muted">Course progress</span>
-              <span class="text-xs text-muted">{{ courseProgress }}% <span class="text-red-400 font-bold">F</span></span>
-            </div>
-            <UProgress :model-value="courseProgress" :animated="false" color="success" size="sm" />
-          </div>
-        </UCard>
-
-        <!-- Final Exams Section -->
-        <UCard>
-          <template #header>
-            <div class="flex items-center justify-between">
-              <h2 class="text-base font-semibold">Final exams</h2>
-              <UBadge variant="subtle" size="xs" color="neutral">
-                VARIANT: TEXT
-              </UBadge>
-            </div>
-          </template>
-
-          <!-- Exam List -->
-          <div class="space-y-2 mb-3">
-            <div
-              v-for="exam in finalExams"
-              :key="exam.name"
-              class="flex items-center gap-2 p-2 rounded-lg bg-muted/30"
-            >
-              <div class="flex-1 min-w-0">
-                <p class="text-xs font-medium truncate">
-                  {{ exam.name }} <span class="text-muted">[{{ exam.duration }}]</span>
-                </p>
-                <p class="text-[10px] text-muted flex items-center gap-1 mt-0.5">
-                  <UIcon name="i-lucide-list-checks" class="size-3" />
-                  Multi-step · {{ exam.tasks }} tasks · {{ exam.steps }}h
-                  <span class="text-muted/60">Join degree to unlock tasks</span>
-                </p>
-              </div>
-              <UIcon name="i-lucide-lock" class="size-4 text-muted shrink-0" />
-            </div>
-          </div>
-
-          <p class="text-xs text-muted text-center mb-3">(complete at least 1)</p>
-
-          <!-- Exam Progress Bar -->
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-xs text-muted">Exams progress:</span>
-              <span class="text-xs text-muted">{{ examProgress }}% <span class="text-red-400 font-bold">F</span></span>
-            </div>
-            <UProgress :model-value="examProgress" :animated="false" color="success" size="sm" />
-          </div>
-        </UCard>
-
-        <!-- Final Grade Section -->
-        <UCard>
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-sm font-semibold">Final Grade</span>
-              <span class="text-xs text-muted">{{ finalGrade }}% <span class="text-red-400 font-bold">F</span></span>
-            </div>
-            <UProgress :model-value="finalGrade" :animated="false" color="success" size="sm" class="mb-2" />
-            <p class="text-xs text-muted text-center">
-              The final grade is comprised of 40% course grades and 60% graduation exam grade
-            </p>
-          </div>
-
-          <!-- Join Degree Button -->
-          <div class="pt-3">
-            <UButton
-              :variant="isEnrolled ? 'solid' : 'outline'"
-              :color="isEnrolled ? 'primary' : 'secondary'"
-              size="md"
-              class="w-full"
-            >
-              {{ isEnrolled ? 'Enrolled' : 'Join Degree' }}
-            </UButton>
-          </div>
-        </UCard>
+        </div>
       </div>
 
       <!-- Loading state -->

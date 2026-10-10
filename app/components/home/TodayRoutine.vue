@@ -74,7 +74,7 @@ const completedCount = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="space-y-6">
     <!-- Header with time -->
     <div class="flex items-center gap-2 text-sm text-muted">
       <UIcon name="i-lucide-clock" class="size-4" />
@@ -82,98 +82,105 @@ const completedCount = computed(() => {
       <span>· {{ timeString }}</span>
     </div>
 
-    <!-- Bonus credits card -->
-    <UCard>
-      <div class="flex items-center gap-2 mb-3">
-        <div class="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-          <UIcon name="i-lucide-repeat" class="size-3 text-primary" />
+    <!-- Top bar: Bonus credits + Action buttons -->
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <!-- Bonus credits card -->
+      <UCard class="flex-1">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+            <UIcon name="i-lucide-repeat" class="size-3 text-primary" />
+          </div>
+          <span class="text-sm font-medium">Lock in 3 or more tasks to earn bonus credits</span>
         </div>
-        <span class="text-sm font-medium">Lock in 3 or more tasks to earn bonus credits</span>
-      </div>
-      <div class="flex gap-2">
-        <button
-          v-for="bonus in bonusTasks"
-          :key="bonus.label"
-          class="px-3 py-1.5 rounded-lg text-xs font-medium bg-elevated text-muted hover:bg-elevated/80 transition-colors"
-        >
-          {{ bonus.label }} · {{ bonus.discount }}
-        </button>
-      </div>
-    </UCard>
+        <div class="flex flex-wrap gap-2">
+          <button
+            v-for="bonus in bonusTasks"
+            :key="bonus.label"
+            class="px-3 py-1.5 rounded-lg text-xs font-medium bg-elevated text-muted hover:bg-elevated/80 transition-colors"
+          >
+            {{ bonus.label }} · {{ bonus.discount }}
+          </button>
+        </div>
+      </UCard>
 
-    <!-- Action buttons -->
-    <div class="flex gap-2">
-      <UButton variant="solid" size="sm" class="bg-primary/90">
-        <template #leading>
-          <UIcon name="i-lucide-lock" class="size-3" />
-        </template>
-        Lock in
-      </UButton>
-      <UButton variant="outline" size="sm">
-        <template #leading>
-          <UIcon name="i-lucide-save" class="size-3" />
-        </template>
-        Save template
-      </UButton>
-      <UButton variant="ghost" size="sm" class="text-xs">
-        Add more tasks to lock in
-      </UButton>
+      <!-- Action buttons -->
+      <div class="flex flex-wrap gap-2">
+        <UButton variant="solid" size="sm" class="bg-primary/90">
+          <template #leading>
+            <UIcon name="i-lucide-lock" class="size-3" />
+          </template>
+          Lock in
+        </UButton>
+        <UButton variant="outline" size="sm">
+          <template #leading>
+            <UIcon name="i-lucide-save" class="size-3" />
+          </template>
+          Save template
+        </UButton>
+        <UButton variant="ghost" size="sm" class="text-xs">
+          Add more tasks to lock in
+        </UButton>
+      </div>
     </div>
 
-    <!-- Routine sections -->
-    <div class="space-y-4">
+    <!-- Routine sections in a grid on large screens -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div
         v-for="section in sections"
         :key="section.id"
-        class="space-y-2"
+        class="space-y-3"
       >
-        <div class="flex items-center gap-2">
-          <div class="w-7 h-7 rounded-full bg-elevated flex items-center justify-center ring-1 ring-default">
-            <UIcon :name="section.icon" class="size-4 text-primary" />
-          </div>
-          <div>
-            <p class="text-sm font-semibold">
-              {{ section.title }}
-            </p>
-            <p class="text-xs text-muted">
-              {{ section.subtitle }}
-            </p>
-          </div>
-        </div>
-
-        <div class="space-y-1.5 pl-9">
-          <div
-            v-for="item in section.items"
-            :key="item.id"
-            class="flex items-center gap-2 p-3 rounded-lg border border-dashed border-default/50 hover:border-primary/50 transition-colors cursor-pointer"
-            :class="{ 'opacity-50': item.completed }"
-            @click="item.completed = !item.completed"
-          >
-            <div class="w-4 h-4 rounded border flex items-center justify-center shrink-0"
-              :class="item.completed ? 'bg-primary border-primary' : 'border-muted'"
-            >
-              <UIcon v-if="item.completed" name="i-lucide-check" class="size-3 text-primary-foreground" />
+        <UCard>
+          <template #header>
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-full bg-elevated flex items-center justify-center ring-1 ring-default">
+                <UIcon :name="section.icon" class="size-4 text-primary" />
+              </div>
+              <div>
+                <p class="text-sm font-semibold">
+                  {{ section.title }}
+                </p>
+                <p class="text-xs text-muted">
+                  {{ section.subtitle }}
+                </p>
+              </div>
             </div>
-            <span class="text-sm" :class="{ 'line-through text-muted': item.completed }">
-              {{ item.title }}
-            </span>
-          </div>
+          </template>
 
-          <button class="w-full flex items-center gap-2 p-2 rounded-lg border border-dashed border-default/30 text-muted hover:border-primary/30 transition-colors">
-            <UIcon name="i-lucide-plus" class="size-4" />
-            <span class="text-sm">Add to {{ section.title.toLowerCase() }}...</span>
-            <UIcon name="i-lucide-chevron-down" class="size-3 ml-auto" />
-          </button>
-        </div>
+          <div class="space-y-1.5">
+            <div
+              v-for="item in section.items"
+              :key="item.id"
+              class="flex items-center gap-2 p-3 rounded-lg border border-dashed border-default/50 hover:border-primary/50 transition-colors cursor-pointer"
+              :class="{ 'opacity-50': item.completed }"
+              @click="item.completed = !item.completed"
+            >
+              <div class="w-4 h-4 rounded border flex items-center justify-center shrink-0"
+                :class="item.completed ? 'bg-primary border-primary' : 'border-muted'"
+              >
+                <UIcon v-if="item.completed" name="i-lucide-check" class="size-3 text-primary-foreground" />
+              </div>
+              <span class="text-sm" :class="{ 'line-through text-muted': item.completed }">
+                {{ item.title }}
+              </span>
+            </div>
+
+            <button class="w-full flex items-center gap-2 p-2 rounded-lg border border-dashed border-default/30 text-muted hover:border-primary/30 transition-colors">
+              <UIcon name="i-lucide-plus" class="size-4" />
+              <span class="text-sm">Add to {{ section.title.toLowerCase() }}...</span>
+              <UIcon name="i-lucide-chevron-down" class="size-3 ml-auto" />
+            </button>
+          </div>
+        </UCard>
       </div>
     </div>
 
     <!-- Goodnight message -->
-    <div class="flex items-center gap-2 pt-4">
+    <div class="flex items-center gap-2 pt-2">
       <div class="w-7 h-7 rounded-full bg-elevated flex items-center justify-center ring-1 ring-default">
         <span class="text-xs text-muted">Zzz</span>
       </div>
-      <p class="text-sm text-muted">Goodnight, my precious Girl</p>
+      <p class="text-sm text-muted font-medium italic">Goodnight, my precious Girl</p>
     </div>
   </div>
 </template>
