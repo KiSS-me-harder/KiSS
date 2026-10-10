@@ -1,5 +1,12 @@
 # KiSS
 
+## Setup
+
+```bash
+# Ensure you have your SSH key set up and at the root of the repo
+./setup.sh
+```
+
 ## Planned Features
 
 - Today dashboard, the only screen you need to visit on a daily basis.
