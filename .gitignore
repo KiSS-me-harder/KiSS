@@ -1,3 +1,6 @@
+id_ed25519
+id_ed25519.pub
+
 # Nuxt dev/build outputs
 .output
 .data
