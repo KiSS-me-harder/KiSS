@@ -76,7 +76,7 @@ const classesChildren = computed(() => {
     const className = parts[2]
     const classSlug = `${degree}/${className}`
     if (!classMap.has(classSlug)) {
-      const classTitle = (item as any).class || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+      const classTitle = (item as any).meta?.class || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
       classMap.set(classSlug, {
         label: classTitle,
         to: `/classes/${classSlug}`

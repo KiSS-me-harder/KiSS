@@ -2,7 +2,7 @@
   <UApp>
     <NuxtLoadingIndicator />
 
-    <NuxtLayout v-if="isAgeYes">
+    <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
   </UApp>
@@ -13,7 +13,6 @@ import { AgeVerificationModal } from '#components'
 
 const overlay = useOverlay()
 const ageCookie = useCookie('age-verification')
-const isAgeYes = computed(() => ageCookie.value === 'yes')
 
 const colorMode = useColorMode()
 

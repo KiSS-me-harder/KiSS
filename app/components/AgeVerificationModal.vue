@@ -57,7 +57,7 @@
 
 <script setup lang="ts">
 defineProps<{
-  count: number
+  count?: number
 }>()
 
 const emit = defineEmits<{ close: [boolean] }>()

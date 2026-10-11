@@ -51,11 +51,12 @@
                 <img
                   :src="item.image"
                   :alt="item.classTitle"
-                  class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-110"
+                  class="absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover/card:scale-110"
+                  :class="isEligible(item) ? '' : 'blur-md group-hover/card:blur-none'"
                 />
 
-                <!-- Dark Overlay with gradient -->
-                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
+                <!-- Dark Overlay for text readability -->
+                <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/20" />
 
                 <!-- Shimmer effect on hover -->
                 <div class="absolute inset-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 bg-gradient-to-tr from-purple-500/10 via-transparent to-pink-500/10" />
@@ -81,18 +82,18 @@
                 <!-- Content Area -->
                 <div class="absolute bottom-0 left-0 right-0 p-3">
                   <!-- Class Title -->
-                  <p class="text-white text-base font-bold leading-tight tracking-tight drop-shadow-md line-clamp-2">
+                  <p class="text-white text-base font-bold leading-tight tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] line-clamp-2">
                     {{ item.classTitle }}
                   </p>
 
                   <!-- Level Title -->
-                  <p class="text-white/80 text-sm mt-1 line-clamp-1 leading-snug">
+                  <p class="text-white/90 text-sm mt-1 line-clamp-1 leading-snug drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                     {{ item.title }}
                   </p>
 
                   <!-- Total levels in this class -->
                   <div class="flex items-center gap-2 mt-1.5">
-                    <span class="text-white/50 text-xs">{{ item.totalLevels }} levels total</span>
+                    <span class="text-white/70 text-xs drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">{{ item.totalLevels }} levels total</span>
                   </div>
 
                   <!-- Hover indicator line -->
@@ -125,10 +126,18 @@
 
 <script setup lang="ts">
 import type { BreadcrumbItem } from '@nuxt/ui'
+import { useEnrollmentStore } from '~/stores/enrollment'
 
 useHead({
   title: 'Classes'
 })
+
+const enrollmentStore = useEnrollmentStore()
+
+function isEligible(item: ClassLevelEntry): boolean {
+  if (!item.dependencies.length) return true
+  return enrollmentStore.areDependenciesMet(item.classSlug, item.level, item.dependencies)
+}
 
 useSeoMeta({
   title: 'Classes',
@@ -178,6 +187,8 @@ interface ClassLevelEntry {
   image: string
   totalLevels: number
   description: string
+  classSlug: string
+  dependencies: { class: string; level: number }[]
 }
 
 interface LevelGroup {
@@ -201,7 +212,8 @@ const classLevelCounts = computed(() => {
     const parts = (item as any).stem?.split('/') || []
     if (parts.length < 4) continue
     const classSlug = `${parts[1]}/${parts[2]}`
-    const level = parseInt((item as any).level, 10)
+    const level = parseInt((item as any).meta?.level, 10)
+    if (isNaN(level)) continue
     if (!map.has(classSlug)) {
       map.set(classSlug, new Set())
     }
@@ -235,7 +247,7 @@ const levelGroups = computed(() => {
     const seenClasses = new Set<string>()
 
     for (const item of classesData) {
-      const level = parseInt((item as any).level, 10)
+      const level = parseInt((item as any).meta?.level, 10)
       // Only include the base level of each tier
       if (level !== tierLevel) continue
 
@@ -251,7 +263,7 @@ const levelGroups = computed(() => {
       seenClasses.add(classSlug)
 
       const degreeLabel = degree.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-      const classTitle = (item as any).class || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+      const classTitle = (item as any).meta?.class || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
       // Extract description from body text
       let description = ''
@@ -273,6 +285,8 @@ const levelGroups = computed(() => {
         description = parts.join('').replace(/\*\*[^*]*\*\*/g, '').trim()
       }
 
+      const dependencies = (item as any).meta?.dependencies || []
+
       classes.push({
         path: `/classes/${classSlug}`,
         classTitle,
@@ -282,7 +296,9 @@ const levelGroups = computed(() => {
         level,
         image: `/img/degrees/${degree}.webp`,
         totalLevels: classLevelCounts.value.get(classSlug) || 0,
-        description
+        description,
+        classSlug,
+        dependencies
       })
     }
 
@@ -303,6 +319,7 @@ const levelGroups = computed(() => {
   // Return only groups that have classes
   return classByTier.filter(g => g.classCount > 0)
 })
+
 
 const collapsedGroups = ref(new Set<number>())
 

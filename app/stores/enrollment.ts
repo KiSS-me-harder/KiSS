@@ -311,11 +311,18 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
 
   function areDependenciesMet(slug: string, level: number, requiredDeps: { class: string; level: number }[]): boolean {
     for (const dep of requiredDeps) {
-      if (!isLevelCompleted(dep.class, dep.level)) {
+      if (!isLevelCompletedByName(dep.class, dep.level)) {
         return false
       }
     }
     return true
+  }
+
+  function isLevelCompletedByName(className: string, level: number): boolean {
+    const enrollment = enrollments.value.find(e => e.className === className)
+    if (!enrollment) return false
+    const levelProgress = enrollment.levels.find(l => l.level === level)
+    return levelProgress?.completed ?? false
   }
 
   function canEnroll(slug: string, requiredDeps: { class: string; level: number }[]): boolean {
@@ -324,7 +331,7 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
 
     // Check if all dependencies are met
     for (const dep of requiredDeps) {
-      if (!isLevelCompleted(dep.class, dep.level)) {
+      if (!isLevelCompletedByName(dep.class, dep.level)) {
         return false
       }
     }

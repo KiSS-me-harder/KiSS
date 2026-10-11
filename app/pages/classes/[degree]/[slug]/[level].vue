@@ -329,8 +329,8 @@ const sortedLevelsData = computed(() => {
   if (!classLevels.value) return []
   return classLevels.value
     .map(item => ({
-      level: parseInt((item as any).level, 10),
-      title: (item as any).title,
+      level: parseInt((item as any).meta?.level, 10),
+      title: (item as any).meta?.title,
       item
     }))
     .sort((a, b) => a.level - b.level)
@@ -361,13 +361,13 @@ const lessonData = computed(() => {
   if (!item) return null
 
   const itemAny = item as any
-  const level = parseInt(itemAny.level, 10)
-  const className = itemAny.class || slug.value.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+  const level = parseInt(itemAny.meta?.level, 10)
+  const className = itemAny.meta?.class || slug.value.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
   const degreeLabel = degree.value.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-  const flashcards = itemAny.flashcards || []
+  const flashcards = itemAny.meta?.flashcards || []
 
   return {
-    title: itemAny.title,
+    title: itemAny.meta?.title,
     level,
     className,
     degree: degree.value,

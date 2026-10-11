@@ -126,7 +126,8 @@
                 <img
                   :src="classData.image"
                   :alt="level.title"
-                  class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover/level:scale-110"
+                  class="absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover/level:scale-110"
+                  :class="isEligible(level) ? '' : 'blur-md group-hover/level:blur-none'"
                 />
 
                 <!-- Dark Overlay with gradient -->
@@ -240,32 +241,16 @@ const classData = computed(() => {
   const degreeValue = degree.value
   const degreeLabel = degreeValue.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
-  // Get title from first item
-  const firstItem = classes[0]
-  const title = (firstItem as any).class || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+  // Find the _index.md item for class-level metadata (title, description)
+  const indexItem = classes.find(item => (item as any).stem?.endsWith('/_index'))
 
-  // Get description from first level - extract full body text for a longer description
-  let description = ''
-  const body = (firstItem as any).body
-  if (body && typeof body === 'string') {
-    // String body: strip markdown bold, key takeaways section, and trim
-    let text = body.replace(/\*\*[^*]*\*\*/g, '').replace(/\* Key Takeaways:[\s\S]*/i, '').trim()
-    description = text
-  } else if (body && typeof body === 'object' && body.children) {
-    // Object body: extract text from children, skip Key Takeaways section
-    let inKeyTakeaways = false
-    const parts: string[] = []
-    for (const child of body.children) {
-      if (child.tag === 'strong' && child.value && /key takeaways/i.test(child.value)) {
-        inKeyTakeaways = true
-        break
-      }
-      if (child.value) {
-        parts.push(child.value)
-      }
-    }
-    description = parts.join('').replace(/\*\*[^*]*\*\*/g, '').trim()
-  }
+  // Get title: prefer _index.md title, then slug fallback
+  const title = indexItem
+    ? ((indexItem as any).title || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '))
+    : className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+
+  // Get description from _index.md frontmatter
+  const description = indexItem ? (indexItem as any).description || '' : ''
 
   return {
     slug: classSlug.value,
@@ -282,10 +267,10 @@ const classLookup = computed(() => {
   if (!allClasses.value) return new Map()
   const map = new Map<string, { stem: string; title: string }>()
   for (const item of allClasses.value) {
-    const key = `${(item as any).class}-${(item as any).level}`
+    const key = `${(item as any).meta?.class}-${(item as any).meta?.level}`
     map.set(key, {
       stem: (item as any).stem,
-      title: (item as any).title
+      title: (item as any).meta?.title
     })
   }
   return map
@@ -308,7 +293,7 @@ const levelGroups = computed(() => {
   ]
 
   for (const item of classes) {
-    const level = parseInt((item as any).level, 10)
+    const level = parseInt((item as any).meta?.level, 10)
     let groupIndex: number | undefined
 
     if (level >= 100 && level < 200) {
@@ -324,7 +309,7 @@ const levelGroups = computed(() => {
     const gi = groups[groupIndex]
     if (gi) {
       // Resolve dependencies with titles
-      const rawDeps = (item as any).dependencies || []
+      const rawDeps = (item as any).meta?.dependencies || []
       const dependencies = rawDeps.map((dep: any) => {
         const lookupKey = `${dep.class}-${dep.level}`
         const lookup = classLookup.value.get(lookupKey)
@@ -393,7 +378,8 @@ const isEnrolled = computed(() => store.isEnrolled(classSlug.value))
 
 const enrollment = computed(() => store.getEnrollment(classSlug.value))
 
-const totalLevels = computed(() => filteredClasses.value.length)
+// Exclude _index.md from level count
+const totalLevels = computed(() => filteredClasses.value.filter(item => !(item as any).stem?.endsWith('/_index')).length)
 
 const completedCount = computed(() => {
   if (!enrollment.value) return 0
@@ -409,6 +395,11 @@ function isLevelCompleted(level: number): boolean {
   return store.isLevelCompleted(classSlug.value, level)
 }
 
+function isEligible(level: { level: number; dependencies: { class: string; level: number }[] }): boolean {
+  if (!level.dependencies.length) return true
+  return store.areDependenciesMet(classSlug.value, level.level, level.dependencies)
+}
+
 function toggleLevelComplete(level: number) {
   if (!isEnrolled.value) return
   if (isLevelCompleted(level)) {
@@ -419,7 +410,9 @@ function toggleLevelComplete(level: number) {
 }
 
 function handleEnroll() {
-  const levels = filteredClasses.value.map(item => parseInt((item as any).level, 10))
+  const levels = filteredClasses.value
+    .filter(item => !(item as any).stem?.endsWith('/_index'))
+    .map(item => parseInt((item as any).meta?.level, 10))
   store.enrollInClass(classSlug.value, slug.value, degree.value, levels)
 }
 

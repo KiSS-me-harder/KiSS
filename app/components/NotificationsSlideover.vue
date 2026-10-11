@@ -1,10 +1,16 @@
 <script setup lang="ts">
 import { formatTimeAgo } from '@vueuse/core'
-import type { Notification } from '~/types'
 
 const { isNotificationsSlideoverOpen } = useDashboard()
 
-const { data: notifications } = await useFetch<Notification[]>('/api/notifications')
+// Notifications are generated client-side; no backend API is used
+const notifications = ref([] as {
+  id: number
+  unread?: boolean
+  sender: { name: string; avatar?: any }
+  body: string
+  date: string
+}[])
 </script>
 
 <template>
