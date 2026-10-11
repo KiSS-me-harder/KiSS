@@ -1,186 +1,340 @@
 <script setup lang="ts">
-interface RoutineItem {
-  id: number
-  title: string
-  completed: boolean
-}
+import { useEnrollmentStore } from '~/stores/enrollment'
 
-interface RoutineSection {
-  id: string
-  title: string
-  subtitle: string
-  icon: string
-  items: RoutineItem[]
-}
+const store = useEnrollmentStore()
 
 const now = new Date()
 const hours = now.getHours()
 const minutes = now.getMinutes()
 const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
-
 const dayName = now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()
 
-const sections = ref<RoutineSection[]>([
-  {
-    id: 'morning',
-    title: 'Morning',
-    subtitle: 'Are you ready for training, Girl?',
-    icon: 'i-lucide-sunrise',
-    items: [
-      { id: 1, title: 'Wake up and stretch', completed: true },
-      { id: 2, title: 'Morning affirmation', completed: true },
-      { id: 3, title: 'Wear assigned underwear', completed: false },
-    ]
-  },
-  {
-    id: 'lunch',
-    title: 'Lunch',
-    subtitle: 'Midday break',
-    icon: 'i-lucide-sun',
-    items: [
-      { id: 4, title: 'Check in with instructor', completed: false },
-    ]
-  },
-  {
-    id: 'evening',
-    title: 'Evening',
-    subtitle: 'After work',
-    icon: 'i-lucide-sunset',
-    items: [
-      { id: 5, title: 'Evening reflection', completed: false },
-      { id: 6, title: 'Submit daily report', completed: false },
-    ]
-  },
-  {
-    id: 'bedtime',
-    title: 'Bedtime',
-    subtitle: 'Wind down',
-    icon: 'i-lucide-moon',
-    items: [
-      { id: 7, title: 'Lock device check', completed: false },
-    ]
-  }
-])
+// ── Fetch clubs and activities ──
 
-const bonusTasks = [
-  { label: '3 tasks', discount: '10%' },
-  { label: '4 tasks', discount: '20%' },
-  { label: '5+ tasks', discount: '25%' }
+const { data: allClubs } = await useAsyncData('routine-clubs', () => queryCollection('clubs').all())
+const { data: allActivities } = await useAsyncData('routine-activities', () => queryCollection('activities').all())
+
+// Build a map of club slug -> activity slugs
+const clubActivitiesMap = computed(() => {
+  const map: Record<string, string[]> = {}
+  if (!allClubs.value) return map
+  for (const club of allClubs.value) {
+    const clubSlug = (club as any).stem.slice(6)
+    const meta = (club as any)?.meta
+    const clubActs = meta?.clubActivities
+    if (clubSlug && clubActs.length > 0) {
+      map[clubSlug] = clubActs
+    }
+  }
+  return map
+})
+
+// Get activity slugs from joined clubs (these are "required" activities)
+const subscribedActivitySlugs = computed(() => {
+  return store.getClubActivitySlugs(clubActivitiesMap.value)
+})
+
+// All activities available to add to routine — extract short slugs matching the activities page format
+const availableActivities = computed(() => {
+  if (!allActivities.value) return []
+  const activityMap = new Map<string, any>()
+  for (const item of allActivities.value) {
+    const stem = (item as any).stem || ''
+    const parts = stem.split('/')
+    if (parts.length < 3 || parts[2] !== '_index') continue
+    const activitySlug = parts[1]
+    const meta = (item as any).meta || {}
+    const fields = meta.fields || []
+    const contribs = meta.contributions || []
+    activityMap.set(activitySlug, {
+      slug: activitySlug,
+      title: item.title || activitySlug.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+      description: meta.description || '',
+      icon: meta.icon || 'i-lucide-dumbbell',
+      category: meta.category || 'General',
+      fields: Array.isArray(fields) ? fields : [],
+      contributions: Array.isArray(contribs) ? contribs : []
+    })
+  }
+  return Array.from(activityMap.values()).sort((a: any, b: any) => a.title.localeCompare(b.title))
+})
+
+// ── Routine slot definitions ──
+
+interface RoutineSlotDef {
+  id: string
+  title: string
+  subtitle: string
+  icon: string
+}
+
+const slotDefinitions: RoutineSlotDef[] = [
+  { id: 'morning', title: 'Morning', subtitle: 'Are you ready for training, Girl?', icon: 'i-lucide-sunrise' },
+  { id: 'lunch', title: 'Lunch', subtitle: 'Midday break', icon: 'i-lucide-sun' },
+  { id: 'evening', title: 'Evening', subtitle: 'After work', icon: 'i-lucide-sunset' },
+  { id: 'bedtime', title: 'Bedtime', subtitle: 'Wind down', icon: 'i-lucide-moon' }
 ]
 
-const completedCount = computed(() => {
-  return sections.value.flatMap(s => s.items).filter(i => i.completed).length
+// ── Routine assignments (which activities are assigned to which slots) ──
+
+interface RoutineAssignment {
+  activitySlug: string
+  slot: string // 'morning' | 'lunch' | 'evening' | 'bedtime'
+}
+
+// Load saved routine assignments (persistent template)
+const routineAssignments = ref<RoutineAssignment[]>([])
+function loadRoutineAssignments() {
+  if (!process.client) return
+  try {
+    const raw = localStorage.getItem('kiss-routine-assignments')
+    if (raw) routineAssignments.value = JSON.parse(raw) as RoutineAssignment[]
+  } catch { /* ignore */ }
+}
+loadRoutineAssignments()
+
+// Auto-save assignments
+watch(routineAssignments, (val) => {
+  if (!process.client) return
+  try { localStorage.setItem('kiss-routine-assignments', JSON.stringify(val)) } catch { /* ignore */ }
+}, { deep: true })
+
+// Get assignments for a specific slot
+function getSlotAssignments(slotId: string) {
+  return routineAssignments.value.filter(a => a.slot === slotId)
+}
+
+// Remove an activity from a slot (by slug and slot, not index)
+function removeFromSlot(activitySlug: string, slotId: string) {
+  const index = routineAssignments.value.findIndex(a => a.activitySlug === activitySlug && a.slot === slotId)
+  if (index !== -1) routineAssignments.value.splice(index, 1)
+}
+
+// ── Drag and Drop ──
+
+const draggedActivitySlug = ref<string | null>(null)
+const dragOverSlot = ref<string | null>(null)
+
+function onDragStart(activitySlug: string) {
+  draggedActivitySlug.value = activitySlug
+}
+
+function onDragEnd() {
+  draggedActivitySlug.value = null
+  dragOverSlot.value = null
+}
+
+function onSlotDragOver(slotId: string, e: DragEvent) {
+  e.preventDefault()
+  dragOverSlot.value = slotId
+}
+
+function onSlotDragLeave() {
+  dragOverSlot.value = null
+}
+
+function onSlotDrop(slotId: string) {
+  const slug = draggedActivitySlug.value
+  if (!slug) return
+  // Don't add if already in this slot
+  if (routineAssignments.value.some(a => a.activitySlug === slug && a.slot === slotId)) {
+    dragOverSlot.value = null
+    draggedActivitySlug.value = null
+    return
+  }
+  // If already in another slot, remove it first
+  const existingIndex = routineAssignments.value.findIndex(a => a.activitySlug === slug)
+  if (existingIndex !== -1) {
+    routineAssignments.value.splice(existingIndex, 1)
+  }
+  routineAssignments.value.push({ activitySlug: slug, slot: slotId })
+  dragOverSlot.value = null
+  draggedActivitySlug.value = null
+}
+
+// ── Validation ──
+
+// Check if all required activities are placed in at least one slot
+const allRequiredPlaced = computed(() => {
+  const placedSlugs = new Set(routineAssignments.value.map(a => a.activitySlug))
+  const requiredSlugs = subscribedActivitySlugs.value
+  if (requiredSlugs.length === 0) return true
+  return requiredSlugs.every(slug => placedSlugs.has(slug))
 })
+
+const missingRequiredActivities = computed(() => {
+  const placedSlugs = new Set(routineAssignments.value.map(a => a.activitySlug))
+  return subscribedActivitySlugs.value.filter(slug => !placedSlugs.has(slug))
+})
+
+// Save routine
+const saved = ref(false)
+function saveRoutine() {
+  if (!allRequiredPlaced.value) return
+  saved.value = true
+  setTimeout(() => saved.value = false, 2000)
+}
+
+const totalCount = computed(() => routineAssignments.value.length)
+
+// Check if an activity is already in any slot
+const isInAnySlot = (slug: string) => routineAssignments.value.some(a => a.activitySlug === slug)
+
+// Check if an activity is required (from club membership)
+const isRequiredActivity = (slug: string) => subscribedActivitySlugs.value.includes(slug)
 </script>
 
 <template>
   <div class="space-y-6">
-    <!-- Header with time -->
-    <div class="flex items-center gap-2 text-sm text-muted">
-      <UIcon name="i-lucide-clock" class="size-4" />
-      <span class="font-medium">TODAY · {{ dayName }}</span>
-      <span>· {{ timeString }}</span>
-    </div>
-
-    <!-- Top bar: Bonus credits + Action buttons -->
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-      <!-- Bonus credits card -->
-      <UCard class="flex-1">
-        <div class="flex items-center gap-2 mb-3">
-          <div class="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-            <UIcon name="i-lucide-repeat" class="size-3 text-primary" />
-          </div>
-          <span class="text-sm font-medium">Lock in 3 or more tasks to earn bonus credits</span>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <button
-            v-for="bonus in bonusTasks"
-            :key="bonus.label"
-            class="px-3 py-1.5 rounded-lg text-xs font-medium bg-elevated text-muted hover:bg-elevated/80 transition-colors"
-          >
-            {{ bonus.label }} · {{ bonus.discount }}
-          </button>
-        </div>
-      </UCard>
-
-      <!-- Action buttons -->
+    <!-- Header with save button -->
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div>
+        <h2 class="text-base font-semibold">Build Your Routine</h2>
+        <p class="text-xs text-muted">Drag activities to the time slots below. Activities highlighted in amber are required by your clubs.</p>
+      </div>
       <div class="flex flex-wrap gap-2">
-        <UButton variant="solid" size="sm" class="bg-primary/90">
+        <UButton
+          variant="solid"
+          size="sm"
+          :class="saved ? 'bg-success/90' : 'bg-primary/90'"
+          :disabled="!allRequiredPlaced"
+          @click="saveRoutine()"
+        >
           <template #leading>
-            <UIcon name="i-lucide-lock" class="size-3" />
+            <UIcon :name="saved ? 'i-lucide-check' : 'i-lucide-save'" class="size-3" />
           </template>
-          Lock in
-        </UButton>
-        <UButton variant="outline" size="sm">
-          <template #leading>
-            <UIcon name="i-lucide-save" class="size-3" />
-          </template>
-          Save template
-        </UButton>
-        <UButton variant="ghost" size="sm" class="text-xs">
-          Add more tasks to lock in
+          {{ saved ? 'Saved!' : 'Save' }}
         </UButton>
       </div>
+    </div>
+
+    <!-- Validation warning -->
+    <div v-if="!allRequiredPlaced && subscribedActivitySlugs.length > 0" class="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+      <div class="flex items-start gap-2">
+        <UIcon name="i-lucide-alert-triangle" class="size-4 text-amber-400 shrink-0 mt-0.5" />
+        <div>
+          <p class="text-sm font-medium text-amber-200">Required activities missing</p>
+          <p class="text-xs text-amber-200/70 mt-0.5">
+            Please place the following activities: {{ missingRequiredActivities.map(slug => availableActivities.find((a: any) => a.slug === slug)?.title || slug).join(', ') }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Draggable activity pool -->
+    <div class="rounded-lg border border-default/50 p-4">
+      <div class="flex items-center gap-2 mb-3">
+        <UIcon name="i-lucide-grip-vertical" class="size-4 text-muted" />
+        <h3 class="text-sm font-semibold">Activities</h3>
+        <span v-if="totalCount > 0" class="ml-auto text-xs text-muted">
+          {{ totalCount }} placed
+        </span>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <div
+          v-for="activity in availableActivities"
+          :key="activity.slug"
+          draggable="true"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg border cursor-grab active:cursor-grabbing select-none transition-all"
+          :class="isInAnySlot(activity.slug)
+            ? 'border-default/30 bg-elevated/30 opacity-40'
+            : isRequiredActivity(activity.slug)
+              ? 'border-amber-500/50 bg-amber-500/10 hover:border-amber-500/80 hover:bg-amber-500/20'
+              : 'border-default/50 bg-elevated/50 hover:border-primary/50 hover:bg-elevated/80'
+          "
+          @dragstart="onDragStart(activity.slug)"
+          @dragend="onDragEnd()"
+        >
+          <div class="w-5 h-5 rounded bg-purple-500/20 flex items-center justify-center shrink-0">
+            <UIcon :name="activity.icon || 'i-lucide-circle-dot'" class="size-3 text-purple-400" />
+          </div>
+          <span class="text-sm">{{ activity.title }}</span>
+          <UIcon v-if="isRequiredActivity(activity.slug)" name="i-lucide-star" class="size-3 text-amber-400 shrink-0" />
+          <UIcon v-if="isInAnySlot(activity.slug)" name="i-lucide-check" class="size-3 text-muted shrink-0" />
+        </div>
+      </div>
+    </div>
+
+    <!-- No activities assigned prompt -->
+    <div v-if="totalCount === 0 && availableActivities.length > 0" class="text-center py-6 text-muted">
+      <UIcon name="i-lucide-list-checks" class="w-8 h-8 mx-auto mb-2 opacity-50" />
+      <p class="text-sm">Drag activities from above to the time slots below.</p>
+      <p class="text-xs mt-1">Activities highlighted in amber are required by your club memberships.</p>
     </div>
 
     <!-- Routine sections in a grid on large screens -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div
-        v-for="section in sections"
-        :key="section.id"
+        v-for="slotDef in slotDefinitions"
+        :key="slotDef.id"
         class="space-y-3"
       >
         <UCard>
           <template #header>
             <div class="flex items-center gap-2">
               <div class="w-7 h-7 rounded-full bg-elevated flex items-center justify-center ring-1 ring-default">
-                <UIcon :name="section.icon" class="size-4 text-primary" />
+                <UIcon :name="slotDef.icon" class="size-4 text-primary" />
               </div>
               <div>
                 <p class="text-sm font-semibold">
-                  {{ section.title }}
+                  {{ slotDef.title }}
                 </p>
                 <p class="text-xs text-muted">
-                  {{ section.subtitle }}
+                  {{ slotDef.subtitle }}
                 </p>
               </div>
+              <span v-if="getSlotAssignments(slotDef.id).length > 0" class="ml-auto text-xs text-muted">
+                {{ getSlotAssignments(slotDef.id).length }} task{{ getSlotAssignments(slotDef.id).length !== 1 ? 's' : '' }}
+              </span>
             </div>
           </template>
 
-          <div class="space-y-1.5">
+          <!-- Drop zone -->
+          <div
+            class="space-y-1.5 min-h-[60px] rounded-lg transition-colors"
+            :class="dragOverSlot === slotDef.id ? 'bg-primary/5 ring-2 ring-primary/30 ring-dashed p-2' : 'p-1'"
+            @dragover="onSlotDragOver(slotDef.id, $event)"
+            @dragleave="onSlotDragLeave()"
+            @drop="onSlotDrop(slotDef.id)"
+          >
+            <!-- Assigned activities -->
             <div
-              v-for="item in section.items"
-              :key="item.id"
-              class="flex items-center gap-2 p-3 rounded-lg border border-dashed border-default/50 hover:border-primary/50 transition-colors cursor-pointer"
-              :class="{ 'opacity-50': item.completed }"
-              @click="item.completed = !item.completed"
+              v-for="assignment in getSlotAssignments(slotDef.id)"
+              :key="assignment.activitySlug"
+              class="flex items-center gap-2 p-3 rounded-lg border border-dashed border-default/50 hover:border-primary/50 transition-colors group"
             >
-              <div class="w-4 h-4 rounded border flex items-center justify-center shrink-0"
-                :class="item.completed ? 'bg-primary border-primary' : 'border-muted'"
-              >
-                <UIcon v-if="item.completed" name="i-lucide-check" class="size-3 text-primary-foreground" />
+              <!-- Activity icon -->
+              <div class="w-6 h-6 rounded bg-purple-500/20 flex items-center justify-center shrink-0">
+                <UIcon
+                  :name="availableActivities.find((a: any) => a.slug === assignment.activitySlug)?.icon || 'i-lucide-circle-dot'"
+                  class="size-3 text-purple-400"
+                />
               </div>
-              <span class="text-sm" :class="{ 'line-through text-muted': item.completed }">
-                {{ item.title }}
+
+              <span class="text-sm flex-1 truncate">
+                {{ availableActivities.find((a: any) => a.slug === assignment.activitySlug)?.title || assignment.activitySlug }}
               </span>
+
+              <!-- Required indicator -->
+              <UIcon v-if="isRequiredActivity(assignment.activitySlug)" name="i-lucide-star" class="size-3 text-amber-400 shrink-0" />
+
+              <!-- Remove button -->
+              <button
+                class="text-xs text-muted hover:text-error shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                @click="removeFromSlot(assignment.activitySlug, slotDef.id)"
+              >
+                <UIcon name="i-lucide-x" class="size-3" />
+              </button>
             </div>
 
-            <button class="w-full flex items-center gap-2 p-2 rounded-lg border border-dashed border-default/30 text-muted hover:border-primary/30 transition-colors">
-              <UIcon name="i-lucide-plus" class="size-4" />
-              <span class="text-sm">Add to {{ section.title.toLowerCase() }}...</span>
-              <UIcon name="i-lucide-chevron-down" class="size-3 ml-auto" />
-            </button>
+            <!-- Empty slot hint -->
+            <div v-if="getSlotAssignments(slotDef.id).length === 0" class="text-center py-4 text-muted">
+              <p class="text-xs">Drop activities here</p>
+            </div>
           </div>
         </UCard>
       </div>
     </div>
 
-    <!-- Goodnight message -->
-    <div class="flex items-center gap-2 pt-2">
-      <div class="w-7 h-7 rounded-full bg-elevated flex items-center justify-center ring-1 ring-default">
-        <span class="text-xs text-muted">Zzz</span>
-      </div>
-      <p class="text-sm text-muted font-medium italic">Goodnight, my precious Girl</p>
-    </div>
   </div>
 </template>

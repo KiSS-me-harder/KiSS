@@ -37,7 +37,7 @@
           </button>
 
           <!-- Class Cards Grid -->
-          <div v-show="!collapsedGroups.has(group.level)" class="grid gap-3 grid-cols-[repeat(auto-fit,minmax(9rem,1fr))]">
+          <div v-show="!collapsedGroups.has(group.level)" class="grid gap-3 grid-cols-[repeat(auto-fit,minmax(12rem,1fr))]">
             <div
               v-for="item in group.classes"
               :key="item.path"

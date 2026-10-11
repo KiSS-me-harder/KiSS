@@ -36,7 +36,7 @@
     <template #body>
       <div class="flex flex-col xl:flex-row gap-4 h-[calc(100vh-12rem)] min-h-[500px]">
         <!-- Left sidebar: Legend + Filters + Plan list -->
-        <div class="w-full xl:w-56 shrink-0 space-y-4 overflow-y-auto pr-1">
+        <div class="xl:w-56 xl:shrink-0 space-y-4 overflow-y-auto pr-1 xl:max-h-none max-h-[200px] xl:order-none order-first w-full">
           <!-- Legend -->
           <div class="rounded-xl border border-white/10 bg-black/20 p-3 space-y-2">
             <p class="text-[10px] font-bold text-white/30 uppercase tracking-wider">Legend</p>
@@ -162,13 +162,16 @@
 
         <!-- Graph Container -->
         <div
-          class="flex-1 relative overflow-hidden rounded-xl border border-white/10 bg-black/30 select-none"
+          class="flex-1 relative overflow-hidden rounded-xl border border-white/10 bg-black/30 select-none min-h-[300px] xl:min-h-0"
           ref="graphContainer"
           @mousedown="onMouseDown"
           @mousemove="onGraphMouseMove"
           @mouseup="onMouseUp"
           @mouseleave="onMouseLeaveGraph"
           @wheel.prevent="onWheel"
+          @touchstart="onTouchStart"
+          @touchmove.prevent="onTouchMove"
+          @touchend="onTouchEnd"
         >
           <svg
             ref="svgElement"
@@ -327,7 +330,7 @@
         </div>
 
         <!-- Right sidebar: Selected Node Details -->
-        <div v-if="selectedNode" class="w-full xl:w-60 shrink-0 space-y-3">
+        <div v-if="selectedNode" class="w-full xl:w-60 xl:shrink-0 space-y-3 xl:max-h-none max-h-[200px] overflow-y-auto">
           <UCard class="border border-white/10">
             <template #header>
               <div class="flex items-center gap-2">
@@ -834,6 +837,59 @@ function zoomOut() {
 function resetPanZoom() {
   centerGraph()
   zoom.value = 1
+}
+
+/* ── Touch handlers for mobile pan ── */
+
+const touchStart = ref({ x: 0, y: 0 })
+const touchStartOffset = ref({ x: 0, y: 0 })
+const lastTouchDistance = ref(0)
+const lastTouchZoom = ref(1)
+
+function getTouchDistance(touches: TouchList) {
+  if (touches.length !== 2) return 0
+  const dx = touches[0].clientX - touches[1].clientX
+  const dy = touches[0].clientY - touches[1].clientY
+  return Math.sqrt(dx * dx + dy * dy)
+}
+
+function onTouchStart(event: TouchEvent) {
+  if ((event.target as HTMLElement).closest('.cursor-pointer')) return
+  if (event.touches.length === 1) {
+    touchStart.value = { x: event.touches[0].clientX, y: event.touches[0].clientY }
+    touchStartOffset.value = { x: panX.value, y: panY.value }
+  } else if (event.touches.length === 2) {
+    lastTouchDistance.value = getTouchDistance(event.touches)
+    lastTouchZoom.value = zoom.value
+  }
+}
+
+function onTouchMove(event: TouchEvent) {
+  if (event.touches.length === 1) {
+    panX.value = touchStartOffset.value.x + (event.touches[0].clientX - touchStart.value.x)
+    panY.value = touchStartOffset.value.y + (event.touches[0].clientY - touchStart.value.y)
+  } else if (event.touches.length === 2) {
+    const distance = getTouchDistance(event.touches)
+    if (lastTouchDistance.value > 0) {
+      const scale = distance / lastTouchDistance.value
+      const newZoom = Math.max(0.2, Math.min(5, lastTouchZoom.value * scale))
+
+      // Zoom towards center of two fingers
+      const rect = graphContainer.value?.getBoundingClientRect()
+      if (rect) {
+        const midX = (event.touches[0].clientX + event.touches[1].clientX) / 2 - rect.left
+        const midY = (event.touches[0].clientY + event.touches[1].clientY) / 2 - rect.top
+        const actualScale = newZoom / zoom.value
+        panX.value = midX - (midX - panX.value) * actualScale
+        panY.value = midY - (midY - panY.value) * actualScale
+      }
+      zoom.value = newZoom
+    }
+  }
+}
+
+function onTouchEnd() {
+  lastTouchDistance.value = 0
 }
 
 /* ── Helpers ── */

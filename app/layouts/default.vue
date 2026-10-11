@@ -57,7 +57,7 @@ const { data: punishments } = await useAsyncData('layout-punishments', () => que
 const { data: faculty } = await useAsyncData('layout-faculty', () => queryCollection('faculty').all())
 
 const degreesChildren = computed(() =>
-  degrees.value?.map(item => ({
+  (degrees.value || []).map(item => ({
     label: item.title,
     to: `/${item.stem}`,
     onSelect: () => {
@@ -94,7 +94,7 @@ const classesChildren = computed(() => {
 })
 
 const clubsChildren = computed(() =>
-  clubs.value?.map(item => ({
+  (clubs.value || []).map(item => ({
     label: item.title,
     to: `/${item.stem}`,
     onSelect: () => {
@@ -104,7 +104,7 @@ const clubsChildren = computed(() =>
 )
 
 const punishmentsChildren = computed(() =>
-  punishments.value?.map(item => ({
+  (punishments.value || []).map(item => ({
     label: item.title,
     to: `/${item.stem}`,
     onSelect: () => {
@@ -114,7 +114,7 @@ const punishmentsChildren = computed(() =>
 )
 
 const facultyChildren = computed(() =>
-  faculty.value?.map(item => ({
+  (faculty.value || []).map(item => ({
     label: item.title,
     to: `/teachers/${(item as any).path.split('/').pop()}`,
     onSelect: () => {
@@ -247,6 +247,22 @@ const links = computed(() => [[{
   label: 'Flashcards',
   icon: 'i-lucide-playing-cards-fan',
   to: '/flashcards',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
+  label: 'Activities',
+  icon: 'i-lucide-dumbbell',
+  to: '/activities',
+  active: route.path.startsWith('/activities'),
+  onSelect: () => {
+    open.value = false
+  }
+}, {
+  label: 'Metrics',
+  icon: 'i-lucide-chart-no-axes-combined',
+  to: '/metrics',
+  active: route.path.startsWith('/metrics'),
   onSelect: () => {
     open.value = false
   }

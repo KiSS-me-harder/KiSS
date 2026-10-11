@@ -1,0 +1,22 @@
+---
+title: "Body Shape"
+description: "Track your body measurements as your figure develops. Report your bust, waist, hips, and thighs to see your progress."
+icon: "i-lucide-ruler"
+fields:
+  - id: "bust"
+    label: "Bust"
+    unit: "cm"
+    icon: "i-lucide-ruler"
+  - id: "waist"
+    label: "Waist"
+    unit: "cm"
+    icon: "i-lucide-ruler"
+  - id: "hips"
+    label: "Hips"
+    unit: "cm"
+    icon: "i-lucide-ruler"
+  - id: "thighs"
+    label: "Thighs"
+    unit: "cm"
+    icon: "i-lucide-ruler"
+---

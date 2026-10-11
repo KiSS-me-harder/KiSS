@@ -1,6 +1,10 @@
 ---
 title: "Nudity & Freedom Club"
 description: "Explore body positivity and comfort with nudity in a safe, judgment-free environment."
+clubActivities:
+  - breast-measurement
+  - body-measurements
+  - weight-tracking
 activities:
   - type: challenge
     title: "Nude Morning Routine"

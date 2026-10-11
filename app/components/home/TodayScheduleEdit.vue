@@ -1,16 +1,11 @@
 <script setup lang="ts">
-interface ScheduledClass {
-  id: number
-  title: string
-  frequency: string
-}
+import { useEnrollmentStore } from '~/stores/enrollment'
 
-interface ScheduledEntry {
-  id: number
-  classId: number
-  day: number
-  section: string
-}
+const store = useEnrollmentStore()
+const { app } = useRuntimeConfig()
+
+// Fetch all classes from content to get titles and metadata
+const { data: allClassesContent } = await useAsyncData('schedule-edit-classes', () => queryCollection('classes').all())
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
@@ -21,51 +16,100 @@ const timeSections = [
   { id: 'bedtime', title: 'Bedtime', icon: 'i-lucide-moon', timeRange: '20:00 - 23:00' }
 ]
 
-// Classes that need to be scheduled
-const unscheduledClasses = ref<ScheduledClass[]>([
-  { id: 1, title: 'Chastity Basics', frequency: '1 per week' },
-  { id: 2, title: 'Prostate Play Basics', frequency: '1 per week' },
-  { id: 3, title: 'Girly Underwear', frequency: '1 per week' },
-  { id: 4, title: 'Hypno Basics', frequency: '1 per week' }
-])
+// Build enrolled classes list with metadata from content
+interface EnrolledClassInfo {
+  slug: string
+  title: string
+  degree: string
+  degreeLabel: string
+  image: string
+}
 
-// Already scheduled entries
-const scheduledEntries = ref<ScheduledEntry[]>([
-  { id: 101, classId: 5, day: 0, section: 'morning' },
-  { id: 102, classId: 6, day: 0, section: 'evening' },
-  { id: 103, classId: 7, day: 1, section: 'morning' },
-  { id: 104, classId: 8, day: 2, section: 'lunch' },
-  { id: 105, classId: 5, day: 3, section: 'morning' },
-  { id: 106, classId: 6, day: 4, section: 'evening' },
-])
+const enrolledClasses = computed<EnrolledClassInfo[]>(() => {
+  const enrollments = store.enrollments.value
+  if (!allClassesContent.value || !enrollments || enrollments.length === 0) return []
 
-const allClasses = ref<ScheduledClass[]>([
-  { id: 1, title: 'Chastity Basics', frequency: '1 per week' },
-  { id: 2, title: 'Prostate Play Basics', frequency: '1 per week' },
-  { id: 3, title: 'Girly Underwear', frequency: '1 per week' },
-  { id: 4, title: 'Hypno Basics', frequency: '1 per week' },
-  { id: 5, title: 'Physical Play Basics', frequency: '2 per week' },
-  { id: 6, title: 'Chastity Training', frequency: '2 per week' },
-  { id: 7, title: 'Maid Service', frequency: '1 per week' },
-  { id: 8, title: 'Daily Affirmation', frequency: '1 per week' }
-])
+  const classes: EnrolledClassInfo[] = []
+  for (const enrollment of enrollments) {
+    const { slug, className, degree } = enrollment
 
+    // Find the class index file to get the title
+    const prefix = `classes/${degree}/${className}/_index`
+    const classIndex = allClassesContent.value.find(item => (item as any).stem === prefix)
+
+    const title = (classIndex as any)?.title || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    const degreeLabel = degree.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+
+    classes.push({
+      slug,
+      title,
+      degree,
+      degreeLabel,
+      image: `${app.baseURL}img/degrees/${degree}.webp`
+    })
+  }
+
+  return classes.sort((a, b) => a.title.localeCompare(b.title))
+})
+
+// Schedule entry stored in localStorage
+interface ScheduleEntry {
+  id: number
+  classSlug: string
+  day: number // 0=Monday ... 6=Sunday
+  section: string
+}
+
+const scheduleEntries = ref<ScheduleEntry[]>([])
 const editMode = ref(false)
 
+// Load schedule from localStorage
+function loadSchedule() {
+  if (!process.client) return
+  try {
+    const raw = localStorage.getItem('kiss-class-schedule')
+    if (raw) scheduleEntries.value = JSON.parse(raw) as ScheduleEntry[]
+  } catch { /* ignore */ }
+}
+loadSchedule()
+
+// Save schedule to localStorage
+function saveSchedule() {
+  if (!process.client) return
+  try {
+    localStorage.setItem('kiss-class-schedule', JSON.stringify(scheduleEntries.value))
+  } catch { /* ignore */ }
+}
+
+// Auto-save on changes
+watch(scheduleEntries, () => saveSchedule(), { deep: true })
+
+// Also poll for same-tab changes
+if (process.client) {
+  const pollInterval = setInterval(() => loadSchedule(), 2000)
+  onUnmounted(() => clearInterval(pollInterval))
+}
+
+// Classes that are not yet scheduled
+const unscheduledClasses = computed(() => {
+  const scheduledSlugs = new Set(scheduleEntries.value.map(e => e.classSlug))
+  return enrolledClasses.value.filter(c => !scheduledSlugs.has(c.slug))
+})
+
 // Drag and drop state
-const draggedClassId = ref<number | null>(null)
+const draggedClassSlug = ref<string | null>(null)
 const draggedFromEntryId = ref<number | null>(null)
 const dragOverDay = ref<number | null>(null)
 const dragOverSection = ref<string | null>(null)
 
-const getClassById = (id: number) => allClasses.value.find(c => c.id === id)
+const getClassBySlug = (slug: string) => enrolledClasses.value.find(c => c.slug === slug)
 
 const getEntriesForDaySection = (day: number, section: string) => {
-  return scheduledEntries.value.filter(e => e.day === day && e.section === section)
+  return scheduleEntries.value.filter(e => e.day === day && e.section === section)
 }
 
-const handleDragStart = (classId: number, fromEntryId?: number) => {
-  draggedClassId.value = classId
+const handleDragStart = (classSlug: string, fromEntryId?: number) => {
+  draggedClassSlug.value = classSlug
   draggedFromEntryId.value = fromEntryId ?? null
 }
 
@@ -85,51 +129,39 @@ const handleDrop = (event: DragEvent, day: number, section: string) => {
   dragOverDay.value = null
   dragOverSection.value = null
 
-  if (draggedClassId.value === null) return
+  if (draggedClassSlug.value === null) return
 
   // If dragging from an existing entry, remove it first
   if (draggedFromEntryId.value !== null) {
-    scheduledEntries.value = scheduledEntries.value.filter(e => e.id !== draggedFromEntryId.value)
-  }
-
-  // If dragging an unscheduled class, remove it from unscheduled
-  if (draggedFromEntryId.value === null) {
-    unscheduledClasses.value = unscheduledClasses.value.filter(c => c.id !== draggedClassId.value)
+    scheduleEntries.value = scheduleEntries.value.filter(e => e.id !== draggedFromEntryId.value)
   }
 
   // Add to the target day/section
-  const newId = scheduledEntries.value.length ? Math.max(...scheduledEntries.value.map(e => e.id)) + 1 : 1
-  scheduledEntries.value.push({
+  const newId = scheduleEntries.value.length ? Math.max(...scheduleEntries.value.map(e => e.id)) + 1 : 1
+  scheduleEntries.value.push({
     id: newId,
-    classId: draggedClassId.value,
+    classSlug: draggedClassSlug.value,
     day,
     section
   })
 
-  draggedClassId.value = null
+  draggedClassSlug.value = null
   draggedFromEntryId.value = null
 }
 
 const handleDragEnd = () => {
-  draggedClassId.value = null
+  draggedClassSlug.value = null
   draggedFromEntryId.value = null
   dragOverDay.value = null
   dragOverSection.value = null
 }
 
 const removeEntry = (entryId: number) => {
-  const entry = scheduledEntries.value.find(e => e.id === entryId)
-  if (entry) {
-    // If it was an unscheduled class, add it back
-    const cls = getClassById(entry.classId)
-    if (cls && !unscheduledClasses.value.find(c => c.id === cls.id)) {
-      unscheduledClasses.value.push(cls)
-    }
-  }
-  scheduledEntries.value = scheduledEntries.value.filter(e => e.id !== entryId)
+  scheduleEntries.value = scheduleEntries.value.filter(e => e.id !== entryId)
 }
 
 const saveChanges = () => {
+  saveSchedule()
   editMode.value = false
 }
 </script>
@@ -141,7 +173,7 @@ const saveChanges = () => {
       <div class="flex items-center justify-between">
         <div>
           <h2 class="text-base font-semibold">Weekly Schedule</h2>
-          <p class="text-sm text-muted mt-1">Drag classes onto days and time slots to schedule them.</p>
+          <p class="text-sm text-muted mt-1">Drag your enrolled classes onto days and time slots to schedule them.</p>
         </div>
         <div class="flex items-center gap-2">
           <UButton
@@ -170,13 +202,28 @@ const saveChanges = () => {
       </div>
     </UCard>
 
+    <!-- No enrolled classes -->
+    <UCard v-if="enrolledClasses.length === 0">
+      <div class="text-center py-8 text-muted">
+        <UIcon name="i-lucide-book-open" class="w-10 h-10 mx-auto mb-3 opacity-50" />
+        <p class="text-sm font-medium mb-1">No classes enrolled yet</p>
+        <p class="text-xs mb-4">Enroll in classes to start building your weekly schedule.</p>
+        <UButton variant="outline" size="sm" to="/degrees">
+          <template #leading>
+            <UIcon name="i-lucide-graduation-cap" class="size-3" />
+          </template>
+          Browse Degrees
+        </UButton>
+      </div>
+    </UCard>
+
     <!-- Unscheduled classes warning -->
-    <UCard v-if="unscheduledClasses.length > 0" class="bg-warning/10 border-warning/30">
+    <UCard v-else-if="unscheduledClasses.length > 0" class="bg-warning/10 border-warning/30">
       <div class="flex items-start gap-3">
         <UIcon name="i-lucide-alert-triangle" class="size-5 text-warning mt-0.5 shrink-0" />
         <div>
           <p class="text-sm font-medium text-warning">
-            {{ unscheduledClasses.length }} classes need schedule days
+            {{ unscheduledClasses.length }} class{{ unscheduledClasses.length !== 1 ? 'es' : '' }} need schedule days
           </p>
           <p class="text-xs text-warning/80 mt-1">
             Having unassigned classes will lead to a punishment at the end of the day!
@@ -194,20 +241,38 @@ const saveChanges = () => {
       <div class="flex flex-wrap gap-2">
         <div
           v-for="cls in unscheduledClasses"
-          :key="cls.id"
+          :key="cls.slug"
           draggable="true"
           class="px-3 py-2 rounded-lg border border-default bg-elevated cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors"
-          @dragstart="handleDragStart(cls.id)"
+          @dragstart="handleDragStart(cls.slug)"
           @dragend="handleDragEnd"
         >
           <p class="text-sm font-medium">{{ cls.title }}</p>
-          <p class="text-xs text-muted">{{ cls.frequency }}</p>
+          <p class="text-xs text-muted">{{ cls.degreeLabel }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- All enrolled classes (for re-scheduling in edit mode) -->
+    <div v-if="editMode && enrolledClasses.length > 0" class="space-y-2">
+      <p class="text-sm font-medium text-muted">All enrolled classes (drag to reassign)</p>
+      <div class="flex flex-wrap gap-2">
+        <div
+          v-for="cls in enrolledClasses"
+          :key="cls.slug"
+          draggable="true"
+          class="px-3 py-2 rounded-lg border border-default bg-elevated cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors"
+          @dragstart="handleDragStart(cls.slug)"
+          @dragend="handleDragEnd"
+        >
+          <p class="text-sm font-medium">{{ cls.title }}</p>
+          <p class="text-xs text-muted">{{ cls.degreeLabel }}</p>
         </div>
       </div>
     </div>
 
     <!-- Days grid -->
-    <div class="grid grid-cols-7 gap-3">
+    <div v-if="enrolledClasses.length > 0" class="grid grid-cols-7 gap-3">
       <div
         v-for="(day, dayIndex) in days"
         :key="dayIndex"
@@ -243,10 +308,10 @@ const saveChanges = () => {
               :key="entry.id"
               draggable="true"
               class="px-2 py-1.5 rounded-md bg-default/50 text-xs font-medium cursor-grab active:cursor-grabbing hover:bg-primary/10 transition-colors group relative"
-              @dragstart="handleDragStart(entry.classId, entry.id)"
+              @dragstart="handleDragStart(entry.classSlug, entry.id)"
               @dragend="handleDragEnd"
             >
-              <span>{{ getClassById(entry.classId)?.title }}</span>
+              <span>{{ getClassBySlug(entry.classSlug)?.title }}</span>
               <UButton
                 v-if="editMode"
                 variant="ghost"
@@ -272,10 +337,10 @@ const saveChanges = () => {
     </div>
 
     <!-- Summary -->
-    <UCard>
+    <UCard v-if="enrolledClasses.length > 0">
       <div class="flex items-center justify-between">
         <span class="text-sm text-muted">
-          {{ scheduledEntries.length }} activities scheduled across the week
+          {{ scheduleEntries.length }} class{{ scheduleEntries.length !== 1 ? 'es' : '' }} scheduled across the week
         </span>
         <UButton
           v-if="editMode"

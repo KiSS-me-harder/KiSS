@@ -1,6 +1,8 @@
 ---
 title: "Sensory Play Club"
 description: "Explore sensation and deprivation through blindfolds, restraints, temperature play, and more."
+clubActivities:
+  - sensory-deprivation
 activities:
   - type: challenge
     title: "Blindfold Trust Walk"

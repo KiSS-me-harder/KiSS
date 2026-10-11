@@ -1,6 +1,8 @@
 ---
 title: "Hypnosis & Mindplay Club"
 description: "Dive deeper into trance states and subconscious exploration with guided hypnosis sessions and workshops."
+clubActivities:
+  - hypnosis-videos
 activities:
   - type: challenge
     title: "Deep Trance Dive"

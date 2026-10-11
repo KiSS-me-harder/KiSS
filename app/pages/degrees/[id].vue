@@ -8,7 +8,7 @@ const id = computed(() => route.params.id as string)
 
 const { data: home } = await useAsyncData(
   () => `degree-${id.value}`,
-  () => queryCollection('content')
+  () => queryCollection('degrees')
     .path(`/degrees/${id.value}`)
     .first(),
   {
@@ -101,7 +101,7 @@ interface DegreeLevel {
 }
 
 const degreeLevels = computed<DegreeLevel[]>(() => {
-  return home.value?.levels || []
+  return (home.value as any)?.meta?.levels || []
 })
 
 // Selected target level index
@@ -497,7 +497,7 @@ const levelBadgeColors = [
                   </span>
                 </div>
                 <UProgress
-                  :model-value="(classInfos.filter(c => c.isEnrolled && c.completedLevels === c.totalLevels).length / classInfos.length) * 100"
+                  :model-value="classInfos.length > 0 ? (classInfos.filter(c => c.isEnrolled && c.completedLevels === c.totalLevels).length / classInfos.length) * 100 : 0"
                   :animated="false"
                   color="success"
                   size="xs"
@@ -570,7 +570,7 @@ const levelBadgeColors = [
                           <span>{{ classInfo.completedLevels }}/{{ classInfo.totalLevels }}</span>
                         </div>
                         <UProgress
-                          :model-value="(classInfo.completedLevels / classInfo.totalLevels) * 100"
+                          :model-value="classInfo.totalLevels > 0 ? (classInfo.completedLevels / classInfo.totalLevels) * 100 : 0"
                           :animated="false"
                           color="success"
                           size="xs"

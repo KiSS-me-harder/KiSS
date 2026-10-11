@@ -172,7 +172,7 @@
           <div v-else />
 
           <NuxtLink
-            v-if="lessonData.nextLevel"
+            v-if="lessonData.nextLevel && isLevelUnlockedByLevel(lessonData.nextLevel.level)"
             :to="lessonData.nextLevel.path"
             class="group flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all duration-200"
           >
@@ -252,33 +252,49 @@
             </NuxtLink>
           </div>
           <div class="space-y-1 max-h-64 lg:max-h-[calc(100vh-300px)] overflow-y-auto pr-1 custom-scrollbar">
-            <NuxtLink
-              v-for="level in sortedLevelsData"
-              :key="level.level"
-              :to="`/classes/${degree}/${slug}/${level.level}`"
-              class="flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200"
-              :class="level.level === lessonData.level
-                ? 'bg-purple-500/20 border border-purple-500/30'
-                : 'hover:bg-white/5 border border-transparent'"
-            >
-              <div
-                class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
-                :class="isLevelCompleted(level.level)
-                  ? 'bg-emerald-500/20 text-emerald-400'
-                  : level.level === lessonData.level
-                    ? 'bg-purple-500/30 text-purple-300'
-                    : 'bg-white/10 text-white/40'"
+            <template v-for="level in sortedLevelsData" :key="level.level">
+              <NuxtLink
+                v-if="isSidebarLevelUnlocked(level.level)"
+                :to="`/classes/${degree}/${slug}/${level.level}`"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200"
+                :class="level.level === lessonData.level
+                  ? 'bg-purple-500/20 border border-purple-500/30'
+                  : 'hover:bg-white/5 border border-transparent'"
               >
-                <UIcon v-if="isLevelCompleted(level.level)" name="i-lucide-check" class="size-3" />
-                <template v-else>{{ level.level }}</template>
+                <div
+                  class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
+                  :class="isLevelCompleted(level.level)
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : level.level === lessonData.level
+                      ? 'bg-purple-500/30 text-purple-300'
+                      : 'bg-white/10 text-white/40'"
+                >
+                  <UIcon v-if="isLevelCompleted(level.level)" name="i-lucide-check" class="size-3" />
+                  <template v-else>{{ level.level }}</template>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-xs text-white/70 truncate" :class="{ 'text-white font-medium': level.level === lessonData.level }">
+                    {{ level.title }}
+                  </p>
+                </div>
+                <UIcon v-if="level.level === lessonData.level" name="i-lucide-book-open" class="size-3 text-purple-400 flex-shrink-0" />
+              </NuxtLink>
+              <div
+                v-else
+                class="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-not-allowed opacity-50"
+              >
+                <div
+                  class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 bg-white/10 text-white/40"
+                >
+                  <UIcon name="i-lucide-lock" class="size-3" />
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-xs text-white/40 truncate">
+                    {{ level.title }}
+                  </p>
+                </div>
               </div>
-              <div class="min-w-0 flex-1">
-                <p class="text-xs text-white/70 truncate" :class="{ 'text-white font-medium': level.level === lessonData.level }">
-                  {{ level.title }}
-                </p>
-              </div>
-              <UIcon v-if="level.level === lessonData.level" name="i-lucide-book-open" class="size-3 text-purple-400 flex-shrink-0" />
-            </NuxtLink>
+            </template>
           </div>
         </div>
 
@@ -344,6 +360,50 @@ const currentLevelItem = computed(() => {
   const found = sortedLevelsData.value.find(l => l.level === levelParam.value)
   return found?.item || null
 })
+
+// Build a lookup of all levels by their item for dependency resolution
+const levelItemMap = computed(() => {
+  const map = new Map<number, any>()
+  for (const l of sortedLevelsData.value) {
+    map.set(l.level, l.item)
+  }
+  return map
+})
+
+// Check if a specific level is unlocked (its dependencies are met)
+function isLevelUnlockedByLevel(levelNum: number): boolean {
+  const item = levelItemMap.value.get(levelNum)
+  if (!item) return false
+  const deps = (item as any).meta?.dependencies || []
+  if (!deps.length) return true
+  return store.areDependenciesMet(classSlug.value, levelNum, deps)
+}
+
+// Alias for sidebar usage
+function isSidebarLevelUnlocked(levelNum: number): boolean {
+  return isLevelUnlockedByLevel(levelNum)
+}
+
+// Check if the current level's dependencies are met
+const currentLevelDeps = computed(() => {
+  const item = currentLevelItem.value
+  if (!item) return []
+  return (item as any).meta?.dependencies || []
+})
+
+const isLevelUnlocked = computed(() => {
+  if (!currentLevelDeps.value.length) return true
+  return store.areDependenciesMet(classSlug.value, levelParam.value, currentLevelDeps.value)
+})
+
+// Redirect to class page if level is locked
+if (process.client) {
+  watch([isLevelUnlocked, currentLevelItem], ([unlocked, item]) => {
+    if (item && !unlocked) {
+      navigateTo(`/classes/${degree.value}/${slug.value}`, { replace: true })
+    }
+  }, { immediate: true })
+}
 
 // Find adjacent levels
 const previousLevel = computed(() => {

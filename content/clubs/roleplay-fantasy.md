@@ -1,6 +1,8 @@
 ---
 title: "Roleplay & Fantasy Club"
 description: "Step into different scenarios and personas with guided roleplay sessions and creative storytelling."
+clubActivities:
+  - roleplay-session
 activities:
   - type: challenge
     title: "Character Creation"

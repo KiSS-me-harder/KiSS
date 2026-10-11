@@ -1,93 +1,375 @@
 <script setup lang="ts">
-interface ClassTask {
-  id: number
+import { useEnrollmentStore } from '~/stores/enrollment'
+
+const store = useEnrollmentStore()
+const { app } = useRuntimeConfig()
+
+const { data: allClasses } = await useAsyncData('today-tasks-classes', () => queryCollection('classes').all())
+
+// Load clubs and activities for club membership section
+const { data: allClubs } = await useAsyncData('today-tasks-clubs', () => queryCollection('clubs').all())
+const { data: allActivities } = await useAsyncData('today-tasks-activities', () => queryCollection('activities').all())
+
+// Build a map of club slug -> activity slugs
+const clubActivitiesMap = computed(() => {
+  const map: Record<string, string[]> = {}
+  if (!allClubs.value) return map
+  for (const club of allClubs.value) {
+    const meta = (club as any)?.meta
+    const clubActs = meta?.clubActivities
+    if (Array.isArray(clubActs) && clubActs.length > 0) {
+      // Use the slug field directly
+      const clubSlug = (club as any).slug
+      if (clubSlug) {
+        map[clubSlug] = clubActs
+      }
+    }
+  }
+  return map
+})
+
+// Get activity slugs from joined clubs
+const subscribedActivitySlugs = computed(() => {
+  return store.getClubActivitySlugs(clubActivitiesMap.value)
+})
+
+// Get activity details for subscribed activities
+const subscribedActivities = computed(() => {
+  if (!allActivities.value || subscribedActivitySlugs.value.length === 0) return []
+  const slugs = new Set(subscribedActivitySlugs.value)
+  return allActivities.value.filter(a => {
+    const stem = (a as any).stem || ''
+    const parts = stem.split('/')
+    if (parts.length < 3) return false
+    return slugs.has(parts[1])
+  })
+})
+
+// Helper: extract short activity slug from stem
+function getActivitySlug(activity: any): string {
+  const stem = activity?.stem || ''
+  const parts = stem.split('/')
+  return parts.length >= 2 ? parts[1] : stem
+}
+
+// Group subscribed activities by category
+const subscribedActivityGroups = computed(() => {
+  const groups: Record<string, any[]> = {}
+  for (const activity of subscribedActivities.value) {
+    const meta = (activity as any)?.meta || {}
+    const category = meta.category || 'General'
+    if (!groups[category]) groups[category] = []
+    groups[category].push(activity)
+  }
+  return groups
+})
+
+// ── Enrolled class tasks ──
+
+interface ClassTaskItem {
+  id: string
   title: string
-  type: 'timed' | 'instant'
-  duration?: string
-  status: 'not-started' | 'in-progress' | 'completed'
-  locked?: boolean
-  lockReason?: string
+  completed: boolean
+  completedKey: string // unique key for tracking completion across days
 }
 
-interface ClassGroup {
+interface ClassTaskGroup {
+  slug: string
   name: string
+  degree: string
+  degreeLabel: string
   image: string
-  grade: string
-  tasks: ClassTask[]
+  currentLevel: number
+  examTasks: ClassTaskItem[]
+  metrics: LessonMetric[]
 }
 
-const classes = ref<ClassGroup[]>([
-  {
-    name: 'Physical Play Basics',
-    image: '/images/classes/physical-play-basics.png',
-    grade: 'F',
-    tasks: [
-      { id: 1, title: 'Massage your g-spot for 5 min', type: 'timed', duration: '5m', status: 'not-started' },
-      { id: 2, title: 'Perform kegel exercises (20 reps)', type: 'instant', status: 'not-started' },
-      { id: 3, title: 'Press firmly for 10 seconds', type: 'instant', status: 'not-started', locked: true, lockReason: 'Attend class to unlock' },
-    ]
-  },
-  {
-    name: 'Grirty Underwear',
-    image: '/images/classes/grirty-underwear.png',
-    grade: 'F',
-    tasks: [
-      { id: 4, title: 'Wear high heels for 10 min', type: 'timed', duration: '10m', status: 'not-started' },
-      { id: 5, title: 'Wear panties and a bra for 20 min', type: 'timed', duration: '20m', status: 'not-started', locked: true, lockReason: 'Attend class to unlock' },
-      { id: 6, title: 'Practice walking in heels', type: 'instant', status: 'not-started', locked: true, lockReason: 'Attend class to unlock' },
-    ]
-  },
-  {
-    name: 'Chastity Training',
-    image: '/images/classes/chastity-training.png',
-    grade: 'D',
-    tasks: [
-      { id: 7, title: 'Wear chastity device for 1 hour', type: 'timed', duration: '1h', status: 'in-progress' },
-      { id: 8, title: 'Submit daily affirmation', type: 'instant', status: 'completed' },
-      { id: 9, title: 'Endurance test: 30 min', type: 'timed', duration: '30m', status: 'not-started', locked: true, lockReason: 'Attend class to unlock' },
-    ]
-  },
-  {
-    name: 'Maid Service',
-    image: '/images/classes/maid-service.png',
-    grade: 'C',
-    tasks: [
-      { id: 10, title: 'Clean the classroom', type: 'timed', duration: '15m', status: 'completed' },
-      { id: 11, title: 'Serve tea to classmates', type: 'instant', status: 'not-started' },
-      { id: 12, title: 'Polish shoes for 10 min', type: 'timed', duration: '10m', status: 'not-started' },
-    ]
-  },
-])
+interface LessonMetric {
+  id: string
+  label: string
+  unit: string
+  target: number
+  currentValue: number
+}
 
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case 'not-started': return 'i-lucide-clock'
-    case 'in-progress': return 'i-lucide-play'
-    case 'completed': return 'i-lucide-check-circle'
-    default: return 'i-lucide-clock'
+// Get today's date key for daily task completion tracking
+const todayKey = computed(() => {
+  const d = new Date()
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+})
+
+// Load daily task completion state from localStorage
+const dailyCompleted = ref<Set<string>>(new Set())
+function loadDailyCompleted() {
+  if (!process.client) return
+  try {
+    const raw = localStorage.getItem(`kiss-daily-${todayKey.value}`)
+    if (raw) dailyCompleted.value = new Set(JSON.parse(raw) as string[])
+  } catch { /* ignore */ }
+}
+loadDailyCompleted()
+
+// Auto-save daily completions
+watch(dailyCompleted, (val) => {
+  if (!process.client) return
+  try { localStorage.setItem(`kiss-daily-${todayKey.value}`, JSON.stringify([...val])) } catch { /* ignore */ }
+}, { deep: true })
+
+function toggleTaskCompleted(taskId: string) {
+  if (dailyCompleted.value.has(taskId)) {
+    dailyCompleted.value.delete(taskId)
+  } else {
+    dailyCompleted.value.add(taskId)
   }
 }
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'not-started': return 'neutral'
-    case 'in-progress': return 'warning'
-    case 'completed': return 'success'
-    default: return 'neutral'
+// Build task groups from enrolled classes
+const enrolledTaskGroups = computed(() => {
+  const enrollments = store.enrollments.value
+  if (!allClasses.value || !enrollments || enrollments.length === 0) return []
+
+  const groups: ClassTaskGroup[] = []
+
+  for (const enrollment of enrollments) {
+    const { slug, className, degree } = enrollment
+
+    // Find all lessons for this class
+    const prefix = `classes/${degree}/${className}/`
+    const classLessons = allClasses.value.filter(item => (item as any).stem?.startsWith(prefix))
+
+    if (classLessons.length === 0) continue
+
+    // Find current level (first incomplete level)
+    const enrollmentLevels = enrollment.levels.sort((a, b) => a.level - b.level)
+    const currentLevel = enrollmentLevels.find(l => !l.completed)?.level ?? enrollmentLevels[enrollmentLevels.length - 1]?.level
+
+    if (currentLevel === undefined) continue
+
+    // Find the lesson for the current level
+    const currentLesson = classLessons.find(item => {
+      const level = parseInt((item as any).meta?.level, 10)
+      return level === currentLevel
+    })
+
+    if (!currentLesson) continue
+
+    const meta = (currentLesson as any).meta || {}
+    const examTasks = (meta.exam || []).map((task: string, i: number) => ({
+      id: `${slug}-${currentLevel}-exam-${i}`,
+      title: task,
+      completed: dailyCompleted.value.has(`${slug}-${currentLevel}-exam-${i}`),
+      completedKey: `${slug}-${currentLevel}-exam-${i}`
+    }))
+
+    // Build metrics from lesson
+    const lessonMetrics: LessonMetric[] = (meta.metrics || []).map((m: any) => ({
+      id: m.id,
+      label: m.label,
+      unit: m.unit,
+      target: m.target,
+      currentValue: m.currentValue || 0
+    }))
+
+    const degreeLabel = degree.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+
+    groups.push({
+      slug,
+      name: meta.class || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+      degree,
+      degreeLabel,
+      image: `${app.baseURL}img/degrees/${degree}.webp`,
+      currentLevel,
+      examTasks,
+      metrics: lessonMetrics
+    })
   }
+
+  return groups.sort((a, b) => a.name.localeCompare(b.name))
+})
+
+// ── Metric activities removed — metrics are now milestone-based, not daily tasks ──
+
+const metricActivityGroups = computed(() => [])
+
+// ── Single-shot task queue ──
+// These are one-time tasks that auto-dismiss when the condition is resolved
+
+interface SingleShotTask {
+  id: string
+  title: string
+  description: string
+  icon: string
+  to: string
+  linkText: string
 }
 
-const getGradeColor = (grade: string) => {
-  switch (grade) {
-    case 'S': return 'success'
-    case 'A': return 'success'
-    case 'B': return 'primary'
-    case 'C': return 'warning'
-    case 'D': return 'error'
-    case 'F': return 'error'
-    default: return 'neutral'
-  }
+// Load routine assignments to check which club activities are in the routine
+const routineAssignments = ref<Array<{ activitySlug: string; slot: string }>>([])
+function loadRoutineAssignments() {
+  if (!process.client) return
+  try {
+    const raw = localStorage.getItem('kiss-routine-assignments')
+    if (raw) routineAssignments.value = JSON.parse(raw) as Array<{ activitySlug: string; slot: string }>
+  } catch { /* ignore */ }
 }
+loadRoutineAssignments()
+
+// Poll for routine changes (same-tab edits)
+onMounted(() => {
+  const interval = setInterval(() => loadRoutineAssignments(), 3000)
+  onUnmounted(() => clearInterval(interval))
+})
+
+// Force re-evaluation when the store loads from localStorage after hydration
+const tasksForceUpdate = ref(0)
+
+if (process.client) {
+  // Watch the store refs deeply so any change triggers a re-evaluation
+  watch([store.clubMemberships, store.enrollments], () => {
+    tasksForceUpdate.value++
+  }, { deep: true })
+
+  // Also force re-evaluation after Nuxt hydration completes, in case the store
+  // loaded data before this component's watch was set up
+  const nuxtApp = useNuxtApp()
+  if (!nuxtApp.isHydrated) {
+    watch(() => nuxtApp.isHydrated, (hydrated) => {
+      if (hydrated) {
+        tasksForceUpdate.value++
+      }
+    }, { once: true })
+  }
+
+  // Also listen for storage events from other tabs
+  window.addEventListener('storage', () => {
+    tasksForceUpdate.value++
+  })
+}
+
+const singleShotTasks = computed(() => {
+  const tasks: SingleShotTask[] = []
+
+  // Force re-evaluation when tasksForceUpdate changes
+  const _ = tasksForceUpdate.value
+
+  // Skip all checks during SSR — store data is only available on the client
+  if (!process.client) return tasks
+
+  // Access store refs safely — they are initialized as empty arrays,
+  // but during SSR hydration there's a brief window where .value might be undefined
+  const clubCount = store.clubMemberships.length ?? 0
+  const enrollmentCount = store.enrollments.length ?? 0
+
+  // 1. Join a club — show task only if member of 0 clubs
+  if (clubCount === 0) {
+    tasks.push({
+      id: 'join-club',
+      title: 'Join a Club',
+      description: 'Join a club to get recommended activities for your daily routine.',
+      icon: 'i-lucide-users',
+      to: '/clubs',
+      linkText: 'Browse clubs →'
+    })
+  }
+
+  // 2. Join a degree — show task only if enrolled in 0 classes
+  if (enrollmentCount === 0) {
+    tasks.push({
+      id: 'join-degree',
+      title: 'Join a Degree',
+      description: 'Enroll in a degree program to start your first class.',
+      icon: 'i-lucide-graduation-cap',
+      to: '/degrees',
+      linkText: 'Browse degrees →'
+    })
+  }
+
+  // 3. Club activities not in routine — suggest adding them
+  const routineActivitySlugs = new Set(routineAssignments.value.map(a => a.activitySlug))
+  const unsubscribedActivities = subscribedActivities.value.filter(a => {
+    const stem = (a as any).stem || ''
+    const parts = stem.split('/')
+    if (parts.length < 3) return false
+    return !routineActivitySlugs.has(parts[1])
+  })
+
+  if (unsubscribedActivities.length > 0) {
+    // Group by category for the task descriptions
+    const categories = new Set()
+    for (const a of unsubscribedActivities) {
+      const meta = (a as any)?.meta || {}
+      categories.add(meta.category || 'General')
+    }
+    const categoryList = [...categories].join(', ')
+    tasks.push({
+      id: 'add-club-activities-to-routine',
+      title: `Add ${unsubscribedActivities.length} Club Activit${unsubscribedActivities.length === 1 ? 'y' : 'ies'} to Routine`,
+      description: `You have club activities from ${categoryList} not scheduled in your routine.`,
+      icon: 'i-lucide-list-checks',
+      to: '#routine',
+      linkText: 'Add to routine →'
+    })
+  }
+
+  // 4. Unscheduled enrolled classes (classes in study plan not yet enrolled)
+  if (plannedClasses.value.length > 0) {
+    tasks.push({
+      id: 'enroll-planned-classes',
+      title: `Enroll in ${plannedClasses.value.length} Planned Class${plannedClasses.value.length === 1 ? '' : 'es'}`,
+      description: 'You have classes in your study plan that you haven\'t enrolled in yet.',
+      icon: 'i-lucide-book-open',
+      to: '/study-plan',
+      linkText: 'Open study plan →'
+    })
+  }
+
+  return tasks
+})
+
+// ── Study plan classes (planned but not yet enrolled) ──
+
+interface PlannedClassInfo {
+  slug: string
+  name: string
+  degree: string
+  degreeLabel: string
+  image: string
+  to: string
+}
+
+const plannedClasses = computed(() => {
+  if (!process.client) return []
+  try {
+    const raw = localStorage.getItem('kiss-study-plan')
+    if (!raw) return []
+    const planIds = JSON.parse(raw) as string[]
+
+    // Filter out already enrolled classes
+    const enrollments = store.enrollments.value
+    const enrolledSlugs = new Set((enrollments || []).map(e => e.slug))
+    const planned = planIds.filter(id => !enrolledSlugs.has(id) && id !== 'student')
+
+    return planned.map(id => {
+      const parts = id.split('/')
+      const degree = parts[0] || ''
+      const className = parts[1] || ''
+      const degreeLabel = degree.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+      const name = className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+      return {
+        slug: id,
+        name,
+        degree,
+        degreeLabel,
+        image: `${app.baseURL}img/degrees/${degree}.webp`,
+        to: `/classes/${id}`
+      }
+    })
+  } catch {
+    return []
+  }
+})
+
+const hasTasks = computed(() => singleShotTasks.value.length > 0 || enrolledTaskGroups.value.length > 0 || subscribedActivities.value.length > 0 || plannedClasses.value.length > 0)
 </script>
 
 <template>
@@ -99,103 +381,233 @@ const getGradeColor = (grade: string) => {
           Today's Tasks
         </h2>
       </div>
+      <span v-if="hasTasks" class="text-xs text-muted">
+        <template v-if="enrolledTaskGroups.length">{{ enrolledTaskGroups.length }} class{{ enrolledTaskGroups.length !== 1 ? 'es' : '' }}</template>
+        <template v-if="enrolledTaskGroups.length && subscribedActivities.length"> · </template>
+        <template v-if="subscribedActivities.length">{{ subscribedActivities.length }} activit{{ subscribedActivities.length !== 1 ? 'ies' : 'y' }}</template>
+      </span>
     </div>
 
-    <div class="space-y-4">
-      <UCard
-        v-for="classGroup in classes"
-        :key="classGroup.name"
-        :ui="{
-          root: 'overflow-hidden',
-          body: 'p-0'
-        }"
-      >
-        <div class="flex flex-col sm:flex-row gap-4 p-4">
-          <div class="shrink-0">
-            <div class="w-24 h-32 rounded-lg overflow-hidden bg-muted/20 flex items-center justify-center">
-              <UIcon name="i-lucide-image" class="size-12 text-muted" />
-            </div>
-            <p class="text-xs text-muted mt-1 text-center truncate" :title="classGroup.name">
-              {{ classGroup.name }}
-            </p>
-          </div>
+    <div v-if="!hasTasks" class="text-center py-8 text-muted">
+      <UIcon name="i-lucide-clipboard-list" class="w-8 h-8 mx-auto mb-2 opacity-50" />
+      <p class="text-sm">No tasks for today.</p>
+      <p class="text-xs mt-1">Enroll in classes or join clubs to see tasks here.</p>
+    </div>
 
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between mb-3">
-              <div class="flex items-center gap-2">
-                <span class="px-2 py-0.5 rounded text-xs font-semibold" :class="`bg-${getGradeColor(classGroup.grade)}/20 text-${getGradeColor(classGroup.grade)}`">
-                  GRADE: {{ classGroup.grade }}
+    <div v-else class="space-y-4">
+      <!-- Single-Shot Task Queue -->
+      <template v-if="singleShotTasks.length">
+        <div class="flex items-center gap-2">
+          <UIcon name="i-lucide-sparkles" class="size-4 text-amber-400" />
+          <h3 class="text-sm font-semibold text-white/80">Action Items</h3>
+          <span class="text-xs text-muted">({{ singleShotTasks.length }})</span>
+        </div>
+
+        <UCard
+          v-for="task in singleShotTasks"
+          :key="task.id"
+        >
+          <div class="flex items-start gap-3 p-3">
+            <div class="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
+              <UIcon :name="task.icon" class="w-4 h-4 text-amber-400" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-white">{{ task.title }}</p>
+              <p class="text-xs text-muted mt-0.5">{{ task.description }}</p>
+            </div>
+            <NuxtLink
+              :to="task.to"
+              class="text-xs text-primary hover:underline shrink-0 self-center"
+            >
+              {{ task.linkText }}
+            </NuxtLink>
+          </div>
+        </UCard>
+      </template>
+
+      <!-- Enrolled Class Tasks -->
+      <template v-if="enrolledTaskGroups.length">
+        <UCard
+          v-for="group in enrolledTaskGroups"
+          :key="group.slug"
+          :ui="{
+            root: 'overflow-hidden',
+            body: 'p-0'
+          }"
+        >
+          <div class="flex flex-col sm:flex-row gap-4 p-4">
+            <div class="shrink-0">
+              <div class="w-24 h-32 rounded-lg overflow-hidden bg-muted/20 flex items-center justify-center relative">
+                <img
+                  v-if="group.image"
+                  :src="group.image"
+                  :alt="group.name"
+                  class="w-full h-full object-cover"
+                />
+                <UIcon v-else name="i-lucide-image" class="size-12 text-muted" />
+              </div>
+              <p class="text-xs text-muted mt-1 text-center truncate" :title="group.name">
+                {{ group.name }}
+              </p>
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded text-xs font-semibold bg-purple-500/20 text-purple-400">
+                    {{ group.degreeLabel }}
+                  </span>
+                  <span class="px-2 py-0.5 rounded text-xs font-semibold bg-blue-500/20 text-blue-400">
+                    Level {{ group.currentLevel }}
+                  </span>
+                </div>
+                <NuxtLink
+                  :to="`/classes/${group.slug}`"
+                  class="text-xs text-primary hover:underline"
+                >
+                  Open class →
+                </NuxtLink>
+              </div>
+
+              <!-- Exam / Homework Tasks -->
+              <div v-if="group.examTasks.length">
+                <p class="text-xs font-semibold text-warning mb-2 uppercase">
+                  Homework & Exams
+                </p>
+                <div class="space-y-1.5">
+                  <div
+                    v-for="task in group.examTasks"
+                    :key="task.id"
+                    class="flex items-center gap-2 p-2 rounded-lg hover:bg-elevated/50 transition-colors cursor-pointer"
+                    :class="{ 'opacity-50': task.completed }"
+                    @click="toggleTaskCompleted(task.completedKey)"
+                  >
+                    <UIcon
+                      :name="task.completed ? 'i-lucide-check-circle' : 'i-lucide-circle'"
+                      class="size-4 shrink-0"
+                      :class="task.completed ? 'text-success' : 'text-muted'"
+                    />
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm truncate" :class="{ 'line-through': task.completed }">
+                        {{ task.title }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Lesson Metrics -->
+              <div v-if="group.metrics.length" class="mt-3">
+                <p class="text-xs font-semibold text-muted mb-2 uppercase">
+                  Lesson Metrics
+                </p>
+                <div class="space-y-1.5">
+                  <div
+                    v-for="metric in group.metrics"
+                    :key="metric.id"
+                    class="flex items-center gap-2 p-2 rounded-lg bg-white/5"
+                  >
+                    <UIcon name="i-lucide-target" class="size-4 text-purple-400 shrink-0" />
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm truncate">{{ metric.label }}</p>
+                      <div class="flex items-center gap-2 mt-1">
+                        <div class="h-1.5 flex-1 rounded-full bg-white/10 overflow-hidden">
+                          <div
+                            class="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-300"
+                            :style="{ width: `${Math.min(100, (metric.currentValue / metric.target) * 100)}%` }"
+                          />
+                        </div>
+                        <span class="text-xs text-muted shrink-0">
+                          {{ metric.currentValue }}/{{ metric.target }} {{ metric.unit }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </UCard>
+      </template>
+
+      <!-- Club Activities -->
+      <template v-if="Object.keys(subscribedActivityGroups).length > 0">
+        <div class="flex items-center gap-2 pt-2">
+          <UIcon name="i-lucide-users" class="size-4 text-purple-400" />
+          <h3 class="text-sm font-semibold text-white/80">Club Activities</h3>
+          <span class="text-xs text-muted">({{ subscribedActivities.length }})</span>
+        </div>
+
+        <template v-for="(activities, category) in subscribedActivityGroups" :key="category">
+          <UCard>
+            <div class="p-4">
+              <div class="flex items-center gap-2 mb-3">
+                <span class="px-2 py-0.5 rounded text-xs font-semibold bg-purple-500/20 text-purple-400">
+                  {{ category }}
                 </span>
               </div>
-              <UButton variant="ghost" size="xs" class="text-xs">
-                TEXT
-              </UButton>
+              <div class="space-y-2">
+                <div
+                  v-for="activity in activities"
+                  :key="activity.stem"
+                  class="flex items-center gap-3 p-2 rounded-lg hover:bg-elevated/50 transition-colors"
+                >
+                  <div class="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
+                    <UIcon
+                      :name="(activity as any).meta?.icon || 'i-lucide-circle-dot'"
+                      class="w-4 h-4 text-purple-400"
+                    />
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-white truncate">{{ (activity as any).title }}</p>
+                    <p v-if="(activity as any).meta?.description" class="text-xs text-muted line-clamp-1">
+                      {{ (activity as any).meta.description }}
+                    </p>
+                  </div>
+                  <NuxtLink
+                    :to="`/activities#${getActivitySlug(activity)}`"
+                    class="text-xs text-primary hover:underline shrink-0"
+                  >
+                    Log →
+                  </NuxtLink>
+                </div>
+              </div>
             </div>
+          </UCard>
+        </template>
+      </template>
 
-            <div class="space-y-3">
-              <div>
-                <p class="text-xs font-semibold text-warning mb-2 uppercase">
-                  Daily Tasks
-                </p>
-                <div class="space-y-1.5">
-                  <div
-                    v-for="task in classGroup.tasks.filter(t => !t.locked)"
-                    :key="task.id"
-                    class="flex items-center gap-2 p-2 rounded-lg hover:bg-elevated/50 transition-colors"
-                    :class="{ 'opacity-50': task.locked }"
-                  >
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm truncate">
-                        {{ task.title }}
-                      </p>
-                      <div class="flex items-center gap-2 mt-0.5">
-                        <UIcon :name="task.type === 'timed' ? 'i-lucide-clock' : 'i-lucide-zap'" class="size-3 text-muted" />
-                        <span class="text-xs text-muted">
-                          {{ task.type === 'timed' ? 'Timed' : 'Instant' }}
-                          {{ task.duration ? `· ${task.duration}` : '' }}
-                        </span>
-                        <span class="text-xs" :class="`text-${getStatusColor(task.status)}`">
-                          {{ task.status === 'not-started' ? 'Not started' : task.status === 'in-progress' ? 'In progress' : 'Completed' }}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+      <!-- Planned Classes (not yet enrolled) -->
+      <template v-if="plannedClasses.length">
+        <div class="flex items-center gap-2 pt-2">
+          <UIcon name="i-lucide-git-branch" class="size-4 text-blue-400" />
+          <h3 class="text-sm font-semibold text-white/80">Planned Classes</h3>
+        </div>
 
-              <div v-if="classGroup.tasks.some(t => t.locked)">
-                <p class="text-xs font-semibold text-muted mb-2 uppercase">
-                  Exams
-                </p>
-                <div class="space-y-1.5">
-                  <div
-                    v-for="task in classGroup.tasks.filter(t => t.locked)"
-                    :key="task.id"
-                    class="flex items-center gap-2 p-2 rounded-lg opacity-50"
-                  >
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm truncate">
-                        {{ task.title }}
-                      </p>
-                      <div class="flex items-center gap-2 mt-0.5">
-                        <UIcon :name="task.type === 'timed' ? 'i-lucide-clock' : 'i-lucide-zap'" class="size-3 text-muted" />
-                        <span class="text-xs text-muted">
-                          {{ task.type === 'timed' ? 'Timed' : 'Instant' }}
-                          {{ task.duration ? `· ${task.duration}` : '' }}
-                        </span>
-                        <span class="text-xs text-muted">
-                          {{ task.lockReason }}
-                        </span>
-                      </div>
-                    </div>
-                    <UIcon name="i-lucide-lock" class="size-4 text-muted shrink-0" />
-                  </div>
-                </div>
+        <UCard>
+          <div class="p-4 space-y-2">
+            <div
+              v-for="planned in plannedClasses"
+              :key="planned.slug"
+              class="flex items-center gap-3 p-2 rounded-lg hover:bg-elevated/50 transition-colors"
+            >
+              <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                <UIcon name="i-lucide-book-open" class="w-4 h-4 text-blue-400" />
               </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm text-white truncate">{{ planned.name }}</p>
+                <p class="text-xs text-muted">{{ planned.degreeLabel }}</p>
+              </div>
+              <NuxtLink
+                :to="planned.to"
+                class="text-xs text-primary hover:underline shrink-0"
+              >
+                Enroll →
+              </NuxtLink>
             </div>
           </div>
-        </div>
-      </UCard>
+        </UCard>
+      </template>
     </div>
   </div>
 </template>

@@ -33,6 +33,14 @@ export default defineContentConfig({
     binaural: defineCollection({
       type: 'data',
       source: 'binaural/**/*.md'
+    }),
+    metrics: defineCollection({
+      type: 'page',
+      source: 'metrics/**/*.md'
+    }),
+    activities: defineCollection({
+      type: 'page',
+      source: 'activities/**/*.md'
     })
   }
 })

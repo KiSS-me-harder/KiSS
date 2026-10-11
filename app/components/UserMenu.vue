@@ -7,7 +7,6 @@ defineProps<{
 
 const colorMode = useColorMode()
 const appConfig = useAppConfig()
-const { app } = useRuntimeConfig()
 
 const colors = ['red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose']
 const neutrals = ['slate', 'gray', 'zinc', 'neutral', 'stone']
@@ -15,7 +14,7 @@ const neutrals = ['slate', 'gray', 'zinc', 'neutral', 'stone']
 const user = ref({
   name: 'Kisses Hugs',
   avatar: {
-    src: `${app.baseURL}img/placeholder.webp`,
+    src: '/img/placeholder.webp',
     alt: 'Kisses Hugs'
   }
 })

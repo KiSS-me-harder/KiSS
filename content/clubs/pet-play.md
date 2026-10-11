@@ -1,6 +1,8 @@
 ---
 title: "Pet Play Club"
 description: "Explore your inner animal through pet play roleplay, and community events."
+clubActivities:
+  - pet-crawl
 activities:
   - type: challenge
     title: "Good Pet Protocol"

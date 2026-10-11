@@ -1,6 +1,13 @@
 ---
 title: "Strip Dance Club"
 description: "Learn the art of seductive movement and performance, from beginner routines to full stage shows."
+clubActivities:
+  - squat-hold
+  - hip-flexor-stretch
+  - split-practice
+  - stripping-practice
+  - seductive-dance
+  - clothing-wear
 activities:
   - type: challenge
     title: "Slow Tease"

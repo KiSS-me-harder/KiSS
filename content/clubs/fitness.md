@@ -1,6 +1,11 @@
 ---
 title: "Fitness Club"
 description: "Get in shape for submission with workouts designed to strengthen your body for endurance and performance."
+clubActivities:
+  - squat-hold
+  - hip-flexor-stretch
+  - split-practice
+  - weight-tracking
 activities:
   - type: challenge
     title: "Kegel King/Queen"

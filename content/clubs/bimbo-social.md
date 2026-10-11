@@ -1,6 +1,13 @@
 ---
 title: "Bimbo Social Club"
 description: "Embrace your inner bimbo with fashion, makeup, and playful social events celebrating the bimbo lifestyle."
+clubActivities:
+  - breast-measurement
+  - body-measurements
+  - breast-stimulation
+  - weight-tracking
+  - hypnosis-videos
+  - clothing-wear
 activities:
   - type: challenge
     title: "Glossy Glam Makeover"

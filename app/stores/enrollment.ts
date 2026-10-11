@@ -73,6 +73,42 @@ export interface UserProfile {
   level: number
 }
 
+// --- Metrics System ---
+
+export interface MetricField {
+  id: string
+  label: string
+  unit: string
+  icon?: string
+}
+
+export interface MetricMilestone {
+  id: string
+  title: string
+  description: string
+  requires: Record<string, number> // fieldId -> minimum value required
+}
+
+export interface MetricDataPoint {
+  metricSlug: string
+  fieldId: string
+  value: number
+  timestamp: number // Date.now() when logged
+  activitySlug?: string // which activity logged this
+}
+
+export interface MetricProgress {
+  metricSlug: string
+  dataPoints: MetricDataPoint[] // all data points for this metric
+}
+
+// --- Clubs System ---
+
+export interface ClubMembership {
+  clubSlug: string
+  joinedAt: number
+}
+
 export const useEnrollmentStore = defineStore('enrollment', () => {
   // --- User Profile ---
   const defaultStats: CharacterStats = {
@@ -130,6 +166,12 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
 
   // --- Detention count ---
   const detentionCount = ref(0)
+
+  // --- Metrics ---
+  const metricProgress = ref<MetricProgress[]>([])
+
+  // --- Clubs ---
+  const clubMemberships = ref<ClubMembership[]>([])
 
   // --- Computed ---
 
@@ -511,6 +553,160 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
     detentionCount.value++
   }
 
+  // --- Metrics ---
+
+  function getMetricProgress(metricSlug: string): MetricProgress | undefined {
+    return metricProgress.value.find(m => m.metricSlug === metricSlug)
+  }
+
+  // Get the latest value for a specific field of a metric
+  function getMetricValueField(metricSlug: string, fieldId: string): number {
+    const progress = metricProgress.value.find(m => m.metricSlug === metricSlug)
+    if (!progress || !progress.dataPoints || progress.dataPoints.length === 0) return 0
+    const fieldPoints = progress.dataPoints
+      .filter(dp => dp.fieldId === fieldId)
+      .sort((a, b) => b.timestamp - a.timestamp)
+    return fieldPoints[0]?.value ?? 0
+  }
+
+  // Get all data points for a metric field, sorted by time (for graphs)
+  function getMetricDataPoints(metricSlug: string, fieldId?: string): MetricDataPoint[] {
+    const progress = metricProgress.value.find(m => m.metricSlug === metricSlug)
+    if (!progress || !progress.dataPoints) return []
+    let points = progress.dataPoints
+    if (fieldId) {
+      points = points.filter(dp => dp.fieldId === fieldId)
+    }
+    return [...points].sort((a, b) => a.timestamp - b.timestamp)
+  }
+
+  // Get the latest data points for all fields of a metric
+  function getMetricLatestValues(metricSlug: string): Record<string, number> {
+    const progress = metricProgress.value.find(m => m.metricSlug === metricSlug)
+    if (!progress || !progress.dataPoints || progress.dataPoints.length === 0) return {}
+    const fieldLatest: Record<string, { value: number; timestamp: number }> = {}
+    for (const dp of progress.dataPoints) {
+      const existing = fieldLatest[dp.fieldId]
+      if (!existing || dp.timestamp > existing.timestamp) {
+        fieldLatest[dp.fieldId] = { value: dp.value, timestamp: dp.timestamp }
+      }
+    }
+    const result: Record<string, number> = {}
+    for (const [fieldId, data] of Object.entries(fieldLatest)) {
+      result[fieldId] = data.value
+    }
+    return result
+  }
+
+  function isMilestoneAchieved(metricSlug: string, milestone: MetricMilestone): boolean {
+    const latestValues = getMetricLatestValues(metricSlug)
+    for (const [fieldId, requiredValue] of Object.entries(milestone.requires)) {
+      const currentValue = latestValues[fieldId] ?? 0
+      if (currentValue < requiredValue) return false
+    }
+    return true
+  }
+
+  function getAchievedMilestoneCount(metricSlug: string, milestones: MetricMilestone[]): number {
+    return milestones.filter(m => isMilestoneAchieved(metricSlug, m)).length
+  }
+
+  // Log an activity session, creating data points for contributed metrics
+  function logActivity(activitySlug: string, contributions: Array<{ metric: string; map: Record<string, string> }>, fieldValues: Record<string, number>) {
+    const now = Date.now()
+
+    for (const contribution of contributions) {
+      let progress = metricProgress.value.find(m => m.metricSlug === contribution.metric)
+      if (!progress) {
+        progress = {
+          metricSlug: contribution.metric,
+          dataPoints: []
+        }
+        metricProgress.value.push(progress)
+      }
+
+      // For each field mapping, create a data point
+      for (const [activityField, metricField] of Object.entries(contribution.map)) {
+        const value = fieldValues[activityField]
+        if (value === undefined || value === null) continue
+
+        // For max-type fields (like maxVolume), only update if this value is higher
+        if (metricField.startsWith('max')) {
+          const currentValue = getMetricValueField(contribution.metric, metricField)
+          if (value <= currentValue) continue
+        }
+
+        progress.dataPoints.push({
+          metricSlug: contribution.metric,
+          fieldId: metricField,
+          value,
+          timestamp: now,
+          activitySlug
+        })
+      }
+    }
+  }
+
+  // Delete a data point
+  function deleteDataPoint(metricSlug: string, dataPointIndex: number) {
+    const progress = metricProgress.value.find(m => m.metricSlug === metricSlug)
+    if (progress && progress.dataPoints) {
+      progress.dataPoints.splice(dataPointIndex, 1)
+    }
+  }
+
+  // Check if an activity has been logged today (any data point with this activitySlug within the last 24h)
+  function hasActivityLoggedToday(activitySlug: string): boolean {
+    const now = Date.now()
+    const startOfToday = new Date()
+    startOfToday.setHours(0, 0, 0, 0)
+    const todayStart = startOfToday.getTime()
+
+    for (const progress of metricProgress.value) {
+      for (const dp of progress.dataPoints) {
+        if (dp.activitySlug === activitySlug && dp.timestamp >= todayStart) {
+          return true
+        }
+      }
+    }
+    return false
+  }
+
+  // --- Clubs ---
+
+  function joinClub(clubSlug: string) {
+    if (clubMemberships.value.some(m => m.clubSlug === clubSlug)) return
+    clubMemberships.value.push({
+      clubSlug,
+      joinedAt: Date.now()
+    })
+  }
+
+  function leaveClub(clubSlug: string) {
+    const index = clubMemberships.value.findIndex(m => m.clubSlug === clubSlug)
+    if (index !== -1) {
+      clubMemberships.value.splice(index, 1)
+    }
+  }
+
+  function isClubMember(clubSlug: string): boolean {
+    return clubMemberships.value.some(m => m.clubSlug === clubSlug)
+  }
+
+  // Get all activity slugs from joined clubs
+  function getClubActivitySlugs(clubActivitiesMap: Record<string, string[]>): string[] {
+    const slugs = new Set<string>()
+    for (const membership of clubMemberships.value) {
+      const activities = clubActivitiesMap[membership.clubSlug]
+      if (activities) {
+        for (const slug of activities) {
+          slugs.add(slug)
+        }
+      }
+    }
+    return [...slugs]
+  }
+
   // --- Persistence via localStorage ---
 
   function saveToStorage() {
@@ -521,7 +717,9 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
         flashcardAnswers: flashcardAnswers.value,
         cardSpacedRep: cardSpacedRep.value,
         detentionCount: detentionCount.value,
-        version: 3
+        metricProgress: metricProgress.value,
+        clubMemberships: clubMemberships.value,
+        version: 8
       }
       try {
         localStorage.setItem('kiss-enrollment', JSON.stringify(data))
@@ -554,18 +752,31 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
       if (data.flashcardAnswers) flashcardAnswers.value = data.flashcardAnswers
       if (data.cardSpacedRep) cardSpacedRep.value = data.cardSpacedRep
       if (typeof data.detentionCount === 'number') detentionCount.value = data.detentionCount
+      // Only load metric progress if version supports data points format
+      if (data.metricProgress && data.version >= 7) metricProgress.value = data.metricProgress
+      // Only load club memberships if version supports them
+      if (data.clubMemberships && data.version >= 8) clubMemberships.value = data.clubMemberships
     } catch {
       // Corrupted data, start fresh
     }
   }
 
-  // Load on init (client-side only)
+  // Load from localStorage after Nuxt hydration to avoid SSR state overwriting client data
   if (process.client) {
-    loadFromStorage()
+    const nuxtApp = useNuxtApp()
+    if (nuxtApp.isHydrated) {
+      loadFromStorage()
+    } else {
+      watch(() => nuxtApp.isHydrated, (hydrated) => {
+        if (hydrated) {
+          loadFromStorage()
+        }
+      }, { once: true })
+    }
   }
 
   // Auto-save on changes
-  watch([profile, enrollments, flashcardAnswers, cardSpacedRep, detentionCount], () => {
+  watch([profile, enrollments, flashcardAnswers, cardSpacedRep, detentionCount, metricProgress, clubMemberships], () => {
     saveToStorage()
   }, { deep: true })
 
@@ -575,6 +786,7 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
     enrollments,
     flashcardAnswers,
     detentionCount,
+    metricProgress,
     // Computed
     enrolledClassSlugs,
     enrolledClassCount,
@@ -610,6 +822,25 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
     getDueCards,
     getDegreeKnowledgeScore,
     getKnowledgeBreakdown,
-    addDetention
+    addDetention,
+    // Metrics
+    getMetricProgress,
+    getMetricValueField,
+    getMetricDataPoints,
+    getMetricLatestValues,
+    isMilestoneAchieved,
+    getAchievedMilestoneCount,
+    logActivity,
+    deleteDataPoint,
+    hasActivityLoggedToday,
+    // Clubs
+    clubMemberships,
+    joinClub,
+    leaveClub,
+    isClubMember,
+    getClubActivitySlugs,
+    // Persistence
+    loadFromStorage,
+    saveToStorage
   }
 })

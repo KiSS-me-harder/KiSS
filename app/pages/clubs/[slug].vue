@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { BreadcrumbItem } from '@nuxt/ui'
+import { useEnrollmentStore } from '~/stores/enrollment'
 
+const store = useEnrollmentStore()
 const route = useRoute()
 
 const slug = computed(() => route.params.slug as string)
@@ -15,6 +17,9 @@ const { data: club } = await useAsyncData(
   }
 )
 
+// Also load all activities from the activities system
+const { data: allActivities } = await useAsyncData('club-activities-all', () => queryCollection('activities').all())
+
 const title = computed(() => club.value?.title)
 const description = computed(() => club.value?.description)
 const body = computed(() => club.value?.body)
@@ -28,10 +33,40 @@ interface Activity {
 }
 
 const activities = computed<Activity[]>(() => {
-  const raw = (club.value as any)?.activities
+  const meta = (club.value as any)?.meta
+  const raw = meta?.activities
   if (!Array.isArray(raw) || raw.length === 0) return []
   return raw
 })
+
+// Club-associated activities from the activities system
+const clubActivitySlugs = computed(() => {
+  const meta = (club.value as any)?.meta
+  const clubActs = meta?.clubActivities
+  if (!Array.isArray(clubActs) || clubActs.length === 0) return []
+  return clubActs
+})
+
+const clubActivities = computed(() => {
+  if (!allActivities.value || clubActivitySlugs.value.length === 0) return []
+  const slugs = new Set(clubActivitySlugs.value)
+  return allActivities.value.filter(a => {
+    const stem = (a as any).stem || ''
+    const parts = stem.split('/')
+    if (parts.length < 3) return false
+    return slugs.has(parts[1])
+  })
+})
+
+const isMember = computed(() => store.isClubMember(slug.value))
+
+function toggleMembership() {
+  if (isMember.value) {
+    store.leaveClub(slug.value)
+  } else {
+    store.joinClub(slug.value)
+  }
+}
 
 // Track completed activities in localStorage
 const completedActivities = ref<Set<string>>(new Set())
@@ -213,8 +248,6 @@ const gradientIndex = computed(() => {
   }
   return Math.abs(hash)
 })
-
-const isMember = false
 </script>
 
 <template>
@@ -394,6 +427,49 @@ const isMember = false
           </div>
         </div>
 
+        <!-- Club Activities from Activities System -->
+        <div v-if="clubActivities.length > 0" class="space-y-4">
+          <div>
+            <h2 class="text-xl font-bold text-foreground flex items-center gap-2">
+              <UIcon name="i-lucide-list-checks" class="w-5 h-5 text-emerald-400" />
+              Club Activities
+            </h2>
+            <p class="text-sm text-muted-foreground mt-1">
+              These activities are part of this club. Join the club to include them in your daily routine.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div
+              v-for="activity in clubActivities"
+              :key="(activity as any).stem"
+              class="group relative rounded-xl border border-white/10 bg-white/5 p-4 hover:border-white/20 transition-all duration-200"
+            >
+              <div class="flex items-start gap-3">
+                <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-500/10 shrink-0">
+                  <UIcon
+                    :name="(activity as any).meta?.icon || 'i-lucide-circle-dot'"
+                    class="w-5 h-5 text-emerald-400"
+                  />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-sm font-semibold text-foreground">
+                    {{ (activity as any).title }}
+                  </h3>
+                  <p v-if="(activity as any).meta?.description" class="text-xs text-muted-foreground mt-1 line-clamp-2">
+                    {{ (activity as any).meta.description }}
+                  </p>
+                  <div v-if="(activity as any).meta?.category" class="mt-2">
+                    <span class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                      {{ (activity as any).meta.category }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Join Club Button -->
         <div class="pt-2">
           <UButton
@@ -401,8 +477,9 @@ const isMember = false
             :color="isMember ? 'primary' : 'secondary'"
             size="md"
             class="w-full sm:w-auto"
+            @click="toggleMembership"
           >
-            {{ isMember ? 'Member' : 'Join Club' }}
+            {{ isMember ? 'Leave Club' : 'Join Club' }}
           </UButton>
         </div>
       </div>

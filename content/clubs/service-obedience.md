@@ -1,6 +1,8 @@
 ---
 title: "Service & Obedience Club"
 description: "Cultivate the art of service and obedience through structured tasks, protocols, and group activities."
+clubActivities:
+  - service-task
 activities:
   - type: challenge
     title: "Silent Service Day"

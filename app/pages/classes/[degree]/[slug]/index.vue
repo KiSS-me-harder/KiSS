@@ -116,6 +116,7 @@
               class="group/level relative aspect-square rounded-xl overflow-visible"
             >
               <NuxtLink
+                v-if="isEligible(level)"
                 :to="`/classes/${degree}/${slug}/${level.level}`"
                 class="relative aspect-square rounded-xl overflow-hidden border shadow-lg shadow-black/20 transition-all duration-300 block"
                 :class="isEnrolled
@@ -127,7 +128,6 @@
                   :src="classData.image"
                   :alt="level.title"
                   class="absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover/level:scale-110"
-                  :class="isEligible(level) ? '' : 'blur-md group-hover/level:blur-none'"
                 />
 
                 <!-- Dark Overlay with gradient -->
@@ -181,6 +181,62 @@
                   <div class="mt-1.5 h-0.5 w-0 group-hover/level:w-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500" />
                 </div>
               </NuxtLink>
+
+              <!-- Locked Level Card (non-clickable) -->
+              <div
+                v-else
+                class="relative aspect-square rounded-xl overflow-hidden border border-white/10 shadow-lg shadow-black/20 cursor-not-allowed"
+              >
+                <!-- Background Image -->
+                <img
+                  :src="classData.image"
+                  :alt="level.title"
+                  class="absolute inset-0 w-full h-full object-cover blur-md"
+                />
+
+                <!-- Dark Overlay with gradient -->
+                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
+
+                <!-- Lock overlay -->
+                <div class="absolute inset-0 flex items-center justify-center z-20">
+                  <div class="flex flex-col items-center gap-1.5">
+                    <div class="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center">
+                      <UIcon name="i-lucide-lock" class="w-5 h-5 text-amber-400" />
+                    </div>
+                    <span class="text-[9px] text-white/60 font-medium uppercase tracking-wider">Locked</span>
+                  </div>
+                </div>
+
+                <!-- Level Number Badge -->
+                <div class="absolute top-2 right-2 z-10 flex items-center gap-1">
+                  <span
+                    class="px-2 py-0.5 rounded-md backdrop-blur-sm text-white text-[9px] font-bold"
+                    :class="isLevelCompleted(level.level) ? 'bg-emerald-500/80' : 'bg-white/20'"
+                  >
+                    Lvl {{ level.level }}
+                  </span>
+                </div>
+
+                <!-- Dependency Badges -->
+                <div v-if="level.dependencies.length" class="absolute top-2 left-2 z-10 flex flex-col gap-1">
+                  <span
+                    v-for="(dep, idx) in level.dependencies"
+                    :key="idx"
+                    class="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/80 backdrop-blur-sm text-white text-[8px] font-bold uppercase tracking-wider whitespace-nowrap"
+                    :title="`${dep.class} Level ${dep.level}`"
+                  >
+                    <UIcon name="i-lucide-lock" class="w-3 h-3" />
+                    <span>L{{ dep.level }}</span>
+                  </span>
+                </div>
+
+                <!-- Content Area -->
+                <div class="absolute bottom-0 left-0 right-0 p-3">
+                  <p class="text-white/40 text-xs font-bold leading-tight tracking-tight drop-shadow-md line-clamp-2">
+                    {{ level.title }}
+                  </p>
+                </div>
+              </div>
 
               <!-- Hover Tooltip -->
               <div

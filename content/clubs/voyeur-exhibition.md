@@ -1,6 +1,8 @@
 ---
 title: "Voyeur & Exhibition Club"
 description: "Explore the thrill of watching and being watched in controlled, consensual settings."
+clubActivities:
+  - exhibition-exposure
 activities:
   - type: challenge
     title: "Mirror Gaze"

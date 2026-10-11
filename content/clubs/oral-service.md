@@ -1,6 +1,14 @@
 ---
 title: "Oral Service Club"
 description: "Master the art of oral pleasure through practice, technique workshops, and peer feedback."
+clubActivities:
+  - oral-practice
+  - deep-throat
+  - oral-endurance
+  - face-sitting
+  - cum-consumption
+  - cum-drinking
+  - cum-bath
 activities:
   - type: challenge
     title: "Endurance Breathing"

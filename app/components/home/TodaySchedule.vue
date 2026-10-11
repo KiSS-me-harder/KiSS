@@ -1,108 +1,229 @@
 <script setup lang="ts">
-interface ScheduleItem {
-  time: string
+import { useEnrollmentStore } from '~/stores/enrollment'
+
+const store = useEnrollmentStore()
+const { app } = useRuntimeConfig()
+
+// Fetch all classes from content to get titles
+const { data: allClassesContent } = await useAsyncData('today-schedule-classes', () => queryCollection('classes').all())
+
+// Build enrolled classes list with metadata from content
+interface EnrolledClassInfo {
+  slug: string
   title: string
-  type: 'class' | 'detention' | 'event' | 'deadline'
-  description?: string
+  degree: string
+  degreeLabel: string
 }
 
-const scheduleItems = ref<ScheduleItem[]>([
-  { time: '09:00', title: 'Physical Play Basics', type: 'class', description: 'Room 101 - Massage techniques' },
-  { time: '10:30', title: 'Chastity Training', type: 'class', description: 'Room 205 - Device endurance' },
-  { time: '12:00', title: 'Break', type: 'event', description: 'Common area' },
-  { time: '13:00', title: 'Grirty Underwear', type: 'class', description: 'Room 303 - Heel walking practice' },
-  { time: '14:30', title: 'Daily affirmation due', type: 'deadline', description: 'Submit to instructor' },
-  { time: '15:00', title: 'Maid Service', type: 'class', description: 'Classroom - Cleaning rotation' },
-  { time: '16:30', title: 'Detention', type: 'detention', description: 'Room 204 - Polish shoes' },
-])
+const enrolledClasses = computed<EnrolledClassInfo[]>(() => {
+  const enrollments = store.enrollments.value
+  if (!allClassesContent.value || !enrollments || enrollments.length === 0) return []
 
-const typeConfig = (type: string) => {
-  switch (type) {
-    case 'class': return { icon: 'i-lucide-book-open', color: 'primary' as const }
-    case 'detention': return { icon: 'i-lucide-octagon-alert', color: 'error' as const }
-    case 'event': return { icon: 'i-lucide-calendar', color: 'success' as const }
-    case 'deadline': return { icon: 'i-lucide-clock-alert', color: 'warning' as const }
-    default: return { icon: 'i-lucide-circle', color: 'neutral' as const }
+  const classes: EnrolledClassInfo[] = []
+  for (const enrollment of enrollments) {
+    const { slug, className, degree } = enrollment
+
+    // Find the class index file to get the title
+    const prefix = `classes/${degree}/${className}/_index`
+    const classIndex = allClassesContent.value.find(item => (item as any).stem === prefix)
+
+    const title = (classIndex as any)?.title || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    const degreeLabel = degree.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+
+    classes.push({ slug, title, degree, degreeLabel })
   }
+
+  return classes
+})
+
+// Schedule entries from localStorage (same source as TodayScheduleEdit)
+interface ScheduleEntry {
+  id: number
+  classSlug: string
+  day: number // 0=Monday ... 6=Sunday
+  section: string
 }
 
-const now = new Date()
-const currentHour = now.getHours()
-const currentMinute = now.getMinutes()
-const currentTime = currentHour * 60 + currentMinute
+const scheduleEntries = ref<ScheduleEntry[]>([])
+function loadSchedule() {
+  if (!process.client) return
+  try {
+    const raw = localStorage.getItem('kiss-class-schedule')
+    if (raw) scheduleEntries.value = JSON.parse(raw) as ScheduleEntry[]
+  } catch { /* ignore */ }
+}
+loadSchedule()
 
-const isPast = (time: string) => {
-  const parts = time.split(':').map(Number)
-  const hours = parts[0] ?? 0
-  const minutes = parts[1] ?? 0
-  return hours * 60 + minutes < currentTime
+// Poll for changes from other tabs and same-tab edits
+if (process.client) {
+  const storageListener = (e: StorageEvent) => {
+    if (e.key === 'kiss-class-schedule' && e.newValue) {
+      try { scheduleEntries.value = JSON.parse(e.newValue) as ScheduleEntry[] } catch { /* ignore */ }
+    }
+  }
+  window.addEventListener('storage', storageListener)
+  const pollInterval = setInterval(() => loadSchedule(), 2000)
+  onUnmounted(() => {
+    window.removeEventListener('storage', storageListener)
+    clearInterval(pollInterval)
+  })
 }
 
-const isNow = (time: string) => {
-  const parts = time.split(':').map(Number)
-  const hours = parts[0] ?? 0
-  const minutes = parts[1] ?? 0
-  const diff = Math.abs(hours * 60 + minutes - currentTime)
-  return diff < 60
+// Today's day index (0=Monday ... 6=Sunday)
+const todayDayIndex = computed(() => {
+  const day = new Date().getDay() // 0=Sunday
+  return day === 0 ? 6 : day - 1 // Convert to 0=Monday
+})
+
+// Slot time ranges
+const slotTimeRanges: Record<string, { label: string; timeStart: string; timeEnd: string; icon: string }> = {
+  morning: { label: 'Morning', timeStart: '06:00', timeEnd: '12:00', icon: 'i-lucide-sunrise' },
+  lunch: { label: 'Lunch', timeStart: '12:00', timeEnd: '14:00', icon: 'i-lucide-sun' },
+  evening: { label: 'Evening', timeStart: '14:00', timeEnd: '20:00', icon: 'i-lucide-sunset' },
+  bedtime: { label: 'Bedtime', timeStart: '20:00', timeEnd: '23:00', icon: 'i-lucide-moon' }
 }
 
-const getColorClass = (color: string) => `text-${color}`
+// Get today's scheduled classes
+const todayScheduleEntries = computed(() => {
+  return scheduleEntries.value.filter(e => e.day === todayDayIndex.value)
+})
+
+// Build schedule items grouped by time slot
+const scheduleItems = computed(() => {
+  const items: { slot: string; slotLabel: string; timeRange: string; icon: string; classes: { slug: string; title: string; degreeLabel: string }[] }[] = []
+
+  for (const [slotId, slotInfo] of Object.entries(slotTimeRanges)) {
+    const slotEntries = todayScheduleEntries.value.filter(e => e.section === slotId)
+    if (slotEntries.length === 0) continue
+
+    const classes = slotEntries.map(entry => {
+      const cls = enrolledClasses.value.find(c => c.slug === entry.classSlug)
+      return {
+        slug: entry.classSlug,
+        title: cls?.title || entry.classSlug,
+        degreeLabel: cls?.degreeLabel || ''
+      }
+    })
+
+    items.push({
+      slot: slotId,
+      slotLabel: slotInfo.label,
+      timeRange: `${slotInfo.timeStart} – ${slotInfo.timeEnd}`,
+      icon: slotInfo.icon,
+      classes
+    })
+  }
+
+  return items
+})
+
+const totalCount = computed(() => todayScheduleEntries.value.length)
+
+// Track which classes have been completed today (via daily task completion)
+const todayKey = computed(() => {
+  const d = new Date()
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+})
+
+const dailyCompleted = ref<Set<string>>(new Set())
+function loadDailyCompleted() {
+  if (!process.client) return
+  try {
+    const raw = localStorage.getItem(`kiss-daily-${todayKey.value}`)
+    if (raw) dailyCompleted.value = new Set(JSON.parse(raw) as string[])
+  } catch { /* ignore */ }
+}
+loadDailyCompleted()
+
+// Watch for daily completion changes
+if (process.client) {
+  const pollInterval = setInterval(() => loadDailyCompleted(), 2000)
+  onUnmounted(() => clearInterval(pollInterval))
+}
+
+const isClassCompletedToday = (classSlug: string) => {
+  // Check if any exam tasks for this class are completed today
+  return dailyCompleted.value.has(`${classSlug}-completed`)
+}
 </script>
 
 <template>
   <UCard>
     <template #header>
-      <div class="flex items-center gap-2">
-        <UIcon name="i-lucide-calendar-clock" class="size-5 text-muted" />
-        <h2 class="text-base font-semibold">
-          Today's Schedule
-        </h2>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <UIcon name="i-lucide-calendar-clock" class="size-5 text-muted" />
+          <h2 class="text-base font-semibold">
+            Today's Schedule
+          </h2>
+        </div>
+        <span v-if="totalCount > 0" class="text-xs text-muted">
+          {{ totalCount }} class{{ totalCount !== 1 ? 'es' : '' }} scheduled
+        </span>
       </div>
     </template>
 
-    <div class="space-y-0">
+    <!-- No classes scheduled today -->
+    <div v-if="scheduleItems.length === 0" class="text-center py-8 text-muted">
+      <UIcon name="i-lucide-calendar-plus" class="w-10 h-10 mx-auto mb-3 opacity-50" />
+      <p class="text-sm font-medium mb-1">No classes scheduled today</p>
+      <p class="text-xs mb-4">Go to the Schedule tab to assign your enrolled classes to days and time slots.</p>
+      <UButton variant="outline" size="sm" @click="$router.push('/today#Schedule')">
+        <template #leading>
+          <UIcon name="i-lucide-calendar-clock" class="size-3" />
+        </template>
+        Open Schedule
+      </UButton>
+    </div>
+
+    <!-- Schedule groups by time slot -->
+    <div v-else class="space-y-4">
       <div
-        v-for="(item, index) in scheduleItems"
-        :key="index"
-        class="flex gap-4 relative"
-        :class="{ 'opacity-50': isPast(item.time) }"
+        v-for="group in scheduleItems"
+        :key="group.slot"
+        class="space-y-2"
       >
-        <div class="flex flex-col items-center">
-          <div
-            class="size-3 rounded-full ring-2 ring-offset-2 ring-offset-transparent shrink-0"
-            :class="{
-              'bg-primary ring-primary': isNow(item.time),
-              'bg-muted ring-muted': !isNow(item.time)
-            }"
-          />
-          <div
-            v-if="index < scheduleItems.length - 1"
-            class="w-px flex-1 bg-default mt-1"
-          />
+        <!-- Slot header -->
+        <div class="flex items-center gap-2 text-xs text-muted font-medium uppercase tracking-wider">
+          <UIcon :name="group.icon" class="size-3" />
+          <span>{{ group.slotLabel }}</span>
+          <span class="font-mono">{{ group.timeRange }}</span>
         </div>
 
-        <div class="flex-1 pb-4">
-          <div class="flex items-center gap-2 mb-0.5">
-            <UIcon :name="typeConfig(item.type).icon" class="size-4" :class="getColorClass(typeConfig(item.type).color)" />
-            <span class="text-sm font-medium text-highlighted">
-              {{ item.title }}
-            </span>
-            <UBadge
-              v-if="isNow(item.time)"
-              label="Now"
-              color="primary"
-              variant="subtle"
-              class="text-xs"
-            />
+        <!-- Classes in this slot -->
+        <div
+          v-for="cls in group.classes"
+          :key="cls.slug"
+          class="flex items-center gap-3 p-3 rounded-lg border transition-colors group"
+          :class="isClassCompletedToday(cls.slug) ? 'border-success/50 bg-success/5' : 'border-default/50 hover:border-primary/50'"
+        >
+          <!-- Status indicator -->
+          <div
+            class="w-4 h-4 rounded border flex items-center justify-center shrink-0"
+            :class="isClassCompletedToday(cls.slug) ? 'bg-success border-success' : 'border-muted'"
+          >
+            <UIcon v-if="isClassCompletedToday(cls.slug)" name="i-lucide-check" class="size-3 text-success-foreground" />
           </div>
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-muted font-mono">
-              {{ item.time }}
-            </span>
-            <span v-if="item.description" class="text-xs text-muted">
-              {{ item.description }}
-            </span>
+
+          <!-- Class icon -->
+          <div class="w-6 h-6 rounded bg-purple-500/20 flex items-center justify-center shrink-0">
+            <UIcon name="i-lucide-book-open" class="size-3 text-purple-400" />
           </div>
+
+          <div class="flex-1 min-w-0">
+            <span class="text-sm flex-1 truncate" :class="{ 'line-through text-muted': isClassCompletedToday(cls.slug) }">
+              {{ cls.title }}
+            </span>
+            <span class="text-xs text-muted">{{ cls.degreeLabel }}</span>
+          </div>
+
+          <!-- Class link -->
+          <NuxtLink
+            :to="`/classes/${cls.slug}`"
+            class="text-xs text-primary hover:underline shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            Open
+          </NuxtLink>
         </div>
       </div>
     </div>
