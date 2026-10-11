@@ -108,7 +108,7 @@ useHead({
 
 const { data: punishments } = await useAsyncData('punishments', () => {
   return queryCollection('punishments').all()
-}, { server: false })
+})
 
 const items = ref<BreadcrumbItem[]>([
   {

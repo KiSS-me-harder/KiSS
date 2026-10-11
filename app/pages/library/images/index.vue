@@ -110,7 +110,7 @@ const items = ref<BreadcrumbItem[]>([
   }
 ])
 
-const { data: libraryItems } = await useAsyncData('library-images', () => queryCollection('library').all(), { server: false })
+const { data: libraryItems } = await useAsyncData('library-images', () => queryCollection('library').all())
 
 const searchQuery = ref('')
 

@@ -12,8 +12,6 @@
 import { AgeVerificationModal } from '#components'
 
 const overlay = useOverlay()
-
-const modal = overlay.create(AgeVerificationModal)
 const ageCookie = useCookie('age-verification')
 const isAgeYes = computed(() => ageCookie.value === 'yes')
 
@@ -48,9 +46,12 @@ useSeoMeta({
   twitterCard: 'summary_large_image'
 })
 
+// Age verification modal is client-only
+const modal = ref<any>(null)
 onMounted(() => {
+  modal.value = overlay.create(AgeVerificationModal)
   if (ageCookie.value !== 'yes') {
-    modal.open()
+    modal.value.open()
   }
 })
 </script>

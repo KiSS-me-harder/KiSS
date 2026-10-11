@@ -108,7 +108,7 @@ useHead({
 
 const { data: clubs } = await useAsyncData('clubs', () => {
   return queryCollection('clubs').all()
-}, { server: false })
+})
 
 const items = ref<BreadcrumbItem[]>([
   {

@@ -114,19 +114,19 @@ interface TeacherData {
 
 const { data: facultyData } = await useAsyncData('faculty-all', () => {
   return queryCollection('faculty').all() as unknown as Promise<any[]>
-}, { server: false })
+})
 
 const teacher = computed(() => {
   const item = facultyData.value?.find(t => t.path.includes(`/${slug}`))
   if (!item) return null
   return {
     title: item.title,
-    role: item.meta?.role || '',
-    department: item.meta?.department || '',
-    avatar: item.meta?.avatar || 'i-lucide-user',
-    color: item.meta?.color || 'purple',
+    role: item.role || '',
+    department: item.department || '',
+    avatar: item.avatar || 'i-lucide-user',
+    color: item.color || 'purple',
     description: item.description || '',
-    systemPrompt: item.meta?.systemPrompt || '',
+    systemPrompt: item.systemPrompt || '',
     path: item.path,
     id: item.id
   }

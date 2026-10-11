@@ -221,8 +221,7 @@ const { data: allClasses } = await useAsyncData(
   () => `class-levels-${classSlug.value}`,
   () => queryCollection('classes').all(),
   {
-    watch: [classSlug],
-    server: false
+    watch: [classSlug]
   }
 )
 
@@ -243,7 +242,7 @@ const classData = computed(() => {
 
   // Get title from first item
   const firstItem = classes[0]
-  const title = (firstItem as any).meta?.class || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+  const title = (firstItem as any).class || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
   // Get description from first level - extract full body text for a longer description
   let description = ''
@@ -283,7 +282,7 @@ const classLookup = computed(() => {
   if (!allClasses.value) return new Map()
   const map = new Map<string, { stem: string; title: string }>()
   for (const item of allClasses.value) {
-    const key = `${(item as any).meta?.class}-${(item as any).meta?.level}`
+    const key = `${(item as any).class}-${(item as any).level}`
     map.set(key, {
       stem: (item as any).stem,
       title: (item as any).title
@@ -309,7 +308,7 @@ const levelGroups = computed(() => {
   ]
 
   for (const item of classes) {
-    const level = parseInt((item as any).meta?.level, 10)
+    const level = parseInt((item as any).level, 10)
     let groupIndex: number | undefined
 
     if (level >= 100 && level < 200) {
@@ -325,7 +324,7 @@ const levelGroups = computed(() => {
     const gi = groups[groupIndex]
     if (gi) {
       // Resolve dependencies with titles
-      const rawDeps = (item as any).meta?.dependencies || []
+      const rawDeps = (item as any).dependencies || []
       const dependencies = rawDeps.map((dep: any) => {
         const lookupKey = `${dep.class}-${dep.level}`
         const lookup = classLookup.value.get(lookupKey)
@@ -420,7 +419,7 @@ function toggleLevelComplete(level: number) {
 }
 
 function handleEnroll() {
-  const levels = filteredClasses.value.map(item => parseInt((item as any).meta?.level, 10))
+  const levels = filteredClasses.value.map(item => parseInt((item as any).level, 10))
   store.enrollInClass(classSlug.value, slug.value, degree.value, levels)
 }
 

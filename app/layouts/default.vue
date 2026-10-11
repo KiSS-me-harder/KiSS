@@ -50,11 +50,11 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 const open = ref(false)
 const route = useRoute()
 
-const { data: degrees } = await useAsyncData(() => queryCollection('degrees').all(), { server: false })
-const { data: allClasses } = await useAsyncData(() => queryCollection('classes').all(), { server: false })
-const { data: clubs } = await useAsyncData(() => queryCollection('clubs').all(), { server: false })
-const { data: punishments } = await useAsyncData(() => queryCollection('punishments').all(), { server: false })
-const { data: faculty } = await useAsyncData(() => queryCollection('faculty').all(), { server: false })
+const { data: degrees } = await useAsyncData('layout-degrees', () => queryCollection('degrees').all())
+const { data: allClasses } = await useAsyncData('layout-classes', () => queryCollection('classes').all())
+const { data: clubs } = await useAsyncData('layout-clubs', () => queryCollection('clubs').all())
+const { data: punishments } = await useAsyncData('layout-punishments', () => queryCollection('punishments').all())
+const { data: faculty } = await useAsyncData('layout-faculty', () => queryCollection('faculty').all())
 
 const degreesChildren = computed(() =>
   degrees.value?.map(item => ({
@@ -76,7 +76,7 @@ const classesChildren = computed(() => {
     const className = parts[2]
     const classSlug = `${degree}/${className}`
     if (!classMap.has(classSlug)) {
-      const classTitle = (item as any).meta?.class || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+      const classTitle = (item as any).class || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
       classMap.set(classSlug, {
         label: classTitle,
         to: `/classes/${classSlug}`

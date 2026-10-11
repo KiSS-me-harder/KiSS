@@ -12,14 +12,13 @@ const { data: home } = await useAsyncData(
     .path(`/degrees/${id.value}`)
     .first(),
   {
-    watch: [id],
-    server: false
+    watch: [id]
   }
 )
 
 const { data: allClasses } = await useAsyncData('all-classes-degree', () => {
   return queryCollection('classes').all()
-}, { server: false })
+})
 
 const title = computed(() => home.value?.title)
 const description = computed(() => home.value?.description)
@@ -101,7 +100,7 @@ interface DegreeLevel {
 }
 
 const degreeLevels = computed<DegreeLevel[]>(() => {
-  return home.value?.meta?.levels || []
+  return home.value?.levels || []
 })
 
 // Selected target level index
@@ -148,9 +147,9 @@ const classInfos = computed<ClassInfo[]>(() => {
     const classLevels = allClasses.value
       .filter(item => (item as any).stem?.startsWith(prefix))
       .map(item => ({
-        level: parseInt((item as any).meta?.level, 10),
+        level: parseInt((item as any).level, 10),
         title: (item as any).title,
-        classTitle: (item as any).meta?.class
+        classTitle: (item as any).class
       }))
       .filter(item => !isNaN(item.level))
       .sort((a, b) => a.level - b.level)
@@ -220,7 +219,7 @@ function handleEnrollInDegree() {
       const prefix = `classes/${dc.slug}/`
       const levels = allClasses.value!
         .filter(item => (item as any).stem?.startsWith(prefix))
-        .map(item => parseInt((item as any).meta?.level, 10))
+        .map(item => parseInt((item as any).level, 10))
         .filter(l => !isNaN(l) && l <= dc.maxLevel)
         .sort((a, b) => a - b)
 
@@ -255,7 +254,7 @@ function isTitleCompleted(titleIndex: number): boolean {
     const prefix = `classes/${dc.slug}/`
     const levels = allClasses.value
       .filter(item => (item as any).stem?.startsWith(prefix))
-      .map(item => parseInt((item as any).meta?.level, 10))
+      .map(item => parseInt((item as any).level, 10))
       .filter(l => !isNaN(l) && l <= dc.maxLevel)
       .sort((a, b) => a - b)
 

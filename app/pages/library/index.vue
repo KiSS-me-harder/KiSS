@@ -219,7 +219,7 @@ const items = ref<BreadcrumbItem[]>([
   }
 ])
 
-const { data: libraryItems } = await useAsyncData('library', () => queryCollection('library').all(), { server: false })
+const { data: libraryItems } = await useAsyncData('library', () => queryCollection('library').all())
 
 interface LibraryItem {
   path: string

@@ -11,7 +11,7 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@nuxtjs/seo'
   ],
-  ssr: false,
+  ssr: true,
   devtools: {
     enabled: false
   },

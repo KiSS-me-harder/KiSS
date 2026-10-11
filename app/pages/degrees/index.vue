@@ -120,7 +120,7 @@ useHead({
 
 const { data: degrees } = await useAsyncData('degrees', () => {
   return queryCollection('degrees').all()
-}, { server: false })
+})
 
 const items = ref<BreadcrumbItem[]>([
   {

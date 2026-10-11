@@ -11,8 +11,7 @@ const { data: club } = await useAsyncData(
     .path(`/clubs/${slug.value}`)
     .first(),
   {
-    watch: [slug],
-    server: false
+    watch: [slug]
   }
 )
 
@@ -39,18 +38,21 @@ const completedActivities = ref<Set<string>>(new Set())
 
 // Load completed activities from localStorage
 const storageKey = computed(() => `club-activities-${slug.value}`)
-try {
-  const stored = localStorage.getItem(storageKey.value)
-  if (stored) {
-    completedActivities.value = new Set(JSON.parse(stored))
+if (process.client) {
+  try {
+    const stored = localStorage.getItem(storageKey.value)
+    if (stored) {
+      completedActivities.value = new Set(JSON.parse(stored))
+    }
   }
-}
-catch {
-  // Ignore localStorage errors
+  catch {
+    // Ignore localStorage errors
+  }
 }
 
 // Persist completed activities
 watch(completedActivities, (val) => {
+  if (!process.client) return
   try {
     localStorage.setItem(storageKey.value, JSON.stringify([...val]))
   }

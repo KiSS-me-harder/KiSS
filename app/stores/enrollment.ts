@@ -507,22 +507,25 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
   // --- Persistence via localStorage ---
 
   function saveToStorage() {
-    const data = {
-      profile: profile.value,
-      enrollments: enrollments.value,
-      flashcardAnswers: flashcardAnswers.value,
-      cardSpacedRep: cardSpacedRep.value,
-      detentionCount: detentionCount.value,
-      version: 3
-    }
-    try {
-      localStorage.setItem('kiss-enrollment', JSON.stringify(data))
-    } catch {
-      // Storage might be unavailable
+    if (process.client) {
+      const data = {
+        profile: profile.value,
+        enrollments: enrollments.value,
+        flashcardAnswers: flashcardAnswers.value,
+        cardSpacedRep: cardSpacedRep.value,
+        detentionCount: detentionCount.value,
+        version: 3
+      }
+      try {
+        localStorage.setItem('kiss-enrollment', JSON.stringify(data))
+      } catch {
+        // Storage might be unavailable
+      }
     }
   }
 
   function loadFromStorage() {
+    if (!process.client) return
     try {
       const raw = localStorage.getItem('kiss-enrollment')
       if (!raw) return
@@ -549,8 +552,10 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
     }
   }
 
-  // Load on init
-  loadFromStorage()
+  // Load on init (client-side only)
+  if (process.client) {
+    loadFromStorage()
+  }
 
   // Auto-save on changes
   watch([profile, enrollments, flashcardAnswers, cardSpacedRep, detentionCount], () => {

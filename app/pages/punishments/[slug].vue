@@ -11,8 +11,7 @@ const { data: punishment } = await useAsyncData(
     .path(`/punishments/${slug.value}`)
     .first(),
   {
-    watch: [slug],
-    server: false
+    watch: [slug]
   }
 )
 

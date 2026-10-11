@@ -214,13 +214,11 @@ const route = useRoute()
 const slug = route.params.slug as string
 
 const { data: itemRaw } = await useAsyncData(`library-${slug}`, () =>
-  queryCollection('library').path(`/library/${slug}`).first(),
-  { server: false }
+  queryCollection('library').path(`/library/${slug}`).first()
 )
 
 const { data: allItemsRaw } = await useAsyncData('library-all', () =>
-  queryCollection('library').all(),
-  { server: false }
+  queryCollection('library').all()
 )
 
 const item = computed<LibraryItem | null>(() => itemRaw.value as unknown as LibraryItem | null)

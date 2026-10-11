@@ -191,7 +191,7 @@ interface LevelGroup {
 
 const { data: allClasses } = await useAsyncData('all-classes', () => {
   return queryCollection('classes').all()
-}, { server: false })
+})
 
 // Build a map of class slugs to their total level count
 const classLevelCounts = computed(() => {
@@ -201,7 +201,7 @@ const classLevelCounts = computed(() => {
     const parts = (item as any).stem?.split('/') || []
     if (parts.length < 4) continue
     const classSlug = `${parts[1]}/${parts[2]}`
-    const level = parseInt((item as any).meta?.level, 10)
+    const level = parseInt((item as any).level, 10)
     if (!map.has(classSlug)) {
       map.set(classSlug, new Set())
     }
@@ -235,7 +235,7 @@ const levelGroups = computed(() => {
     const seenClasses = new Set<string>()
 
     for (const item of classesData) {
-      const level = parseInt((item as any).meta?.level, 10)
+      const level = parseInt((item as any).level, 10)
       // Only include the base level of each tier
       if (level !== tierLevel) continue
 
@@ -251,7 +251,7 @@ const levelGroups = computed(() => {
       seenClasses.add(classSlug)
 
       const degreeLabel = degree.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-      const classTitle = (item as any).meta?.class || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+      const classTitle = (item as any).class || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
       // Extract description from body text
       let description = ''

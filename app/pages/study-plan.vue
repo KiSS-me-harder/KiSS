@@ -436,11 +436,11 @@ interface GraphEdge {
 
 const { data: allClasses } = await useAsyncData('study-plan-classes', () => {
   return queryCollection('classes').all()
-}, { server: false })
+})
 
 const { data: allDegrees } = await useAsyncData('study-plan-degrees', () => {
   return queryCollection('degrees').all()
-}, { server: false })
+})
 
 /* ── Degree titles map: degree slug → list of titles with their class requirements ── */
 
@@ -456,7 +456,7 @@ const degreeTitlesMap = computed(() => {
   for (const degree of allDegrees.value) {
     const stem = (degree as any).stem || ''
     const slug = stem.split('/').pop() || ''
-    const levels = (degree as any).meta?.levels || []
+    const levels = (degree as any).levels || []
     const titles: DegreeTitle[] = levels.map((l: any) => ({
       name: l.name || '',
       description: l.description || '',
@@ -499,10 +499,10 @@ const classMap = computed(() => {
     const degree = parts[1]
     const classSlug = parts[2]
     const key = `${degree}/${classSlug}`
-    const level = parseInt((item as any).meta?.level, 10)
-    const classTitle = (item as any).meta?.class || classSlug.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    const level = parseInt((item as any).level, 10)
+    const classTitle = (item as any).class || classSlug.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
     const degreeLabel = degree.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-    const deps = (item as any).meta?.dependencies || []
+    const deps = (item as any).dependencies || []
 
     if (!map.has(key)) {
       map.set(key, { degree, degreeLabel, className: classTitle, classSlug, levels: [], dependencies: new Map() })
