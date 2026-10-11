@@ -22,7 +22,9 @@
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
-                <h2 class="text-white text-lg font-bold truncate">{{ thread.title }}</h2>
+                <h2 class="text-white text-lg font-bold truncate">
+                  {{ thread.title }}
+                </h2>
                 <UBadge
                   :label="getCategoryLabel(thread.category)"
                   :color="getCategoryColor(thread.category) as any"
@@ -57,7 +59,9 @@
           </div>
           <!-- Original Post -->
           <div class="mt-3 p-3 rounded-lg bg-white/5 border border-white/5">
-            <p class="text-white/80 text-sm whitespace-pre-wrap">{{ thread.message }}</p>
+            <p class="text-white/80 text-sm whitespace-pre-wrap">
+              {{ thread.message }}
+            </p>
           </div>
         </div>
 
@@ -65,8 +69,12 @@
         <div class="flex-1 overflow-y-auto rounded-xl bg-white/5 border border-white/10 p-4 mb-2">
           <div v-if="replies.length === 0" class="flex flex-col items-center justify-center h-full text-center">
             <UIcon name="i-lucide-message-circle" class="w-12 h-12 text-white/20 mb-3" />
-            <p class="text-white/40 text-sm mb-1">No replies yet</p>
-            <p class="text-white/30 text-xs">Be the first to respond to this thread</p>
+            <p class="text-white/40 text-sm mb-1">
+              No replies yet
+            </p>
+            <p class="text-white/30 text-xs">
+              Be the first to respond to this thread
+            </p>
           </div>
           <div v-else class="space-y-3">
             <div
@@ -82,11 +90,15 @@
               </div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
-                  <p class="text-white text-sm font-semibold">{{ reply.author }}</p>
+                  <p class="text-white text-sm font-semibold">
+                    {{ reply.author }}
+                  </p>
                   <span class="text-white/30 text-xs">{{ reply.time }}</span>
                 </div>
                 <div class="mt-1 p-3 rounded-lg bg-white/5 border border-white/5">
-                  <p class="text-white/80 text-sm whitespace-pre-wrap">{{ reply.message }}</p>
+                  <p class="text-white/80 text-sm whitespace-pre-wrap">
+                    {{ reply.message }}
+                  </p>
                 </div>
               </div>
             </div>
@@ -142,7 +154,7 @@ interface Thread {
 
 // Sample thread data (in a real app, this would come from an API)
 const allThreads: Record<string, Thread> = {
-  '1': {
+  1: {
     id: '1',
     title: 'Welcome to the new semester!',
     message: 'Hey everyone! Excited to see so many new faces this semester. Let\'s make it a great one!\n\nRemember to check out the updated class schedules and don\'t forget to sign up for clubs if you haven\'t already.\n\nLooking forward to meeting all of you!',
@@ -154,7 +166,7 @@ const allThreads: Record<string, Thread> = {
     time: '2 hours ago',
     pinned: true
   },
-  '2': {
+  2: {
     id: '2',
     title: 'Study group for Anal Fundamentals 100',
     message: 'Looking for classmates to form a study group for next week\'s exam. Who\'s interested?\n\nI was thinking we could meet twice a week in the library. Let me know your availability!',
@@ -166,7 +178,7 @@ const allThreads: Record<string, Thread> = {
     time: '5 hours ago',
     pinned: false
   },
-  '3': {
+  3: {
     id: '3',
     title: 'Fitness Club - New Schedule',
     message: 'Updated workout schedule for this month:\n\n- Monday: 6 PM - Cardio & Core\n- Wednesday: 6 PM - Strength Training\n- Friday: 5 PM - Flexibility & Recovery\n\nAll sessions are held in the main gym. New members are always welcome!',
@@ -178,7 +190,7 @@ const allThreads: Record<string, Thread> = {
     time: '1 day ago',
     pinned: false
   },
-  '4': {
+  4: {
     id: '4',
     title: 'New here - Introduction!',
     message: 'Hi everyone, I just joined the school. Currently working on my first degree. Looking forward to learning!\n\nA bit about me: I\'m new to all this but very eager to learn. Any tips for beginners would be greatly appreciated!',
@@ -190,7 +202,7 @@ const allThreads: Record<string, Thread> = {
     time: '2 days ago',
     pinned: false
   },
-  '5': {
+  5: {
     id: '5',
     title: 'Question about degree prerequisites',
     message: 'Can someone explain the difference between the Sissy and Obedient degree paths? Trying to decide which to pursue.\n\nI\'m particularly interested in understanding the class requirements and how they differ.',
@@ -290,16 +302,16 @@ interface Reply {
 
 // Sample replies
 const sampleReplies: Record<string, Reply[]> = {
-  '1': [
+  1: [
     { author: 'Student_A', avatar: 'i-lucide-user', color: 'blue', message: 'Welcome Professor! Excited for this semester!', time: '1 hour ago' },
     { author: 'NewStudent_42', avatar: 'i-lucide-sparkles', color: 'purple', message: 'Thanks for the warm welcome! Looking forward to it.', time: '1 hour ago' },
     { author: 'Coach Flex', avatar: 'i-lucide-dumbbell', color: 'green', message: 'Let\'s make it the best one yet! 💪', time: '45 min ago' }
   ],
-  '2': [
+  2: [
     { author: 'Student_B', avatar: 'i-lucide-user', color: 'green', message: 'I\'m in! Tuesday and Thursday work best for me.', time: '4 hours ago' },
     { author: 'Student_C', avatar: 'i-lucide-user', color: 'yellow', message: 'Count me in too. The library sounds good.', time: '3 hours ago' }
   ],
-  '4': [
+  4: [
     { author: 'Professor Velvet', avatar: 'i-lucide-heart', color: 'pink', message: 'Welcome to the school! Don\'t hesitate to ask questions.', time: '1 day ago' },
     { author: 'Student_A', avatar: 'i-lucide-user', color: 'blue', message: 'Hey! Start with the beginner classes, they really set a good foundation.', time: '1 day ago' }
   ]
@@ -317,7 +329,7 @@ function getAvatarBgClass(color: string) {
     purple: 'bg-purple-500/90',
     green: 'bg-green-500/90',
     blue: 'bg-blue-500/90',
-    yellow: 'bg-yellow-500/90',
+    yellow: 'bg-yellow-500/90'
   }
   return bgColors[color.toLowerCase()] || 'bg-gray-500/90'
 }

@@ -150,8 +150,7 @@ function pickNextCard() {
       const randomIndex = Math.floor(Math.random() * allDeckCards.value.length)
       currentCardId.value = allDeckCards.value[randomIndex]!.id
     }
-  }
-  else {
+  } else {
     // Pick the top priority card (weakest degree area)
     currentCardId.value = dueCards[0]!.cardId
   }
@@ -233,7 +232,7 @@ const currentCardRep = computed(() => {
 // Only includes classes that have cards in the current deck
 const classKnowledgeBreakdown = computed(() => {
   // Build a map of class slugs that have cards in the deck
-  const classSlugsInDeck = new Map<string, { className: string; classSlug: string; degree: string; cardCount: number }>()
+  const classSlugsInDeck = new Map<string, { className: string, classSlug: string, degree: string, cardCount: number }>()
   for (const card of allDeckCards.value) {
     const key = card.classSlug
     const existing = classSlugsInDeck.get(key)
@@ -245,7 +244,7 @@ const classKnowledgeBreakdown = computed(() => {
   }
 
   // Aggregate spaced rep data by class name
-  const classData: Record<string, { correct: number; incorrect: number }> = {}
+  const classData: Record<string, { correct: number, incorrect: number }> = {}
   for (const entry of store.cardSpacedRep) {
     if (!classData[entry.className]) {
       classData[entry.className] = { correct: 0, incorrect: 0 }
@@ -255,7 +254,7 @@ const classKnowledgeBreakdown = computed(() => {
   }
 
   // Build result: only classes that have cards in the deck
-  const result: Array<{ className: string; classSlug: string; degree: string; score: number; cardsReviewed: number; cardCount: number; totalIncorrect: number }> = []
+  const result: Array<{ className: string, classSlug: string, degree: string, score: number, cardsReviewed: number, cardCount: number, totalIncorrect: number }> = []
   for (const [, info] of classSlugsInDeck) {
     const data = classData[info.className] || { correct: 0, incorrect: 0 }
     const total = data.correct + data.incorrect
@@ -317,8 +316,12 @@ const classKnowledgeBreakdown = computed(() => {
             <!-- Empty state -->
             <div v-if="allDeckCards.length === 0" class="rounded-2xl shadow-2xl border-2 border-border/60 bg-card p-12 text-center">
               <UIcon name="i-lucide-book-open" class="size-16 text-muted/40 mx-auto mb-4" />
-              <h2 class="text-lg font-bold text-foreground mb-2">No Flashcards Available</h2>
-              <p class="text-sm text-muted mb-6">Enroll in classes to build your flashcard deck. Cards are pulled from all your enrolled classes.</p>
+              <h2 class="text-lg font-bold text-foreground mb-2">
+                No Flashcards Available
+              </h2>
+              <p class="text-sm text-muted mb-6">
+                Enroll in classes to build your flashcard deck. Cards are pulled from all your enrolled classes.
+              </p>
               <UButton to="/classes" color="primary">
                 <UIcon name="i-lucide-compass" class="size-4 mr-1" />
                 Browse Classes
@@ -356,7 +359,9 @@ const classKnowledgeBreakdown = computed(() => {
               <div class="flex flex-col items-center justify-center flex-1 px-16 pt-16 pb-16">
                 <!-- Question with stats -->
                 <div class="flex items-center gap-3 mb-5">
-                  <p class="text-xs text-muted-foreground uppercase tracking-widest font-medium">Question</p>
+                  <p class="text-xs text-muted-foreground uppercase tracking-widest font-medium">
+                    Question
+                  </p>
                   <span v-if="currentCard && statsSummary.totalCards > 0" class="text-[10px] text-muted-foreground/60">
                     {{ statsSummary.dueCount }} due · {{ statsSummary.totalCards }} total
                   </span>
@@ -415,25 +420,43 @@ const classKnowledgeBreakdown = computed(() => {
             <template #header>
               <div class="flex items-center gap-2">
                 <UIcon name="i-lucide-bar-chart-3" class="size-4 text-purple-400" />
-                <h2 class="text-base font-semibold">Study Stats</h2>
+                <h2 class="text-base font-semibold">
+                  Study Stats
+                </h2>
               </div>
             </template>
             <div class="grid grid-cols-2 gap-3">
               <div class="p-3 rounded-lg bg-white/5 border border-white/10">
-                <p class="text-[10px] text-muted uppercase tracking-wider">Total Cards</p>
-                <p class="text-2xl font-bold text-white">{{ statsSummary.totalCards }}</p>
+                <p class="text-[10px] text-muted uppercase tracking-wider">
+                  Total Cards
+                </p>
+                <p class="text-2xl font-bold text-white">
+                  {{ statsSummary.totalCards }}
+                </p>
               </div>
               <div class="p-3 rounded-lg bg-white/5 border border-white/10">
-                <p class="text-[10px] text-muted uppercase tracking-wider">Due Now</p>
-                <p class="text-2xl font-bold text-amber-400">{{ statsSummary.dueCount }}</p>
+                <p class="text-[10px] text-muted uppercase tracking-wider">
+                  Due Now
+                </p>
+                <p class="text-2xl font-bold text-amber-400">
+                  {{ statsSummary.dueCount }}
+                </p>
               </div>
               <div class="p-3 rounded-lg bg-white/5 border border-white/10">
-                <p class="text-[10px] text-muted uppercase tracking-wider">Reviewed</p>
-                <p class="text-2xl font-bold text-emerald-400">{{ statsSummary.reviewedCards }}</p>
+                <p class="text-[10px] text-muted uppercase tracking-wider">
+                  Reviewed
+                </p>
+                <p class="text-2xl font-bold text-emerald-400">
+                  {{ statsSummary.reviewedCards }}
+                </p>
               </div>
               <div class="p-3 rounded-lg bg-white/5 border border-white/10">
-                <p class="text-[10px] text-muted uppercase tracking-wider">Mastered</p>
-                <p class="text-2xl font-bold text-amber-400">{{ statsSummary.masteredCards }}</p>
+                <p class="text-[10px] text-muted uppercase tracking-wider">
+                  Mastered
+                </p>
+                <p class="text-2xl font-bold text-amber-400">
+                  {{ statsSummary.masteredCards }}
+                </p>
               </div>
             </div>
           </UCard>
@@ -443,7 +466,9 @@ const classKnowledgeBreakdown = computed(() => {
             <template #header>
               <div class="flex items-center gap-2">
                 <UIcon name="i-lucide-book-open" class="size-4 text-emerald-400" />
-                <h2 class="text-base font-semibold">Class Focus</h2>
+                <h2 class="text-base font-semibold">
+                  Class Focus
+                </h2>
               </div>
             </template>
             <p class="text-[11px] text-muted mb-3">
@@ -486,7 +511,9 @@ const classKnowledgeBreakdown = computed(() => {
             <template #header>
               <div class="flex items-center gap-2">
                 <UIcon name="i-lucide-brain" class="size-4 text-amber-400" />
-                <h2 class="text-base font-semibold">Knowledge by Degree</h2>
+                <h2 class="text-base font-semibold">
+                  Knowledge by Degree
+                </h2>
               </div>
             </template>
             <p class="text-[11px] text-muted mb-3">
@@ -522,7 +549,9 @@ const classKnowledgeBreakdown = computed(() => {
             <template #header>
               <div class="flex items-center gap-2">
                 <UIcon name="i-lucide-info" class="size-4 text-blue-400" />
-                <h2 class="text-base font-semibold">Card Details</h2>
+                <h2 class="text-base font-semibold">
+                  Card Details
+                </h2>
               </div>
             </template>
             <div class="space-y-2 text-sm">
@@ -640,4 +669,3 @@ const classKnowledgeBreakdown = computed(() => {
   }
 }
 </style>
-

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { useEnrollmentStore } from '~/stores/enrollment'
+import { useScheduleStore } from '~/stores/schedule'
 
 const store = useEnrollmentStore()
+const scheduleStore = useScheduleStore()
 
 const now = new Date()
 const hours = now.getHours()
@@ -75,39 +77,18 @@ const slotDefinitions: RoutineSlotDef[] = [
   { id: 'bedtime', title: 'Bedtime', subtitle: 'Wind down', icon: 'i-lucide-moon' }
 ]
 
-// ── Routine assignments (which activities are assigned to which slots) ──
+// ── Routine assignments (from store) ──
 
-interface RoutineAssignment {
-  activitySlug: string
-  slot: string // 'morning' | 'lunch' | 'evening' | 'bedtime'
-}
-
-// Load saved routine assignments (persistent template)
-const routineAssignments = ref<RoutineAssignment[]>([])
-function loadRoutineAssignments() {
-  if (!process.client) return
-  try {
-    const raw = localStorage.getItem('kiss-routine-assignments')
-    if (raw) routineAssignments.value = JSON.parse(raw) as RoutineAssignment[]
-  } catch { /* ignore */ }
-}
-loadRoutineAssignments()
-
-// Auto-save assignments
-watch(routineAssignments, (val) => {
-  if (!process.client) return
-  try { localStorage.setItem('kiss-routine-assignments', JSON.stringify(val)) } catch { /* ignore */ }
-}, { deep: true })
+const routineAssignments = computed(() => scheduleStore.routineAssignments)
 
 // Get assignments for a specific slot
 function getSlotAssignments(slotId: string) {
-  return routineAssignments.value.filter(a => a.slot === slotId)
+  return scheduleStore.getSlotAssignments(slotId)
 }
 
 // Remove an activity from a slot (by slug and slot, not index)
 function removeFromSlot(activitySlug: string, slotId: string) {
-  const index = routineAssignments.value.findIndex(a => a.activitySlug === activitySlug && a.slot === slotId)
-  if (index !== -1) routineAssignments.value.splice(index, 1)
+  scheduleStore.removeRoutineAssignment(activitySlug, slotId)
 }
 
 // ── Drag and Drop ──
@@ -137,17 +118,12 @@ function onSlotDrop(slotId: string) {
   const slug = draggedActivitySlug.value
   if (!slug) return
   // Don't add if already in this slot
-  if (routineAssignments.value.some(a => a.activitySlug === slug && a.slot === slotId)) {
+  if (scheduleStore.isActivityInAnySlot(slug) && scheduleStore.getSlotAssignments(slotId).some(a => a.activitySlug === slug)) {
     dragOverSlot.value = null
     draggedActivitySlug.value = null
     return
   }
-  // If already in another slot, remove it first
-  const existingIndex = routineAssignments.value.findIndex(a => a.activitySlug === slug)
-  if (existingIndex !== -1) {
-    routineAssignments.value.splice(existingIndex, 1)
-  }
-  routineAssignments.value.push({ activitySlug: slug, slot: slotId })
+  scheduleStore.addRoutineAssignment(slug, slotId)
   dragOverSlot.value = null
   draggedActivitySlug.value = null
 }
@@ -156,14 +132,14 @@ function onSlotDrop(slotId: string) {
 
 // Check if all required activities are placed in at least one slot
 const allRequiredPlaced = computed(() => {
-  const placedSlugs = new Set(routineAssignments.value.map(a => a.activitySlug))
+  const placedSlugs = new Set(scheduleStore.routineAssignments.map(a => a.activitySlug))
   const requiredSlugs = subscribedActivitySlugs.value
   if (requiredSlugs.length === 0) return true
   return requiredSlugs.every(slug => placedSlugs.has(slug))
 })
 
 const missingRequiredActivities = computed(() => {
-  const placedSlugs = new Set(routineAssignments.value.map(a => a.activitySlug))
+  const placedSlugs = new Set(scheduleStore.routineAssignments.map(a => a.activitySlug))
   return subscribedActivitySlugs.value.filter(slug => !placedSlugs.has(slug))
 })
 
@@ -175,10 +151,10 @@ function saveRoutine() {
   setTimeout(() => saved.value = false, 2000)
 }
 
-const totalCount = computed(() => routineAssignments.value.length)
+const totalCount = computed(() => scheduleStore.routineAssignments.length)
 
 // Check if an activity is already in any slot
-const isInAnySlot = (slug: string) => routineAssignments.value.some(a => a.activitySlug === slug)
+const isInAnySlot = (slug: string) => scheduleStore.isActivityInAnySlot(slug)
 
 // Check if an activity is required (from club membership)
 const isRequiredActivity = (slug: string) => subscribedActivitySlugs.value.includes(slug)
@@ -189,8 +165,12 @@ const isRequiredActivity = (slug: string) => subscribedActivitySlugs.value.inclu
     <!-- Header with save button -->
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <h2 class="text-base font-semibold">Build Your Routine</h2>
-        <p class="text-xs text-muted">Drag activities to the time slots below. Activities highlighted in amber are required by your clubs.</p>
+        <h2 class="text-base font-semibold">
+          Build Your Routine
+        </h2>
+        <p class="text-xs text-muted">
+          Drag activities to the time slots below. Activities highlighted in amber are required by your clubs.
+        </p>
       </div>
       <div class="flex flex-wrap gap-2">
         <UButton
@@ -213,7 +193,9 @@ const isRequiredActivity = (slug: string) => subscribedActivitySlugs.value.inclu
       <div class="flex items-start gap-2">
         <UIcon name="i-lucide-alert-triangle" class="size-4 text-amber-400 shrink-0 mt-0.5" />
         <div>
-          <p class="text-sm font-medium text-amber-200">Required activities missing</p>
+          <p class="text-sm font-medium text-amber-200">
+            Required activities missing
+          </p>
           <p class="text-xs text-amber-200/70 mt-0.5">
             Please place the following activities: {{ missingRequiredActivities.map(slug => availableActivities.find((a: any) => a.slug === slug)?.title || slug).join(', ') }}
           </p>
@@ -225,7 +207,9 @@ const isRequiredActivity = (slug: string) => subscribedActivitySlugs.value.inclu
     <div class="rounded-lg border border-default/50 p-4">
       <div class="flex items-center gap-2 mb-3">
         <UIcon name="i-lucide-grip-vertical" class="size-4 text-muted" />
-        <h3 class="text-sm font-semibold">Activities</h3>
+        <h3 class="text-sm font-semibold">
+          Activities
+        </h3>
         <span v-if="totalCount > 0" class="ml-auto text-xs text-muted">
           {{ totalCount }} placed
         </span>
@@ -258,8 +242,12 @@ const isRequiredActivity = (slug: string) => subscribedActivitySlugs.value.inclu
     <!-- No activities assigned prompt -->
     <div v-if="totalCount === 0 && availableActivities.length > 0" class="text-center py-6 text-muted">
       <UIcon name="i-lucide-list-checks" class="w-8 h-8 mx-auto mb-2 opacity-50" />
-      <p class="text-sm">Drag activities from above to the time slots below.</p>
-      <p class="text-xs mt-1">Activities highlighted in amber are required by your club memberships.</p>
+      <p class="text-sm">
+        Drag activities from above to the time slots below.
+      </p>
+      <p class="text-xs mt-1">
+        Activities highlighted in amber are required by your club memberships.
+      </p>
     </div>
 
     <!-- Routine sections in a grid on large screens -->
@@ -329,12 +317,13 @@ const isRequiredActivity = (slug: string) => subscribedActivitySlugs.value.inclu
 
             <!-- Empty slot hint -->
             <div v-if="getSlotAssignments(slotDef.id).length === 0" class="text-center py-4 text-muted">
-              <p class="text-xs">Drop activities here</p>
+              <p class="text-xs">
+                Drop activities here
+              </p>
             </div>
           </div>
         </UCard>
       </div>
     </div>
-
   </div>
 </template>

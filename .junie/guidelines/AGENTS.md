@@ -1,44 +1,73 @@
 # Agent Guidelines for KiSS
 
+**Nuxt 3 static site** (`ssr: true`, deployed via `nuxt generate`). Contentlayer for data, Pinia for state.
+
+See also: `.junie/guidelines/architecture.md` (project structure) · `.junie/guidelines/mistakes.md` (common pitfalls) · `.junie/guidelines/refactoring.md` (code organization).
+
+## Implementation Workflow
+
+### One artifact type per task
+
+When asked to implement a feature, work in **sequential, separate tasks**:
+
+1. **Feature file** — Write or update the Gherkin spec in `features/` first.
+2. **E2E tests** — In the next task, write Playwright tests in `test/e2e/` that match the spec.
+3. **Implementation** — Finally, write the code that passes those tests.
+
+**Do not** update tests and implementation in the same task unless explicitly told to do so. If you need to modify multiple artifact types at once, request permission first. Only go back to update a previous step if given explicit permission.
+
+### Read feature files before coding
+
+Always read the relevant `features/*.feature` file before implementing changes. Feature files are the source of truth for expected behavior.
+
+**Available feature files:** `dashboard`, `degrees`, `classes`, `study-plan`, `clubs`, `activities`, `detention`, `flashcards`, `library`, `teachers`, `students`, `metrics`, `settings`, `profile`.
+
 ## Building and Validating
 
 ### Use `pnpm generate` to validate the project
 
-When verifying that changes work correctly, use `pnpm generate` rather than `pnpm build`.
+Use `pnpm generate` (not `pnpm build`) — it prerenders all routes and catches route-level errors.
 
-While both scripts currently run `nuxt generate` under the hood, `pnpm generate` is the explicit, semantically correct command for this static-site project. It prerenders all routes and validates that the entire site builds without errors.
-
-**Why not `pnpm build`?**
-- The project uses Nuxt in full static generation mode (`ssr: true` with `nuxt generate` for release builds).
-- `pnpm generate` makes the intent clear: we're generating a static site, not building a server-side application.
-- Using `pnpm generate` ensures all routes are prerendered and any route-level errors are caught.
-
-### When to run `pnpm generate`
-
-Run `pnpm generate` **only when logic or structure changes** are made, such as:
-- Adding, removing, or renaming pages/routes
-- Changing component logic, computed properties, or event handlers
-- Modifying data fetching, stores, or content queries
-- Refactoring code that affects runtime behavior
-
-**Skip `pnpm generate` for small cosmetic changes** that don't affect logic, such as:
-- Adjusting colors, spacing, fonts, or other visual styles
-- Tweaking Tailwind classes for appearance
-- Updating text content, labels, or translations
-- Changing image sizes, borders, or shadows
-- Minor layout adjustments without structural changes
-
-For cosmetic-only changes, a quick visual check or `pnpm typecheck` is sufficient validation.
-
-### What to check after running `pnpm generate`
-
-1. **Exit code 0** — the command completed without errors
-2. **Routes prerendered** — look for a summary line like "172 routes prerendered" to confirm all pages were generated
-3. **No errors in output** — check for any runtime errors during prerendering
+- **Run on:** Logic or structure changes (new routes, component logic, stores, content queries, refactors).
+- **Skip for:** Cosmetic-only changes (colors, spacing, text, Tailwind tweaks) — use `pnpm typecheck` instead.
+- **Check:** Exit code 0, "N routes prerendered" in output, no runtime errors.
 
 ### Other useful commands
 
-- `pnpm dev` — Start the development server
-- `pnpm preview` — Preview the generated static site locally
-- `pnpm typecheck` — Run TypeScript type checking
-- `pnpm lint` — Run ESLint
+- `pnpm dev` — Development server
+- `pnpm preview` — Preview generated static site
+- `pnpm typecheck` — TypeScript type checking
+- `pnpm lint` — ESLint
+
+## State Management
+
+### Use Pinia Stores for all persistent state
+
+**All persistent reactive state must use Pinia stores in `app/stores/`, never direct `localStorage` in components.**
+
+### Creating a new store
+
+Follow the existing pattern in `app/stores/`:
+1. Use `defineStore()` with composition API (`ref`/`reactive`).
+2. Persist with `saveToStorage()` / `loadFromStorage()` → `localStorage`.
+3. **Guard against SSR:** Load only after hydration (`if (nuxtApp.isHydrated)` else `watch(isHydrated, load, { once: true })`).
+4. Auto-save on changes with `watch(state, save, { deep: true })`.
+5. Use `import.meta.client`, **not** `process.client`.
+
+### Existing stores
+
+- `enrollment.ts` — Class enrollments, degree subscriptions, progress.
+- `studyPlan.ts` — Study plan filters (degrees, titles, planned classes).
+- `schedule.ts` — Routine assignments, class schedule, daily tasks.
+- `clubActivities.ts` — Per-club completed activity tracking.
+
+Direct `localStorage` is acceptable only for non-reactive data (feature flags, analytics).
+
+## Husky Hooks
+
+### All hooks must pass before task completion
+
+- **Pre-commit:** `pnpm lint --fix` (auto-fixes linting issues).
+- **Pre-push:** `pnpm lint` (final check).
+
+Run `pnpm lint` before marking a task complete. Fix all reported issues.

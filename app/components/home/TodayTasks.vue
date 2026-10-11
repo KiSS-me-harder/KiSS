@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { useEnrollmentStore } from '~/stores/enrollment'
+import { useScheduleStore } from '~/stores/schedule'
+import { useStudyPlanStore } from '~/stores/studyPlan'
 
 const store = useEnrollmentStore()
+const scheduleStore = useScheduleStore()
+const planStore = useStudyPlanStore()
 const { app } = useRuntimeConfig()
 
 const { data: allClasses } = await useAsyncData('today-tasks-classes', () => queryCollection('classes').all())
@@ -37,7 +41,7 @@ const subscribedActivitySlugs = computed(() => {
 const subscribedActivities = computed(() => {
   if (!allActivities.value || subscribedActivitySlugs.value.length === 0) return []
   const slugs = new Set(subscribedActivitySlugs.value)
-  return allActivities.value.filter(a => {
+  return allActivities.value.filter((a) => {
     const stem = (a as any).stem || ''
     const parts = stem.split('/')
     if (parts.length < 3) return false
@@ -98,29 +102,13 @@ const todayKey = computed(() => {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
 })
 
-// Load daily task completion state from localStorage
-const dailyCompleted = ref<Set<string>>(new Set())
-function loadDailyCompleted() {
-  if (!process.client) return
-  try {
-    const raw = localStorage.getItem(`kiss-daily-${todayKey.value}`)
-    if (raw) dailyCompleted.value = new Set(JSON.parse(raw) as string[])
-  } catch { /* ignore */ }
-}
-loadDailyCompleted()
-
-// Auto-save daily completions
-watch(dailyCompleted, (val) => {
-  if (!process.client) return
-  try { localStorage.setItem(`kiss-daily-${todayKey.value}`, JSON.stringify([...val])) } catch { /* ignore */ }
-}, { deep: true })
+// Load daily completions from store on mount
+onMounted(() => {
+  scheduleStore.loadDailyCompleted(todayKey.value)
+})
 
 function toggleTaskCompleted(taskId: string) {
-  if (dailyCompleted.value.has(taskId)) {
-    dailyCompleted.value.delete(taskId)
-  } else {
-    dailyCompleted.value.add(taskId)
-  }
+  scheduleStore.toggleDailyCompleted(todayKey.value, taskId)
 }
 
 // Build task groups from enrolled classes
@@ -146,7 +134,7 @@ const enrolledTaskGroups = computed(() => {
     if (currentLevel === undefined) continue
 
     // Find the lesson for the current level
-    const currentLesson = classLessons.find(item => {
+    const currentLesson = classLessons.find((item) => {
       const level = parseInt((item as any).meta?.level, 10)
       return level === currentLevel
     })
@@ -157,7 +145,7 @@ const enrolledTaskGroups = computed(() => {
     const examTasks = (meta.exam || []).map((task: string, i: number) => ({
       id: `${slug}-${currentLevel}-exam-${i}`,
       title: task,
-      completed: dailyCompleted.value.has(`${slug}-${currentLevel}-exam-${i}`),
+      completed: scheduleStore.isDailyCompleted(todayKey.value, `${slug}-${currentLevel}-exam-${i}`),
       completedKey: `${slug}-${currentLevel}-exam-${i}`
     }))
 
@@ -203,27 +191,13 @@ interface SingleShotTask {
   linkText: string
 }
 
-// Load routine assignments to check which club activities are in the routine
-const routineAssignments = ref<Array<{ activitySlug: string; slot: string }>>([])
-function loadRoutineAssignments() {
-  if (!process.client) return
-  try {
-    const raw = localStorage.getItem('kiss-routine-assignments')
-    if (raw) routineAssignments.value = JSON.parse(raw) as Array<{ activitySlug: string; slot: string }>
-  } catch { /* ignore */ }
-}
-loadRoutineAssignments()
-
-// Poll for routine changes (same-tab edits)
-onMounted(() => {
-  const interval = setInterval(() => loadRoutineAssignments(), 3000)
-  onUnmounted(() => clearInterval(interval))
-})
+// Load routine assignments from store
+const routineAssignments = computed(() => scheduleStore.routineAssignments)
 
 // Force re-evaluation when the store loads from localStorage after hydration
 const tasksForceUpdate = ref(0)
 
-if (process.client) {
+if (import.meta.client) {
   // Watch the store refs deeply so any change triggers a re-evaluation
   watch([store.clubMemberships, store.enrollments], () => {
     tasksForceUpdate.value++
@@ -253,7 +227,7 @@ const singleShotTasks = computed(() => {
   const _ = tasksForceUpdate.value
 
   // Skip all checks during SSR — store data is only available on the client
-  if (!process.client) return tasks
+  if (!import.meta.client) return tasks
 
   // Access store refs safely — they are initialized as empty arrays,
   // but during SSR hydration there's a brief window where .value might be undefined
@@ -286,7 +260,7 @@ const singleShotTasks = computed(() => {
 
   // 3. Club activities not in routine — suggest adding them
   const routineActivitySlugs = new Set(routineAssignments.value.map(a => a.activitySlug))
-  const unsubscribedActivities = subscribedActivities.value.filter(a => {
+  const unsubscribedActivities = subscribedActivities.value.filter((a) => {
     const stem = (a as any).stem || ''
     const parts = stem.split('/')
     if (parts.length < 3) return false
@@ -338,35 +312,28 @@ interface PlannedClassInfo {
 }
 
 const plannedClasses = computed(() => {
-  if (!process.client) return []
-  try {
-    const raw = localStorage.getItem('kiss-study-plan')
-    if (!raw) return []
-    const planIds = JSON.parse(raw) as string[]
+  const planIds = Array.from(planStore.studyPlan)
 
-    // Filter out already enrolled classes
-    const enrollments = store.enrollments.value
-    const enrolledSlugs = new Set((enrollments || []).map(e => e.slug))
-    const planned = planIds.filter(id => !enrolledSlugs.has(id) && id !== 'student')
+  // Filter out already enrolled classes
+  const enrollments = store.enrollments.value
+  const enrolledSlugs = new Set((enrollments || []).map(e => e.slug))
+  const planned = planIds.filter(id => !enrolledSlugs.has(id) && id !== 'student')
 
-    return planned.map(id => {
-      const parts = id.split('/')
-      const degree = parts[0] || ''
-      const className = parts[1] || ''
-      const degreeLabel = degree.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-      const name = className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-      return {
-        slug: id,
-        name,
-        degree,
-        degreeLabel,
-        image: `${app.baseURL}img/degrees/${degree}.webp`,
-        to: `/classes/${id}`
-      }
-    })
-  } catch {
-    return []
-  }
+  return planned.map((id) => {
+    const parts = id.split('/')
+    const degree = parts[0] || ''
+    const className = parts[1] || ''
+    const degreeLabel = degree.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    const name = className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    return {
+      slug: id,
+      name,
+      degree,
+      degreeLabel,
+      image: `${app.baseURL}img/degrees/${degree}.webp`,
+      to: `/classes/${id}`
+    }
+  })
 })
 
 const hasTasks = computed(() => singleShotTasks.value.length > 0 || enrolledTaskGroups.value.length > 0 || subscribedActivities.value.length > 0 || plannedClasses.value.length > 0)
@@ -390,8 +357,12 @@ const hasTasks = computed(() => singleShotTasks.value.length > 0 || enrolledTask
 
     <div v-if="!hasTasks" class="text-center py-8 text-muted">
       <UIcon name="i-lucide-clipboard-list" class="w-8 h-8 mx-auto mb-2 opacity-50" />
-      <p class="text-sm">No tasks for today.</p>
-      <p class="text-xs mt-1">Enroll in classes or join clubs to see tasks here.</p>
+      <p class="text-sm">
+        No tasks for today.
+      </p>
+      <p class="text-xs mt-1">
+        Enroll in classes or join clubs to see tasks here.
+      </p>
     </div>
 
     <div v-else class="space-y-4">
@@ -399,7 +370,9 @@ const hasTasks = computed(() => singleShotTasks.value.length > 0 || enrolledTask
       <template v-if="singleShotTasks.length">
         <div class="flex items-center gap-2">
           <UIcon name="i-lucide-sparkles" class="size-4 text-amber-400" />
-          <h3 class="text-sm font-semibold text-white/80">Action Items</h3>
+          <h3 class="text-sm font-semibold text-white/80">
+            Action Items
+          </h3>
           <span class="text-xs text-muted">({{ singleShotTasks.length }})</span>
         </div>
 
@@ -412,8 +385,12 @@ const hasTasks = computed(() => singleShotTasks.value.length > 0 || enrolledTask
               <UIcon :name="task.icon" class="w-4 h-4 text-amber-400" />
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-white">{{ task.title }}</p>
-              <p class="text-xs text-muted mt-0.5">{{ task.description }}</p>
+              <p class="text-sm font-medium text-white">
+                {{ task.title }}
+              </p>
+              <p class="text-xs text-muted mt-0.5">
+                {{ task.description }}
+              </p>
             </div>
             <NuxtLink
               :to="task.to"
@@ -443,7 +420,7 @@ const hasTasks = computed(() => singleShotTasks.value.length > 0 || enrolledTask
                   :src="group.image"
                   :alt="group.name"
                   class="w-full h-full object-cover"
-                />
+                >
                 <UIcon v-else name="i-lucide-image" class="size-12 text-muted" />
               </div>
               <p class="text-xs text-muted mt-1 text-center truncate" :title="group.name">
@@ -509,7 +486,9 @@ const hasTasks = computed(() => singleShotTasks.value.length > 0 || enrolledTask
                   >
                     <UIcon name="i-lucide-target" class="size-4 text-purple-400 shrink-0" />
                     <div class="flex-1 min-w-0">
-                      <p class="text-sm truncate">{{ metric.label }}</p>
+                      <p class="text-sm truncate">
+                        {{ metric.label }}
+                      </p>
                       <div class="flex items-center gap-2 mt-1">
                         <div class="h-1.5 flex-1 rounded-full bg-white/10 overflow-hidden">
                           <div
@@ -534,7 +513,9 @@ const hasTasks = computed(() => singleShotTasks.value.length > 0 || enrolledTask
       <template v-if="Object.keys(subscribedActivityGroups).length > 0">
         <div class="flex items-center gap-2 pt-2">
           <UIcon name="i-lucide-users" class="size-4 text-purple-400" />
-          <h3 class="text-sm font-semibold text-white/80">Club Activities</h3>
+          <h3 class="text-sm font-semibold text-white/80">
+            Club Activities
+          </h3>
           <span class="text-xs text-muted">({{ subscribedActivities.length }})</span>
         </div>
 
@@ -559,7 +540,9 @@ const hasTasks = computed(() => singleShotTasks.value.length > 0 || enrolledTask
                     />
                   </div>
                   <div class="flex-1 min-w-0">
-                    <p class="text-sm text-white truncate">{{ (activity as any).title }}</p>
+                    <p class="text-sm text-white truncate">
+                      {{ (activity as any).title }}
+                    </p>
                     <p v-if="(activity as any).meta?.description" class="text-xs text-muted line-clamp-1">
                       {{ (activity as any).meta.description }}
                     </p>
@@ -581,7 +564,9 @@ const hasTasks = computed(() => singleShotTasks.value.length > 0 || enrolledTask
       <template v-if="plannedClasses.length">
         <div class="flex items-center gap-2 pt-2">
           <UIcon name="i-lucide-git-branch" class="size-4 text-blue-400" />
-          <h3 class="text-sm font-semibold text-white/80">Planned Classes</h3>
+          <h3 class="text-sm font-semibold text-white/80">
+            Planned Classes
+          </h3>
         </div>
 
         <UCard>
@@ -595,8 +580,12 @@ const hasTasks = computed(() => singleShotTasks.value.length > 0 || enrolledTask
                 <UIcon name="i-lucide-book-open" class="w-4 h-4 text-blue-400" />
               </div>
               <div class="flex-1 min-w-0">
-                <p class="text-sm text-white truncate">{{ planned.name }}</p>
-                <p class="text-xs text-muted">{{ planned.degreeLabel }}</p>
+                <p class="text-sm text-white truncate">
+                  {{ planned.name }}
+                </p>
+                <p class="text-xs text-muted">
+                  {{ planned.degreeLabel }}
+                </p>
               </div>
               <NuxtLink
                 :to="planned.to"

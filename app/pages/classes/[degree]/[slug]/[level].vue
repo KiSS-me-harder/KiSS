@@ -6,7 +6,7 @@
         :src="lessonData?.image"
         alt=""
         class="w-full h-full object-cover scale-105"
-      />
+      >
       <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black/90" />
       <!-- Subtle animated particles -->
       <div class="absolute inset-0 opacity-20">
@@ -49,7 +49,6 @@
 
     <!-- Main Classroom Area -->
     <div v-if="lessonData" class="relative z-10 flex flex-col lg:flex-row gap-0">
-
       <!-- Blackboard / Lesson Content Area -->
       <div class="flex-1 p-6 lg:p-8">
         <!-- Lesson Title -->
@@ -81,7 +80,9 @@
             </div>
             <div v-else class="chalk-text text-white/40 text-center py-12">
               <UIcon name="i-lucide-chalkboard" class="size-12 mx-auto mb-3 opacity-50" />
-              <p class="text-lg">No lesson material available for this level yet.</p>
+              <p class="text-lg">
+                No lesson material available for this level yet.
+              </p>
             </div>
           </div>
         </div>
@@ -91,7 +92,9 @@
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-clipboard-list" class="size-5 text-pink-400" />
-              <h2 class="text-lg font-semibold text-white">Homework — Knowledge Check</h2>
+              <h2 class="text-lg font-semibold text-white">
+                Homework — Knowledge Check
+              </h2>
             </div>
             <span class="text-xs text-white/50">
               {{ flashcardsCorrect }}/{{ lessonData.flashcards.length }} correct
@@ -161,7 +164,9 @@
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-file-text" class="size-5 text-amber-400" />
-              <h2 class="text-lg font-semibold text-white">Exam Requirements</h2>
+              <h2 class="text-lg font-semibold text-white">
+                Exam Requirements
+              </h2>
             </div>
             <span class="text-xs text-white/50">
               {{ getExamCompletedCount }}/{{ lessonData.exam.length }} done
@@ -204,7 +209,9 @@
                     <UIcon name="i-lucide-target" class="size-3" />
                   </span>
                   <div class="min-w-0 flex-1">
-                    <p class="text-sm font-medium text-white">{{ getExamTaskText(task) }}</p>
+                    <p class="text-sm font-medium text-white">
+                      {{ getExamTaskText(task) }}
+                    </p>
                     <p class="text-xs text-white/40 mt-1">
                       Metric: {{ getExamTaskMetric(task).label }}
                       <span v-if="getExamTaskMetric(task).target">
@@ -243,7 +250,9 @@
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-bar-chart-3" class="size-5 text-cyan-400" />
-              <h2 class="text-lg font-semibold text-white">Metrics Requirements</h2>
+              <h2 class="text-lg font-semibold text-white">
+                Metrics Requirements
+              </h2>
             </div>
             <span class="text-xs text-white/50">
               {{ lessonData.metrics.length }} metrics
@@ -261,7 +270,9 @@
                   {{ metricIndex + 1 }}
                 </span>
                 <div class="min-w-0 flex-1">
-                  <p class="text-sm font-medium text-white">{{ metric.label }}</p>
+                  <p class="text-sm font-medium text-white">
+                    {{ metric.label }}
+                  </p>
                   <p class="text-xs text-white/40 mt-0.5">
                     Target: {{ metric.target }} {{ metric.unit }}
                     <span v-if="metric.increment">(increment: {{ metric.increment }} {{ metric.unit }})</span>
@@ -306,7 +317,9 @@
       <div class="w-full lg:w-72 xl:w-80 border-t lg:border-t-0 lg:border-l border-white/10 bg-black/40 backdrop-blur-md p-6 space-y-5">
         <!-- Progress Card -->
         <div>
-          <h3 class="text-xs uppercase tracking-wider text-white/40 font-semibold mb-3">Your Progress</h3>
+          <h3 class="text-xs uppercase tracking-wider text-white/40 font-semibold mb-3">
+            Your Progress
+          </h3>
           <div class="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3">
             <div class="flex items-center justify-between text-sm">
               <span class="text-white/60">Status</span>
@@ -362,7 +375,9 @@
         <!-- Class Levels -->
         <div>
           <div class="flex items-center justify-between mb-3">
-            <h3 class="text-xs uppercase tracking-wider text-white/40 font-semibold">Class Levels</h3>
+            <h3 class="text-xs uppercase tracking-wider text-white/40 font-semibold">
+              Class Levels
+            </h3>
             <NuxtLink :to="`/classes/${degree}/${slug}`" class="text-[10px] text-purple-400 hover:text-purple-300 transition-colors">
               View All
             </NuxtLink>
@@ -428,7 +443,9 @@
     <div v-else class="fixed inset-0 z-10 flex items-center justify-center bg-black/80">
       <div class="text-center">
         <UIcon name="i-lucide-loader" class="size-8 animate-spin text-purple-400 mx-auto mb-3" />
-        <p class="text-sm text-white/60">Entering classroom...</p>
+        <p class="text-sm text-white/60">
+          Entering classroom...
+        </p>
       </div>
     </div>
   </div>
@@ -517,7 +534,7 @@ const isLevelUnlocked = computed(() => {
 })
 
 // Redirect to class page if level is locked
-if (process.client) {
+if (import.meta.client) {
   watch([isLevelUnlocked, currentLevelItem], ([unlocked, item]) => {
     if (item && !unlocked) {
       navigateTo(`/classes/${degree.value}/${slug.value}`, { replace: true })
@@ -650,7 +667,7 @@ function getExamTaskText(task: any): string {
   return task.text || ''
 }
 
-function getExamTaskMetric(task: any): { label: string; target: number; unit: string } {
+function getExamTaskMetric(task: any): { label: string, target: number, unit: string } {
   if (typeof task === 'object' && task.type === 'milestone') {
     return {
       label: task.label || task.field || '',

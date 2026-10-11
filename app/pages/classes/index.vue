@@ -14,7 +14,7 @@
         <!-- Level Group Sections -->
         <div v-for="group in levelGroups" :key="group.level" class="space-y-4">
           <!-- Group Header -->
-          <button @click="toggleGroup(group.level)" type="button" class="flex items-center gap-3 w-full group/header text-left">
+          <button type="button" class="flex items-center gap-3 w-full group/header text-left" @click="toggleGroup(group.level)">
             <div class="flex items-center gap-2.5">
               <span
                 class="w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm font-bold shadow-lg"
@@ -26,7 +26,9 @@
                 <h2 class="text-base font-bold text-white tracking-tight">
                   {{ group.label }}
                 </h2>
-                <p class="text-[11px] text-muted">{{ group.classCount }} class{{ group.classCount !== 1 ? 'es' : '' }} available</p>
+                <p class="text-[11px] text-muted">
+                  {{ group.classCount }} class{{ group.classCount !== 1 ? 'es' : '' }} available
+                </p>
               </div>
             </div>
             <div class="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
@@ -53,7 +55,7 @@
                   :alt="item.classTitle"
                   class="absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover/card:scale-110"
                   :class="isEligible(item) ? '' : 'blur-md group-hover/card:blur-none'"
-                />
+                >
 
                 <!-- Dark Overlay for text readability -->
                 <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/20" />
@@ -107,8 +109,12 @@
                 class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 z-50 opacity-0 group-hover/card:opacity-100 pointer-events-none group-hover/card:pointer-events-none transition-opacity duration-200"
               >
                 <div class="rounded-lg border border-white/20 bg-gray-900/95 backdrop-blur-sm p-3 shadow-xl">
-                  <p class="text-white text-xs font-semibold mb-1">{{ item.classTitle }}</p>
-                  <p class="text-white/70 text-xs leading-relaxed line-clamp-4">{{ item.description }}</p>
+                  <p class="text-white text-xs font-semibold mb-1">
+                    {{ item.classTitle }}
+                  </p>
+                  <p class="text-white/70 text-xs leading-relaxed line-clamp-4">
+                    {{ item.description }}
+                  </p>
                 </div>
                 <!-- Tooltip arrow -->
                 <div class="w-3 h-3 bg-gray-900/95 border-r border-b border-white/20 rotate-45 mx-auto -mt-1.5" />
@@ -188,7 +194,7 @@ interface ClassLevelEntry {
   totalLevels: number
   description: string
   classSlug: string
-  dependencies: { class: string; level: number }[]
+  dependencies: { class: string, level: number }[]
 }
 
 interface LevelGroup {
@@ -242,7 +248,7 @@ const levelGroups = computed(() => {
   // Build a map: for each class, which tier levels does it have?
   // We only care about the base level (100, 200, 300) for the index page
   const classesData = allClasses.value!
-  const classByTier = tierLevels.map(tierLevel => {
+  const classByTier = tierLevels.map((tierLevel) => {
     const config = tierConfig.find(c => c.level === tierLevel)!
     const classes: ClassLevelEntry[] = []
     const seenClasses = new Set<string>()
@@ -320,7 +326,6 @@ const levelGroups = computed(() => {
   // Return only groups that have classes
   return classByTier.filter(g => g.classCount > 0)
 })
-
 
 const collapsedGroups = ref(new Set<number>())
 

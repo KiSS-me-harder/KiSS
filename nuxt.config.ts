@@ -15,23 +15,34 @@ export default defineNuxtConfig({
   devtools: {
     enabled: false
   },
-  css: ['~/assets/css/main.css'],
-  compatibilityDate: '2024-07-11',
-  nitro: {
-    preset: 'github_pages'
-  },
-  telemetry: false,
   app: {
     baseURL: '/KiSS/'
   },
+  css: ['~/assets/css/main.css'],
   site: {
     url: 'https://kiss-me-harder.github.io',
     name: 'KiSS Academy',
     description: 'KiSS Academy - A gamified learning platform for personal transformation and self-improvement.',
     defaultLocale: 'en'
   },
-  sitemap: {
-    // Nuxt SEO auto-discovers pages from the app
+  compatibilityDate: '2024-07-11',
+  nitro: {
+    preset: 'github_pages'
+  },
+  telemetry: false,
+  eslint: {
+    config: {
+      stylistic: {
+        commaDangle: 'never',
+        braceStyle: '1tbs'
+      }
+    }
+  },
+  image: {
+    inject: false
+  },
+  ogImage: {
+    enabled: false
   },
   robots: {
     robotsTxt: false,
@@ -43,18 +54,7 @@ export default defineNuxtConfig({
       }
     ]
   },
-  ogImage: {
-    enabled: false
-  },
-  image: {
-    inject: false
-  },
-  eslint: {
-    config: {
-      stylistic: {
-        commaDangle: 'never',
-        braceStyle: '1tbs'
-      }
-    }
+  sitemap: {
+    // Nuxt SEO auto-discovers pages from the app
   }
 })

@@ -17,7 +17,7 @@ const daysInPrevMonth = new Date(year, month, 0).getDate()
 const checkedDays = [1, 2, 3, 8, 9, 10]
 
 const calendarDays = computed(() => {
-  const days: { day: number; current: boolean }[] = []
+  const days: { day: number, current: boolean }[] = []
 
   for (let i = firstDay - 1; i >= 0; i--) {
     days.push({ day: daysInPrevMonth - i, current: false })
@@ -74,8 +74,12 @@ const statsBottom = [
             </UButton>
 
             <div class="text-center">
-              <h2 class="text-lg font-semibold">{{ monthLabel }}</h2>
-              <button class="text-xs text-primary hover:underline">Today</button>
+              <h2 class="text-lg font-semibold">
+                {{ monthLabel }}
+              </h2>
+              <button class="text-xs text-primary hover:underline">
+                Today
+              </button>
             </div>
 
             <UButton variant="ghost" size="sm" square>
@@ -100,7 +104,7 @@ const statsBottom = [
               :class="{
                 'text-muted/40 bg-elevated/30': !cell.current,
                 'bg-elevated hover:bg-elevated/80': cell.current,
-                'ring-2 ring-primary': cell.day === today && cell.current,
+                'ring-2 ring-primary': cell.day === today && cell.current
               }"
             >
               {{ cell.day }}
@@ -174,7 +178,9 @@ const statsBottom = [
         <!-- Stats -->
         <UCard>
           <div class="flex items-center justify-between mb-3">
-            <h3 class="text-base font-semibold">Stats</h3>
+            <h3 class="text-base font-semibold">
+              Stats
+            </h3>
             <div class="flex gap-1">
               <button class="px-2 py-1 text-xs text-primary font-medium rounded-md bg-primary/10">
                 Month

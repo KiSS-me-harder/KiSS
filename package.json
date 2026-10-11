@@ -9,7 +9,18 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
-    "typecheck": "nuxt typecheck"
+    "typecheck": "nuxt typecheck",
+    "prepare": "husky",
+    "test": "vitest",
+    "test:unit": "vitest --project unit",
+    "test:nuxt": "vitest --project nuxt",
+    "test:e2e": "start-server-and-test dev http://localhost:3000 test:e2e:cucumber",
+    "test:e2e:cucumber": "cucumber-js --config cucumber.config.ts",
+    "test:e2e:pages": "cucumber-js --profile pages",
+    "test:e2e:components": "cucumber-js --profile components",
+    "test:e2e:pages:server": "start-server-and-test dev http://localhost:3000 test:e2e:pages",
+    "test:e2e:components:server": "start-server-and-test dev http://localhost:3000 test:e2e:components",
+    "test:e2e:playwright": "playwright test --config playwright.config.ts"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -46,8 +57,16 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@cucumber/cucumber": "^13.3.0",
+    "@cucumber/messages": "^34.2.1",
+    "@cucumber/pretty-formatter": "^4.1.0",
     "@nuxt/eslint": "^1.17.0",
+    "@playwright/test": "^1.64.0",
     "eslint": "^9.39.2",
+    "husky": "^9.1.7",
+    "start-server-and-test": "^3.0.13",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vue-tsc": "^3.3.13"
   }

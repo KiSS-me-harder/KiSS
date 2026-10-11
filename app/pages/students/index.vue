@@ -58,7 +58,9 @@
                   <!-- Thread Info -->
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2">
-                      <p class="text-white text-sm font-semibold truncate">{{ thread.title }}</p>
+                      <p class="text-white text-sm font-semibold truncate">
+                        {{ thread.title }}
+                      </p>
                       <UBadge
                         :label="getCategoryLabel(thread.category)"
                         :color="getCategoryColor(thread.category) as any"
@@ -69,7 +71,9 @@
                         <UIcon name="i-lucide-pin" class="w-3.5 h-3.5" />
                       </span>
                     </div>
-                    <p class="text-white/50 text-xs mt-0.5 line-clamp-2">{{ thread.preview }}</p>
+                    <p class="text-white/50 text-xs mt-0.5 line-clamp-2">
+                      {{ thread.preview }}
+                    </p>
                     <div class="flex items-center gap-3 mt-2 text-white/30 text-xs">
                       <span class="flex items-center gap-1">
                         <UIcon name="i-lucide-user" class="w-3 h-3" />
@@ -93,8 +97,12 @@
           <!-- Empty State -->
           <div v-else class="flex flex-col items-center justify-center py-12 rounded-xl border border-white/10 bg-white/5">
             <UIcon name="i-lucide-message-circle" class="w-12 h-12 text-white/20 mb-3" />
-            <p class="text-white/40 text-sm mb-1">No threads yet</p>
-            <p class="text-white/30 text-xs">Be the first to start a conversation</p>
+            <p class="text-white/40 text-sm mb-1">
+              No threads yet
+            </p>
+            <p class="text-white/30 text-xs">
+              Be the first to start a conversation
+            </p>
           </div>
         </div>
 
@@ -105,7 +113,9 @@
             <template #header>
               <div class="flex items-center gap-2">
                 <UIcon name="i-lucide-users" class="w-4 h-4 text-white/60" />
-                <h3 class="text-white text-sm font-semibold">Active Students</h3>
+                <h3 class="text-white text-sm font-semibold">
+                  Active Students
+                </h3>
               </div>
             </template>
             <div class="space-y-2">
@@ -127,8 +137,12 @@
                   />
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-white text-xs font-medium truncate">{{ student.name }}</p>
-                  <p class="text-white/40 text-[10px]">{{ student.degree }}</p>
+                  <p class="text-white text-xs font-medium truncate">
+                    {{ student.name }}
+                  </p>
+                  <p class="text-white/40 text-[10px]">
+                    {{ student.degree }}
+                  </p>
                 </div>
               </div>
             </div>
@@ -139,7 +153,9 @@
             <template #header>
               <div class="flex items-center gap-2">
                 <UIcon name="i-lucide-scroll-text" class="w-4 h-4 text-white/60" />
-                <h3 class="text-white text-sm font-semibold">Board Rules</h3>
+                <h3 class="text-white text-sm font-semibold">
+                  Board Rules
+                </h3>
               </div>
             </template>
             <ul class="space-y-1.5 text-white/50 text-xs">
@@ -167,7 +183,12 @@
   </UDashboardPanel>
 
   <!-- New Thread Modal -->
-  <UModal v-model="showNewThread" title="New Thread" description="Start a new discussion thread" class="max-w-lg">
+  <UModal
+    v-model="showNewThread"
+    title="New Thread"
+    description="Start a new discussion thread"
+    class="max-w-lg"
+  >
     <div class="space-y-4">
       <UFormField label="Title" required>
         <UInput v-model="newThread.title" placeholder="What's on your mind?" variant="outline" />
@@ -178,12 +199,22 @@
       </UFormField>
 
       <UFormField label="Message" required>
-        <UTextarea v-model="newThread.message" placeholder="Write your message..." :rows="4" variant="outline" />
+        <UTextarea
+          v-model="newThread.message"
+          placeholder="Write your message..."
+          :rows="4"
+          variant="outline"
+        />
       </UFormField>
     </div>
 
     <template #footer>
-      <UButton label="Cancel" color="neutral" variant="outline" @click="showNewThread = false" />
+      <UButton
+        label="Cancel"
+        color="neutral"
+        variant="outline"
+        @click="showNewThread = false"
+      />
       <UButton
         label="Post Thread"
         color="primary"
@@ -365,7 +396,7 @@ function getAvatarBgClass(color: string) {
     purple: 'bg-purple-500/90',
     green: 'bg-green-500/90',
     blue: 'bg-blue-500/90',
-    yellow: 'bg-yellow-500/90',
+    yellow: 'bg-yellow-500/90'
   }
   return bgColors[color.toLowerCase()] || 'bg-gray-500/90'
 }

@@ -20,8 +20,12 @@
             class="ring-2 ring-white/10"
           />
           <div>
-            <h1 class="text-2xl font-bold text-white">{{ user.name }}</h1>
-            <p class="text-white/50 text-sm mt-1">{{ user.email }}</p>
+            <h1 class="text-2xl font-bold text-white">
+              {{ user.name }}
+            </h1>
+            <p class="text-white/50 text-sm mt-1">
+              {{ user.email }}
+            </p>
             <div class="flex items-center gap-2 mt-2">
               <UBadge variant="subtle" color="primary" size="sm">
                 {{ user.degree }}
@@ -36,7 +40,9 @@
         <!-- Profile Details -->
         <UCard>
           <template #header>
-            <h2 class="text-lg font-semibold text-white">Personal Information</h2>
+            <h2 class="text-lg font-semibold text-white">
+              Personal Information
+            </h2>
           </template>
 
           <div class="space-y-4">
@@ -47,26 +53,46 @@
 
             <div>
               <label class="text-xs text-white/40 uppercase tracking-wider">Email</label>
-              <UInput v-model="user.email" class="mt-1" placeholder="Your email" type="email" />
+              <UInput
+                v-model="user.email"
+                class="mt-1"
+                placeholder="Your email"
+                type="email"
+              />
             </div>
 
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="text-xs text-white/40 uppercase tracking-wider">Enrolled Degree</label>
-                <UInput v-model="user.degree" class="mt-1" placeholder="Your degree" disabled />
+                <UInput
+                  v-model="user.degree"
+                  class="mt-1"
+                  placeholder="Your degree"
+                  disabled
+                />
               </div>
 
               <div>
                 <label class="text-xs text-white/40 uppercase tracking-wider">Current Level</label>
-                <UInput v-model="user.level" class="mt-1" placeholder="Level" type="number" disabled />
+                <UInput
+                  v-model="user.level"
+                  class="mt-1"
+                  placeholder="Level"
+                  type="number"
+                  disabled
+                />
               </div>
             </div>
           </div>
 
           <template #footer>
             <div class="flex justify-end gap-2">
-              <UButton variant="subtle" color="neutral">Cancel</UButton>
-              <UButton color="primary" @click="handleSave">Save Changes</UButton>
+              <UButton variant="subtle" color="neutral">
+                Cancel
+              </UButton>
+              <UButton color="primary" @click="handleSave">
+                Save Changes
+              </UButton>
             </div>
           </template>
         </UCard>
@@ -75,7 +101,9 @@
         <UCard v-if="enrolledClasses.length">
           <template #header>
             <div class="flex items-center justify-between">
-              <h2 class="text-lg font-semibold text-white">Enrolled Classes</h2>
+              <h2 class="text-lg font-semibold text-white">
+                Enrolled Classes
+              </h2>
               <UBadge variant="subtle" color="primary" size="sm">
                 {{ enrolledClasses.length }} enrolled
               </UBadge>
@@ -90,8 +118,12 @@
             >
               <div class="flex items-center justify-between mb-2">
                 <div>
-                  <p class="text-sm font-medium text-white">{{ enrollment.className }}</p>
-                  <p class="text-xs text-white/40">{{ enrollment.degree }}</p>
+                  <p class="text-sm font-medium text-white">
+                    {{ enrollment.className }}
+                  </p>
+                  <p class="text-xs text-white/40">
+                    {{ enrollment.degree }}
+                  </p>
                 </div>
                 <UBadge
                   variant="subtle"
@@ -114,11 +146,15 @@
         <!-- No enrollments message -->
         <UCard v-else>
           <template #header>
-            <h2 class="text-lg font-semibold text-white">Enrolled Classes</h2>
+            <h2 class="text-lg font-semibold text-white">
+              Enrolled Classes
+            </h2>
           </template>
           <div class="text-center py-6">
             <UIcon name="i-lucide-book-open" class="size-8 mx-auto text-white/20 mb-2" />
-            <p class="text-sm text-white/40">You are not enrolled in any classes yet.</p>
+            <p class="text-sm text-white/40">
+              You are not enrolled in any classes yet.
+            </p>
             <NuxtLink to="/classes">
               <UButton class="mt-3" size="sm" color="primary">
                 Browse Classes
@@ -130,21 +166,35 @@
         <!-- Stats -->
         <UCard>
           <template #header>
-            <h2 class="text-lg font-semibold text-white">Progress</h2>
+            <h2 class="text-lg font-semibold text-white">
+              Progress
+            </h2>
           </template>
 
           <div class="grid grid-cols-3 gap-4">
             <div class="text-center p-4 rounded-lg bg-white/5">
-              <p class="text-2xl font-bold text-purple-400">{{ user.classesCompleted }}</p>
-              <p class="text-xs text-white/40 mt-1">Classes Completed</p>
+              <p class="text-2xl font-bold text-purple-400">
+                {{ user.classesCompleted }}
+              </p>
+              <p class="text-xs text-white/40 mt-1">
+                Classes Completed
+              </p>
             </div>
             <div class="text-center p-4 rounded-lg bg-white/5">
-              <p class="text-2xl font-bold text-pink-400">{{ user.flashcardsAnswered }}</p>
-              <p class="text-xs text-white/40 mt-1">Flashcards Answered</p>
+              <p class="text-2xl font-bold text-pink-400">
+                {{ user.flashcardsAnswered }}
+              </p>
+              <p class="text-xs text-white/40 mt-1">
+                Flashcards Answered
+              </p>
             </div>
             <div class="text-center p-4 rounded-lg bg-white/5">
-              <p class="text-2xl font-bold text-amber-400">{{ user.detentionCount }}</p>
-              <p class="text-xs text-white/40 mt-1">Detentions</p>
+              <p class="text-2xl font-bold text-amber-400">
+                {{ user.detentionCount }}
+              </p>
+              <p class="text-xs text-white/40 mt-1">
+                Detentions
+              </p>
             </div>
           </div>
         </UCard>

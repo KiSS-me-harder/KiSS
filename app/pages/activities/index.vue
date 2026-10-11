@@ -14,23 +14,31 @@
         <!-- Header -->
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-2xl font-bold text-white">Activities</h1>
-            <p class="text-white/60 mt-1">Log your training sessions below. Each activity contributes data to your metrics.</p>
+            <h1 class="text-2xl font-bold text-white">
+              Activities
+            </h1>
+            <p class="text-white/60 mt-1">
+              Log your training sessions below. Each activity contributes data to your metrics.
+            </p>
           </div>
         </div>
 
         <div v-if="activities.length === 0" class="text-center py-12 text-white/50">
           <UIcon name="i-lucide-dumbbell" class="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p class="text-lg">No activities defined yet.</p>
-          <p class="text-sm mt-1">Add activity content files to content/activities/ to get started.</p>
+          <p class="text-lg">
+            No activities defined yet.
+          </p>
+          <p class="text-sm mt-1">
+            Add activity content files to content/activities/ to get started.
+          </p>
         </div>
 
         <!-- Collapsible categories -->
         <div v-for="category in categories" :key="category.name" class="space-y-3">
           <!-- Category header (clickable to toggle) -->
           <button
-            @click="toggleCategory(category.name)"
             class="w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-5 py-3.5 transition-all duration-200 hover:bg-white/10 hover:border-white/20"
+            @click="toggleCategory(category.name)"
           >
             <div class="flex items-center gap-3">
               <UIcon :name="category.icon" class="w-5 h-5 text-purple-400" />
@@ -47,8 +55,8 @@
           <div v-if="isCategoryOpen(category.name)" class="space-y-3 pl-0 sm:pl-3">
             <div
               v-for="activity in category.activities"
-              :key="activity.slug"
               :id="`activity-${activity.slug}`"
+              :key="activity.slug"
               class="rounded-xl border border-white/10 bg-white/5 p-5 transition-all duration-200"
               :class="{ 'ring-2 ring-purple-500': highlightedActivity === activity.slug }"
             >
@@ -59,16 +67,20 @@
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
-                    <h3 class="text-base font-semibold text-white">{{ activity.title }}</h3>
+                    <h3 class="text-base font-semibold text-white">
+                      {{ activity.title }}
+                    </h3>
                     <button
-                      @click="selectedActivity = activity; showHelp = true"
                       class="shrink-0 w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/40 hover:text-white/70 transition-colors"
                       title="What is this activity?"
+                      @click="selectedActivity = activity; showHelp = true"
                     >
                       <UIcon name="i-lucide-circle-help" class="w-4 h-4" />
                     </button>
                   </div>
-                  <p class="text-sm text-white/50 mt-0.5">{{ activity.description }}</p>
+                  <p class="text-sm text-white/50 mt-0.5">
+                    {{ activity.description }}
+                  </p>
                   <!-- Contributed metrics -->
                   <div v-if="activity.contributions.length > 0" class="flex flex-wrap gap-1.5 mt-2">
                     <span
@@ -84,7 +96,7 @@
               </div>
 
               <!-- Inline form -->
-              <form @submit.prevent="submitSession(activity)" class="space-y-3">
+              <form class="space-y-3" @submit.prevent="submitSession(activity)">
                 <div class="flex flex-wrap gap-3">
                   <div
                     v-for="field in activity.fields"
@@ -105,7 +117,7 @@
                       class="w-full bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm font-medium focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-colors"
                       :value="getFieldValue(activity.slug, field.id)"
                       @input="onFieldChange(activity.slug, field.id, $event)"
-                    />
+                    >
                   </div>
                 </div>
                 <div class="flex items-center justify-between pt-1">
@@ -125,7 +137,9 @@
 
               <!-- Recent sessions -->
               <div v-if="getRecentSessions(activity).length > 0" class="mt-4 pt-4 border-t border-white/5">
-                <p class="text-xs font-medium text-white/40 mb-2">Recent sessions</p>
+                <p class="text-xs font-medium text-white/40 mb-2">
+                  Recent sessions
+                </p>
                 <div class="space-y-1.5 max-h-32 overflow-y-auto">
                   <div
                     v-for="(session, sIdx) in getRecentSessions(activity).slice(0, 5)"
@@ -138,8 +152,8 @@
                         {{ val }}{{ getFieldUnit(activity, fId) }}
                       </span>
                       <button
-                        @click="deleteSession(activity, sIdx)"
                         class="text-white/20 hover:text-red-400 transition-colors"
+                        @click="deleteSession(activity, sIdx)"
                       >
                         <UIcon name="i-lucide-trash-2" class="w-3.5 h-3.5" />
                       </button>
@@ -157,16 +171,25 @@
   <!-- Activity Help Dialog -->
   <UModal v-model:open="showHelp" class="max-w-lg">
     <template #header>
-      <div class="text-lg font-semibold text-white">{{ selectedActivity?.title || '' }}</div>
+      <div class="text-lg font-semibold text-white">
+        {{ selectedActivity?.title || '' }}
+      </div>
     </template>
     <template #body>
       <div v-if="selectedActivity" class="py-2">
-        <p class="text-white/70 leading-relaxed">{{ selectedActivity.longDescription || selectedActivity.description }}</p>
+        <p class="text-white/70 leading-relaxed">
+          {{ selectedActivity.longDescription || selectedActivity.description }}
+        </p>
       </div>
     </template>
     <template #footer>
       <div class="flex justify-end">
-        <UButton label="Close" color="neutral" variant="outline" @click="showHelp = false" />
+        <UButton
+          label="Close"
+          color="neutral"
+          variant="outline"
+          @click="showHelp = false"
+        />
       </div>
     </template>
   </UModal>
@@ -210,7 +233,7 @@ const route = useRoute()
 const highlightedActivity = ref<string | null>(null)
 
 function handleHashNavigation() {
-  if (!process.client) return
+  if (!import.meta.client) return
   const hash = route.hash?.slice(1) // Remove the '#' prefix
   if (!hash) return
 
@@ -307,7 +330,7 @@ for (const activity of activities.value) {
 }
 
 const categories = computed(() => {
-  const categoryMap = new Map<string, { name: string; icon: string; activities: typeof activities.value[number][] }>()
+  const categoryMap = new Map<string, { name: string, icon: string, activities: typeof activities.value[number][] }>()
 
   const categoryIcons: Record<string, string> = {
     'Anal Training': 'i-lucide-scala',
@@ -384,7 +407,7 @@ function getFieldUnit(activity: any, fieldId: string): string {
 function getRecentSessions(activity: any) {
   if (!activity || !activity.contributions.length) return []
 
-  const sessions: Array<{ timestamp: number; values: Record<string, number> }> = []
+  const sessions: Array<{ timestamp: number, values: Record<string, number> }> = []
 
   for (const contribution of activity.contributions) {
     const dataPoints = store.getMetricDataPoints(contribution.metric)

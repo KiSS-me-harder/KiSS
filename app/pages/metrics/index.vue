@@ -14,8 +14,12 @@
         <!-- Header -->
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-2xl font-bold text-white">Metrics</h1>
-            <p class="text-white/60 mt-1">Track your progress through measurable training milestones.</p>
+            <h1 class="text-2xl font-bold text-white">
+              Metrics
+            </h1>
+            <p class="text-white/60 mt-1">
+              Track your progress through measurable training milestones.
+            </p>
           </div>
           <div class="flex items-center gap-2 text-sm text-white/40">
             <UIcon name="i-lucide-target" class="w-4 h-4" />
@@ -39,8 +43,12 @@
 
         <div v-if="metrics.length === 0" class="text-center py-12 text-white/50">
           <UIcon name="i-lucide-bar-chart-2" class="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p class="text-lg">No metrics defined yet.</p>
-          <p class="text-sm mt-1">Add metric content files to content/metrics/ to get started.</p>
+          <p class="text-lg">
+            No metrics defined yet.
+          </p>
+          <p class="text-sm mt-1">
+            Add metric content files to content/metrics/ to get started.
+          </p>
         </div>
 
         <!-- Metric Cards Grid -->
@@ -150,7 +158,7 @@ const enrollmentStore = useEnrollmentStore()
 const metrics = computed(() => {
   if (!allMetrics.value) return []
 
-  const metricMap = new Map<string, { slug: string; title: string; description: string; icon: string; milestones: MetricMilestone[] }>()
+  const metricMap = new Map<string, { slug: string, title: string, description: string, icon: string, milestones: MetricMilestone[] }>()
 
   for (const item of allMetrics.value) {
     const stem = (item as any).stem || ''
@@ -187,13 +195,13 @@ const metrics = computed(() => {
   return Array.from(metricMap.values()).sort((a, b) => a.title.localeCompare(b.title))
 })
 
-function metricValue(metric: { slug: string; milestones: MetricMilestone[] }) {
+function metricValue(metric: { slug: string, milestones: MetricMilestone[] }) {
   const achieved = enrollmentStore.getAchievedMilestoneCount(metric.slug, metric.milestones)
   if (metric.milestones.length === 0) return 0
   return Math.round((achieved / metric.milestones.length) * 100)
 }
 
-function achievedCount(metric: { slug: string; milestones: MetricMilestone[] }) {
+function achievedCount(metric: { slug: string, milestones: MetricMilestone[] }) {
   return enrollmentStore.getAchievedMilestoneCount(metric.slug, metric.milestones)
 }
 

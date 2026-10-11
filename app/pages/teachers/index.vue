@@ -164,7 +164,7 @@ function getGradientClass(color: string) {
     purple: 'bg-gradient-to-br from-purple-900/80 via-purple-800/60 to-violet-900/80',
     green: 'bg-gradient-to-br from-green-900/80 via-green-800/60 to-emerald-900/80',
     blue: 'bg-gradient-to-br from-blue-900/80 via-blue-800/60 to-cyan-900/80',
-    yellow: 'bg-gradient-to-br from-yellow-900/80 via-yellow-800/60 to-amber-900/80',
+    yellow: 'bg-gradient-to-br from-yellow-900/80 via-yellow-800/60 to-amber-900/80'
   }
   return gradients[color.toLowerCase()] || 'bg-gradient-to-br from-gray-800/80 via-gray-700/60 to-gray-900/80'
 }
@@ -176,7 +176,7 @@ function getAvatarBgClass(color: string) {
     purple: 'bg-purple-500/90',
     green: 'bg-green-500/90',
     blue: 'bg-blue-500/90',
-    yellow: 'bg-yellow-500/90',
+    yellow: 'bg-yellow-500/90'
   }
   return bgColors[color.toLowerCase()] || 'bg-gray-500/90'
 }

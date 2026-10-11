@@ -59,7 +59,7 @@ export const defaultHapticPatterns: HapticPattern[] = [
   { name: 'Heartbeat', pattern: [100, 80, 50, 200], loop: true },
   { name: 'Rumble', pattern: [200, 100], loop: true },
   { name: 'Subtle', pattern: [50, 150], loop: true },
-  { name: 'Strong', pattern: [300, 100], loop: true },
+  { name: 'Strong', pattern: [300, 100], loop: true }
 ]
 
 const defaultChannels: BinauralChannel[] = [
@@ -70,7 +70,7 @@ const defaultChannels: BinauralChannel[] = [
   { label: 'Beta 2', baseFrequency: 120, beatFrequency: 16, color: '#00FA9A', enabled: false, volume: 0.3 },
   { label: 'Gamma 1', baseFrequency: 120, beatFrequency: 25, color: '#00CED1', enabled: false, volume: 0.3 },
   { label: 'Gamma 2', baseFrequency: 120, beatFrequency: 35, color: '#4169E1', enabled: false, volume: 0.3 },
-  { label: 'Gamma 3', baseFrequency: 120, beatFrequency: 40, color: '#8A2BE2', enabled: false, volume: 0.3 },
+  { label: 'Gamma 3', baseFrequency: 120, beatFrequency: 40, color: '#8A2BE2', enabled: false, volume: 0.3 }
 ]
 
 const defaultTracks: BinauralTrack[] = [
@@ -127,7 +127,7 @@ const defaultTracks: BinauralTrack[] = [
     duration: '15:00',
     tags: ['hypnosis', 'induction'],
     brainwave: 'Theta'
-  },
+  }
 ]
 
 export const useMediaPlayerStore = defineStore('mediaPlayer', () => {

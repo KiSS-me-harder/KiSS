@@ -1,0 +1,10 @@
+# Lint and auto-fix only staged files
+staged_files=$(git diff --cached --name-only --diff-filter=d | grep -E '\.(ts|js|vue|mts|mjs)$' || true)
+if [ -n "$staged_files" ]; then
+  # Auto-fix staged files
+  pnpm lint --fix -- $staged_files || true
+  # Re-stage fixed files
+  git add $staged_files
+  # Run lint check on staged files to ensure they pass
+  pnpm lint -- $staged_files
+fi

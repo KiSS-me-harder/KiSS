@@ -22,7 +22,7 @@
             :src="`${app.baseURL}img/placeholder.webp`"
             :alt="club.title"
             class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          />
+          >
 
           <!-- Dark Overlay with gradient -->
           <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
@@ -122,5 +122,4 @@ const items = ref<BreadcrumbItem[]>([
     to: '/clubs'
   }
 ])
-
 </script>

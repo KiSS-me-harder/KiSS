@@ -8,7 +8,6 @@
       class="bg-elevated/25"
       :ui="{ footer: 'lg:border-t lg:border-default' }"
     >
-
       <template #default="{ collapsed }">
         <UDashboardSearchButton
           :collapsed="collapsed"
@@ -68,7 +67,7 @@ const degreesChildren = computed(() =>
 
 const classesChildren = computed(() => {
   if (!allClasses.value) return []
-  const classMap = new Map<string, { label: string; to: string }>()
+  const classMap = new Map<string, { label: string, to: string }>()
   for (const item of allClasses.value) {
     const parts = (item as any).stem?.split('/') || []
     if (parts.length < 4) continue

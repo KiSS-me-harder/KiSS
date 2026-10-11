@@ -86,9 +86,15 @@
         <!-- Empty State -->
         <div v-else class="flex flex-col items-center justify-center py-12 rounded-xl border border-white/10 bg-white/5">
           <UIcon name="i-lucide-book-open" class="w-12 h-12 text-white/20 mb-3" />
-          <p class="text-white/40 text-sm mb-1">No books found</p>
-          <p v-if="searchQuery" class="text-white/30 text-xs">Try a different search term</p>
-          <p v-else class="text-white/30 text-xs">No book content available yet</p>
+          <p class="text-white/40 text-sm mb-1">
+            No books found
+          </p>
+          <p v-if="searchQuery" class="text-white/30 text-xs">
+            Try a different search term
+          </p>
+          <p v-else class="text-white/30 text-xs">
+            No book content available yet
+          </p>
         </div>
       </div>
     </template>
@@ -143,10 +149,10 @@ const filteredItems = computed<LibraryItem[]>(() => {
   if (!searchQuery.value.trim()) return books
   const query = searchQuery.value.toLowerCase().trim()
   return books.filter(item =>
-    item.title.toLowerCase().includes(query) ||
-    item.description.toLowerCase().includes(query) ||
-    item.author.toLowerCase().includes(query) ||
-    (item.tags && item.tags.some(tag => tag.toLowerCase().includes(query)))
+    item.title.toLowerCase().includes(query)
+    || item.description.toLowerCase().includes(query)
+    || item.author.toLowerCase().includes(query)
+    || (item.tags && item.tags.some(tag => tag.toLowerCase().includes(query)))
   )
 })
 </script>

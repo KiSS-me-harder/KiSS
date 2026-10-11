@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { useEnrollmentStore } from '~/stores/enrollment'
+import { useScheduleStore } from '~/stores/schedule'
 
 const store = useEnrollmentStore()
+const scheduleStore = useScheduleStore()
 const { app } = useRuntimeConfig()
 
 // Fetch all classes from content to get titles
@@ -36,7 +38,7 @@ const enrolledClasses = computed<EnrolledClassInfo[]>(() => {
   return classes
 })
 
-// Schedule entries from localStorage (same source as TodayScheduleEdit)
+// Schedule entries from store (same source as TodayScheduleEdit)
 interface ScheduleEntry {
   id: number
   classSlug: string
@@ -44,30 +46,7 @@ interface ScheduleEntry {
   section: string
 }
 
-const scheduleEntries = ref<ScheduleEntry[]>([])
-function loadSchedule() {
-  if (!process.client) return
-  try {
-    const raw = localStorage.getItem('kiss-class-schedule')
-    if (raw) scheduleEntries.value = JSON.parse(raw) as ScheduleEntry[]
-  } catch { /* ignore */ }
-}
-loadSchedule()
-
-// Poll for changes from other tabs and same-tab edits
-if (process.client) {
-  const storageListener = (e: StorageEvent) => {
-    if (e.key === 'kiss-class-schedule' && e.newValue) {
-      try { scheduleEntries.value = JSON.parse(e.newValue) as ScheduleEntry[] } catch { /* ignore */ }
-    }
-  }
-  window.addEventListener('storage', storageListener)
-  const pollInterval = setInterval(() => loadSchedule(), 2000)
-  onUnmounted(() => {
-    window.removeEventListener('storage', storageListener)
-    clearInterval(pollInterval)
-  })
-}
+const scheduleEntries = computed(() => scheduleStore.scheduleEntries)
 
 // Today's day index (0=Monday ... 6=Sunday)
 const todayDayIndex = computed(() => {
@@ -76,7 +55,7 @@ const todayDayIndex = computed(() => {
 })
 
 // Slot time ranges
-const slotTimeRanges: Record<string, { label: string; timeStart: string; timeEnd: string; icon: string }> = {
+const slotTimeRanges: Record<string, { label: string, timeStart: string, timeEnd: string, icon: string }> = {
   morning: { label: 'Morning', timeStart: '06:00', timeEnd: '12:00', icon: 'i-lucide-sunrise' },
   lunch: { label: 'Lunch', timeStart: '12:00', timeEnd: '14:00', icon: 'i-lucide-sun' },
   evening: { label: 'Evening', timeStart: '14:00', timeEnd: '20:00', icon: 'i-lucide-sunset' },
@@ -90,13 +69,13 @@ const todayScheduleEntries = computed(() => {
 
 // Build schedule items grouped by time slot
 const scheduleItems = computed(() => {
-  const items: { slot: string; slotLabel: string; timeRange: string; icon: string; classes: { slug: string; title: string; degreeLabel: string }[] }[] = []
+  const items: { slot: string, slotLabel: string, timeRange: string, icon: string, classes: { slug: string, title: string, degreeLabel: string }[] }[] = []
 
   for (const [slotId, slotInfo] of Object.entries(slotTimeRanges)) {
     const slotEntries = todayScheduleEntries.value.filter(e => e.section === slotId)
     if (slotEntries.length === 0) continue
 
-    const classes = slotEntries.map(entry => {
+    const classes = slotEntries.map((entry) => {
       const cls = enrolledClasses.value.find(c => c.slug === entry.classSlug)
       return {
         slug: entry.classSlug,
@@ -119,31 +98,19 @@ const scheduleItems = computed(() => {
 
 const totalCount = computed(() => todayScheduleEntries.value.length)
 
-// Track which classes have been completed today (via daily task completion)
+// Track which classes have been completed today (via store)
 const todayKey = computed(() => {
   const d = new Date()
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
 })
 
-const dailyCompleted = ref<Set<string>>(new Set())
-function loadDailyCompleted() {
-  if (!process.client) return
-  try {
-    const raw = localStorage.getItem(`kiss-daily-${todayKey.value}`)
-    if (raw) dailyCompleted.value = new Set(JSON.parse(raw) as string[])
-  } catch { /* ignore */ }
-}
-loadDailyCompleted()
-
-// Watch for daily completion changes
-if (process.client) {
-  const pollInterval = setInterval(() => loadDailyCompleted(), 2000)
-  onUnmounted(() => clearInterval(pollInterval))
-}
+// Ensure today's daily completions are loaded
+onMounted(() => {
+  scheduleStore.loadDailyCompleted(todayKey.value)
+})
 
 const isClassCompletedToday = (classSlug: string) => {
-  // Check if any exam tasks for this class are completed today
-  return dailyCompleted.value.has(`${classSlug}-completed`)
+  return scheduleStore.isDailyCompleted(todayKey.value, `${classSlug}-completed`)
 }
 </script>
 
@@ -166,8 +133,12 @@ const isClassCompletedToday = (classSlug: string) => {
     <!-- No classes scheduled today -->
     <div v-if="scheduleItems.length === 0" class="text-center py-8 text-muted">
       <UIcon name="i-lucide-calendar-plus" class="w-10 h-10 mx-auto mb-3 opacity-50" />
-      <p class="text-sm font-medium mb-1">No classes scheduled today</p>
-      <p class="text-xs mb-4">Go to the Schedule tab to assign your enrolled classes to days and time slots.</p>
+      <p class="text-sm font-medium mb-1">
+        No classes scheduled today
+      </p>
+      <p class="text-xs mb-4">
+        Go to the Schedule tab to assign your enrolled classes to days and time slots.
+      </p>
       <UButton variant="outline" size="sm" @click="$router.push('/today#Schedule')">
         <template #leading>
           <UIcon name="i-lucide-calendar-clock" class="size-3" />

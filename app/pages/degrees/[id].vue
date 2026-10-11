@@ -214,6 +214,9 @@ const overallProgress = computed(() => {
 function handleEnrollInDegree() {
   if (!selectedLevel.value) return
 
+  // Record the degree subscription (degree + title)
+  store.enrollInDegree(id.value, selectedLevel.value.name)
+
   for (const dc of selectedLevel.value.classes) {
     if (!store.isEnrolled(dc.slug)) {
       // Find available levels for this class up to maxLevel
@@ -232,6 +235,9 @@ function handleEnrollInDegree() {
 
 function handleUnenrollFromDegree() {
   if (!selectedLevel.value) return
+
+  // Remove the degree subscription
+  store.unenrollFromDegree(id.value, selectedLevel.value.name)
 
   for (const dc of selectedLevel.value.classes) {
     if (store.isEnrolled(dc.slug)) {
@@ -299,7 +305,6 @@ const levelBadgeColors = [
   'bg-blue-500/20 text-blue-400 border-blue-500/30',
   'bg-purple-500/20 text-purple-400 border-purple-500/30'
 ]
-
 </script>
 
 <template>
@@ -324,7 +329,7 @@ const levelBadgeColors = [
                 :src="`${app.baseURL}img/degrees/${id}.webp`"
                 :alt="title"
                 class="w-full object-cover"
-              />
+              >
             </div>
           </div>
 
@@ -350,7 +355,9 @@ const levelBadgeColors = [
               <template #header>
                 <div class="flex items-center gap-2">
                   <UIcon name="i-lucide-target" class="size-4 text-purple-400" />
-                  <h2 class="text-base font-semibold">Target Title</h2>
+                  <h2 class="text-base font-semibold">
+                    Target Title
+                  </h2>
                 </div>
               </template>
 
@@ -363,11 +370,11 @@ const levelBadgeColors = [
                   v-for="(level, index) in degreeLevels"
                   :key="level.name"
                   type="button"
-                  @click="selectedLevelIndex = index"
                   class="w-full text-left p-3 rounded-lg border transition-all duration-200"
                   :class="selectedLevelIndex === index
                     ? 'border-purple-500/50 bg-purple-500/10 shadow-lg shadow-purple-500/10'
                     : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'"
+                  @click="selectedLevelIndex = index"
                 >
                   <div class="flex items-center gap-3">
                     <div
@@ -439,7 +446,7 @@ const levelBadgeColors = [
                       :src="classInfo.image"
                       :alt="classInfo.classTitle"
                       class="w-full h-full object-cover"
-                    />
+                    >
                   </div>
 
                   <!-- Class Info -->
@@ -538,7 +545,7 @@ const levelBadgeColors = [
                         :src="classInfo.image"
                         :alt="classInfo.classTitle"
                         class="w-full h-full object-cover"
-                      />
+                      >
                     </div>
 
                     <!-- Class Info -->
@@ -608,7 +615,12 @@ const levelBadgeColors = [
                     <span v-else-if="overallProgress >= 60" class="text-yellow-400 font-bold">C</span>
                   </span>
                 </div>
-                <UProgress :model-value="overallProgress" :animated="false" color="success" size="sm" />
+                <UProgress
+                  :model-value="overallProgress"
+                  :animated="false"
+                  color="success"
+                  size="sm"
+                />
               </div>
             </UCard>
 
@@ -658,7 +670,13 @@ const levelBadgeColors = [
                     <span v-else-if="overallProgress >= 60" class="text-yellow-400 font-bold">C</span>
                   </span>
                 </div>
-                <UProgress :model-value="overallProgress" :animated="false" color="success" size="sm" class="mb-2" />
+                <UProgress
+                  :model-value="overallProgress"
+                  :animated="false"
+                  color="success"
+                  size="sm"
+                  class="mb-2"
+                />
                 <p class="text-xs text-muted text-center">
                   Complete all classes at your target level to earn your grade
                 </p>

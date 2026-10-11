@@ -7,7 +7,7 @@ const { isNotificationsSlideoverOpen } = useDashboard()
 const notifications = ref([] as {
   id: number
   unread?: boolean
-  sender: { name: string; avatar?: any }
+  sender: { name: string, avatar?: any }
   body: string
   date: string
 }[])

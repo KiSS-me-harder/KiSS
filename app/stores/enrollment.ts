@@ -13,6 +13,13 @@ export interface ClassEnrollment {
   levels: LevelProgress[]
 }
 
+// Tracks which degree + title (level) the user has subscribed to
+export interface DegreeEnrollment {
+  degreeSlug: string
+  title: string // e.g. "Junior", "Senior", "Master"
+  enrolledAt: number
+}
+
 export interface FlashcardAnswer {
   cardId: number
   className: string
@@ -168,6 +175,9 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
   // --- Enrollments ---
   const enrollments = ref<ClassEnrollment[]>([])
 
+  // --- Degree Subscriptions ---
+  const degreeEnrollments = ref<DegreeEnrollment[]>([])
+
   // --- Flashcard answers history ---
   const flashcardAnswers = ref<FlashcardAnswer[]>([])
 
@@ -203,7 +213,7 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
   )
 
   const completedClassesCount = computed(() => {
-    return enrollments.value.filter(e => {
+    return enrollments.value.filter((e) => {
       if (e.levels.length === 0) return false
       return e.levels.every(l => l.completed)
     }).length
@@ -364,7 +374,7 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
     return levelProgress?.completed ?? false
   }
 
-  function areDependenciesMet(slug: string, level: number, requiredDeps: { class: string; level: number }[]): boolean {
+  function areDependenciesMet(slug: string, level: number, requiredDeps: { class: string, level: number }[]): boolean {
     for (const dep of requiredDeps) {
       if (!isLevelCompletedByName(dep.class, dep.level)) {
         return false
@@ -380,7 +390,7 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
     return levelProgress?.completed ?? false
   }
 
-  function canEnroll(slug: string, requiredDeps: { class: string; level: number }[]): boolean {
+  function canEnroll(slug: string, requiredDeps: { class: string, level: number }[]): boolean {
     // Check if already enrolled
     if (isEnrolled(slug)) return false
 
@@ -392,6 +402,39 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
     }
     return true
   }
+
+  // --- Degree Subscription Actions ---
+
+  function enrollInDegree(degreeSlug: string, title: string) {
+    // Don't enroll if already enrolled in this degree+title
+    if (degreeEnrollments.value.some(d => d.degreeSlug === degreeSlug && d.title === title)) {
+      return
+    }
+    degreeEnrollments.value.push({
+      degreeSlug,
+      title,
+      enrolledAt: Date.now()
+    })
+  }
+
+  function unenrollFromDegree(degreeSlug: string, title: string) {
+    const index = degreeEnrollments.value.findIndex(d => d.degreeSlug === degreeSlug && d.title === title)
+    if (index !== -1) {
+      degreeEnrollments.value.splice(index, 1)
+    }
+  }
+
+  function isDegreeEnrolled(degreeSlug: string): boolean {
+    return degreeEnrollments.value.some(d => d.degreeSlug === degreeSlug)
+  }
+
+  function getDegreeEnrollment(degreeSlug: string): DegreeEnrollment | undefined {
+    return degreeEnrollments.value.find(d => d.degreeSlug === degreeSlug)
+  }
+
+  const enrolledDegreeSlugs = computed(() =>
+    degreeEnrollments.value.map(d => d.degreeSlug)
+  )
 
   function recordFlashcardAnswer(cardId: number, className: string, level: number, correct: boolean) {
     flashcardAnswers.value.push({
@@ -440,8 +483,7 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
       entry.intervalDays = entry.consecutiveSuccesses
       // Card is due again after intervalDays days
       entry.dueDate = now + entry.intervalDays * msPerDay
-    }
-    else {
+    } else {
       entry.consecutiveSuccesses = 0
       entry.totalIncorrect++
       entry.lastFailed = now
@@ -464,12 +506,12 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
 
   // Get all cards that are due now (dueDate <= now), sorted by priority
   // Priority: weakest degree area first, then oldest due date
-  function getDueCards(allCards: Array<{ id: number; className: string; degree: string; level: number }>): CardSpacedRep[] {
+  function getDueCards(allCards: Array<{ id: number, className: string, degree: string, level: number }>): CardSpacedRep[] {
     const now = Date.now()
 
     // Build a map of degree -> weakness score (lower = weaker)
     // Weakness = more failures relative to successes
-    const degreeScores: Record<string, { correct: number; incorrect: number }> = {}
+    const degreeScores: Record<string, { correct: number, incorrect: number }> = {}
     for (const entry of cardSpacedRep.value) {
       if (!degreeScores[entry.degree]) {
         degreeScores[entry.degree] = { correct: 0, incorrect: 0 }
@@ -486,11 +528,9 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
       // If never answered, treat as neutral (0)
       if (scores.incorrect > 0) {
         degreeWeakness[degree] = scores.incorrect / (scores.correct + scores.incorrect)
-      }
-      else if (scores.correct > 0) {
+      } else if (scores.correct > 0) {
         degreeWeakness[degree] = 0 // strong area
-      }
-      else {
+      } else {
         degreeWeakness[degree] = 0.5 // neutral, never answered
       }
     }
@@ -541,8 +581,8 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
   }
 
   // Get overall knowledge breakdown by degree
-  function getKnowledgeBreakdown(): Array<{ degree: string; score: number; cardsReviewed: number }> {
-    const degreeData: Record<string, { correct: number; incorrect: number }> = {}
+  function getKnowledgeBreakdown(): Array<{ degree: string, score: number, cardsReviewed: number }> {
+    const degreeData: Record<string, { correct: number, incorrect: number }> = {}
     for (const entry of cardSpacedRep.value) {
       if (!degreeData[entry.degree]) {
         degreeData[entry.degree] = { correct: 0, incorrect: 0 }
@@ -597,7 +637,7 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
   function getMetricLatestValues(metricSlug: string): Record<string, number> {
     const progress = metricProgress.value.find(m => m.metricSlug === metricSlug)
     if (!progress || !progress.dataPoints || progress.dataPoints.length === 0) return {}
-    const fieldLatest: Record<string, { value: number; timestamp: number }> = {}
+    const fieldLatest: Record<string, { value: number, timestamp: number }> = {}
     for (const dp of progress.dataPoints) {
       const existing = fieldLatest[dp.fieldId]
       if (!existing || dp.timestamp > existing.timestamp) {
@@ -625,7 +665,7 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
   }
 
   // Log an activity session, creating data points for contributed metrics
-  function logActivity(activitySlug: string, contributions: Array<{ metric: string; map: Record<string, string> }>, fieldValues: Record<string, number>) {
+  function logActivity(activitySlug: string, contributions: Array<{ metric: string, map: Record<string, string> }>, fieldValues: Record<string, number>) {
     const now = Date.now()
 
     for (const contribution of contributions) {
@@ -766,17 +806,18 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
   // --- Persistence via localStorage ---
 
   function saveToStorage() {
-    if (process.client) {
+    if (import.meta.client) {
       const data = {
         profile: profile.value,
         enrollments: enrollments.value,
+        degreeEnrollments: degreeEnrollments.value,
         flashcardAnswers: flashcardAnswers.value,
         cardSpacedRep: cardSpacedRep.value,
         detentionCount: detentionCount.value,
         metricProgress: metricProgress.value,
         clubMemberships: clubMemberships.value,
         examTasks: examTasks.value,
-        version: 9
+        version: 10
       }
       try {
         localStorage.setItem('kiss-enrollment', JSON.stringify(data))
@@ -787,7 +828,7 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
   }
 
   function loadFromStorage() {
-    if (!process.client) return
+    if (!import.meta.client) return
     try {
       const raw = localStorage.getItem('kiss-enrollment')
       if (!raw) return
@@ -815,13 +856,15 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
       if (data.clubMemberships && data.version >= 8) clubMemberships.value = data.clubMemberships
       // Only load exam tasks if version supports them
       if (data.examTasks && data.version >= 9) examTasks.value = data.examTasks
+      // Only load degree enrollments if version supports them
+      if (data.degreeEnrollments && data.version >= 10) degreeEnrollments.value = data.degreeEnrollments
     } catch {
       // Corrupted data, start fresh
     }
   }
 
   // Load from localStorage after Nuxt hydration to avoid SSR state overwriting client data
-  if (process.client) {
+  if (import.meta.client) {
     const nuxtApp = useNuxtApp()
     if (nuxtApp.isHydrated) {
       loadFromStorage()
@@ -835,7 +878,7 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
   }
 
   // Auto-save on changes
-  watch([profile, enrollments, flashcardAnswers, cardSpacedRep, detentionCount, metricProgress, clubMemberships, examTasks], () => {
+  watch([profile, enrollments, degreeEnrollments, flashcardAnswers, cardSpacedRep, detentionCount, metricProgress, clubMemberships, examTasks], () => {
     saveToStorage()
   }, { deep: true })
 
@@ -843,6 +886,7 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
     // State
     profile,
     enrollments,
+    degreeEnrollments,
     flashcardAnswers,
     detentionCount,
     metricProgress,
@@ -903,6 +947,12 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
     examTasks,
     toggleExamTask,
     isExamTaskCompleted,
+    // Degree subscriptions
+    enrollInDegree,
+    unenrollFromDegree,
+    isDegreeEnrolled,
+    getDegreeEnrollment,
+    enrolledDegreeSlugs,
     // Persistence
     loadFromStorage,
     saveToStorage

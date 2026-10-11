@@ -23,8 +23,12 @@
             />
           </div>
           <div class="flex-1 min-w-0">
-            <h2 class="text-white text-lg font-bold truncate">{{ teacher.title }}</h2>
-            <p class="text-white/60 text-sm">{{ teacher.role }} · {{ teacher.department }}</p>
+            <h2 class="text-white text-lg font-bold truncate">
+              {{ teacher.title }}
+            </h2>
+            <p class="text-white/60 text-sm">
+              {{ teacher.role }} · {{ teacher.department }}
+            </p>
           </div>
           <NuxtLink
             to="/teachers"
@@ -41,8 +45,12 @@
               :name="teacher.avatar || 'i-lucide-user'"
               class="w-12 h-12 text-white/20 mb-3"
             />
-            <p class="text-white/40 text-sm mb-1">Start a conversation with {{ teacher.title }}</p>
-            <p class="text-white/30 text-xs">{{ teacher.description }}</p>
+            <p class="text-white/40 text-sm mb-1">
+              Start a conversation with {{ teacher.title }}
+            </p>
+            <p class="text-white/30 text-xs">
+              {{ teacher.description }}
+            </p>
           </div>
           <div v-else class="space-y-4">
             <div
@@ -57,7 +65,9 @@
                   ? 'bg-purple-500/80 text-white rounded-br-sm'
                   : 'bg-white/10 text-white/90 rounded-bl-sm'"
               >
-                <p class="text-sm whitespace-pre-wrap">{{ message.content }}</p>
+                <p class="text-sm whitespace-pre-wrap">
+                  {{ message.content }}
+                </p>
                 <p class="text-[10px] mt-1 opacity-50">
                   {{ message.role === 'user' ? 'You' : teacher.title }} · {{ message.time }}
                 </p>
@@ -246,7 +256,7 @@ async function sendMessage() {
     console.error('Chat error:', error)
     messages.value.push({
       role: 'assistant',
-      content: "I'm sorry, I'm having trouble responding right now. Please try again later.",
+      content: 'I\'m sorry, I\'m having trouble responding right now. Please try again later.',
       time: getTimeString()
     })
   } finally {
@@ -261,7 +271,7 @@ function getAvatarBgClass(color: string) {
     purple: 'bg-purple-500/90',
     green: 'bg-green-500/90',
     blue: 'bg-blue-500/90',
-    yellow: 'bg-yellow-500/90',
+    yellow: 'bg-yellow-500/90'
   }
   return bgColors[color.toLowerCase()] || 'bg-gray-500/90'
 }

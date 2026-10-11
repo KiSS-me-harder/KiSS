@@ -6,11 +6,21 @@
       <div class="absolute top-4 left-1/2 -translate-x-1/2 w-[85%] h-[35%] rounded-lg bg-emerald-900/80 border-4 border-amber-900/60 shadow-lg">
         <!-- Chalk drawings on board -->
         <div class="absolute inset-2 flex items-center justify-center gap-4 opacity-30">
-          <div class="text-white/40 text-2xl">👗</div>
-          <div class="text-white/40 text-2xl">👠</div>
-          <div class="text-white/40 text-2xl">💄</div>
-          <div class="text-white/40 text-2xl">🎀</div>
-          <div class="text-white/40 text-2xl">💅</div>
+          <div class="text-white/40 text-2xl">
+            👗
+          </div>
+          <div class="text-white/40 text-2xl">
+            👠
+          </div>
+          <div class="text-white/40 text-2xl">
+            💄
+          </div>
+          <div class="text-white/40 text-2xl">
+            🎀
+          </div>
+          <div class="text-white/40 text-2xl">
+            💅
+          </div>
         </div>
         <!-- Chalk dust effect -->
         <div class="absolute inset-0 bg-gradient-to-t from-transparent via-white/[0.02] to-transparent" />
@@ -29,7 +39,12 @@
       <div class="absolute bottom-0 left-0 right-0 h-[30%] bg-gradient-to-t from-amber-950/30 to-transparent" />
       <!-- Floor lines -->
       <div class="absolute bottom-0 left-0 right-0 h-[30%]">
-        <div v-for="i in 5" :key="i" class="absolute left-0 right-0 h-px bg-amber-900/10" :style="{ bottom: `${i * 6}%` }" />
+        <div
+          v-for="i in 5"
+          :key="i"
+          class="absolute left-0 right-0 h-px bg-amber-900/10"
+          :style="{ bottom: `${i * 6}%` }"
+        />
       </div>
 
       <!-- Light rays from window -->
@@ -147,8 +162,12 @@
 
     <!-- Name tag -->
     <div class="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-sm">
-      <p class="text-sm font-semibold text-white">{{ name }}</p>
-      <p class="text-xs text-white/50">{{ degree }}</p>
+      <p class="text-sm font-semibold text-white">
+        {{ name }}
+      </p>
+      <p class="text-xs text-white/50">
+        {{ degree }}
+      </p>
     </div>
   </div>
 </template>
@@ -177,24 +196,24 @@ const outfitClass = computed(() => {
 
 const accessoryPosition = (accessory: string) => {
   const positions: Record<string, string> = {
-    'necklace': 'top-[28%] left-1/2 -translate-x-1/2',
-    'earrings': 'top-[18%] left-0',
-    'glasses': 'top-[14%] left-1/2 -translate-x-1/2',
-    'crown': '-top-4 left-1/2 -translate-x-1/2',
-    'bow': 'top-[8%] left-1/2 -translate-x-1/2',
-    'collar': 'top-[26%] left-1/2 -translate-x-1/2'
+    necklace: 'top-[28%] left-1/2 -translate-x-1/2',
+    earrings: 'top-[18%] left-0',
+    glasses: 'top-[14%] left-1/2 -translate-x-1/2',
+    crown: '-top-4 left-1/2 -translate-x-1/2',
+    bow: 'top-[8%] left-1/2 -translate-x-1/2',
+    collar: 'top-[26%] left-1/2 -translate-x-1/2'
   }
   return positions[accessory] || ''
 }
 
 const accessoryIcon = (accessory: string) => {
   const icons: Record<string, string> = {
-    'necklace': 'i-lucide-circle',
-    'earrings': 'i-lucide-circle-dot',
-    'glasses': 'i-lucide-glasses',
-    'crown': 'i-lucide-crown',
-    'bow': 'i-lucide-ribbon',
-    'collar': 'i-lucide-circle-dashed'
+    necklace: 'i-lucide-circle',
+    earrings: 'i-lucide-circle-dot',
+    glasses: 'i-lucide-glasses',
+    crown: 'i-lucide-crown',
+    bow: 'i-lucide-ribbon',
+    collar: 'i-lucide-circle-dashed'
   }
   return icons[accessory] || 'i-lucide-circle'
 }

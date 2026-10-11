@@ -22,8 +22,8 @@ const props = defineProps<{
 let audioCtx: AudioContext | null = null
 let masterGain: GainNode | null = null
 const channelGains = new Map<number, GainNode>()
-const channelOscillators = new Map<number, { left: OscillatorNode; right: OscillatorNode }>()
-const channelPanners = new Map<number, { left: StereoPannerNode; right: StereoPannerNode }>()
+const channelOscillators = new Map<number, { left: OscillatorNode, right: OscillatorNode }>()
+const channelPanners = new Map<number, { left: StereoPannerNode, right: StereoPannerNode }>()
 
 // Track mode: pre-recorded audio
 let trackAudio: HTMLAudioElement | null = null

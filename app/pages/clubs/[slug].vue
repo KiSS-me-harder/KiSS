@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import type { BreadcrumbItem } from '@nuxt/ui'
 import { useEnrollmentStore } from '~/stores/enrollment'
+import { useClubActivitiesStore } from '~/stores/clubActivities'
 
 const store = useEnrollmentStore()
+const clubActivitiesStore = useClubActivitiesStore()
 const route = useRoute()
 
 const slug = computed(() => route.params.slug as string)
@@ -62,7 +64,7 @@ const clubActivitySlugs = computed(() => {
 const clubActivities = computed(() => {
   if (!allActivities.value || clubActivitySlugs.value.length === 0) return []
   const slugs = new Set(clubActivitySlugs.value)
-  return allActivities.value.filter(a => {
+  return allActivities.value.filter((a) => {
     const stem = (a as any).stem || ''
     const parts = stem.split('/')
     if (parts.length < 3) return false
@@ -89,46 +91,21 @@ function toggleMembership() {
   }
 }
 
-// Track completed activities in localStorage
-const completedActivities = ref<Set<string>>(new Set())
-
-// Load completed activities from localStorage
-const storageKey = computed(() => `club-activities-${slug.value}`)
-if (process.client) {
-  try {
-    const stored = localStorage.getItem(storageKey.value)
-    if (stored) {
-      completedActivities.value = new Set(JSON.parse(stored))
-    }
+// Track completed activities via store
+// Load completed activities when the club slug changes
+watch(slug, (newSlug) => {
+  if (newSlug) {
+    clubActivitiesStore.loadFromStorage(newSlug)
   }
-  catch {
-    // Ignore localStorage errors
-  }
-}
-
-// Persist completed activities
-watch(completedActivities, (val) => {
-  if (!process.client) return
-  try {
-    localStorage.setItem(storageKey.value, JSON.stringify([...val]))
-  }
-  catch {
-    // Ignore localStorage errors
-  }
-}, { deep: true })
+}, { immediate: true })
 
 function toggleActivity(activity: Activity) {
   const key = `${activity.type}-${activity.title}`
-  if (completedActivities.value.has(key)) {
-    completedActivities.value.delete(key)
-  }
-  else {
-    completedActivities.value.add(key)
-  }
+  clubActivitiesStore.toggleActivity(slug.value, key)
 }
 
 function isCompleted(activity: Activity): boolean {
-  return completedActivities.value.has(`${activity.type}-${activity.title}`)
+  return clubActivitiesStore.isCompleted(slug.value, `${activity.type}-${activity.title}`)
 }
 
 const completedCount = computed(() => {
@@ -227,7 +204,6 @@ useHead({
     }
   ]
 })
-
 </script>
 
 <template>
@@ -250,7 +226,7 @@ useHead({
             :src="`${app.baseURL}img/placeholder.webp`"
             :alt="title"
             class="absolute inset-0 w-full h-full object-cover"
-          />
+          >
 
           <!-- Dark Overlay -->
           <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30" />
@@ -264,7 +240,9 @@ useHead({
             >
               <UIcon name="i-lucide-shield-alert" class="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
               <div>
-                <p class="text-sm font-medium text-amber-400">Prerequisite Required</p>
+                <p class="text-sm font-medium text-amber-400">
+                  Prerequisite Required
+                </p>
                 <p class="text-xs text-amber-200/70 mt-1">
                   To join this club, you must be enrolled in the
                   <NuxtLink :to="`/degrees/${requiredDegree}`" class="underline font-medium hover:text-amber-300">
@@ -282,7 +260,9 @@ useHead({
             >
               <UIcon name="i-lucide-circle-x" class="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
               <div>
-                <p class="text-sm font-medium text-red-400">Unable to Join</p>
+                <p class="text-sm font-medium text-red-400">
+                  Unable to Join
+                </p>
                 <p class="text-xs text-red-200/70 mt-1">
                   You must be enrolled in the
                   <NuxtLink :to="`/degrees/${requiredDegree}`" class="underline font-medium hover:text-red-300">
@@ -499,7 +479,6 @@ useHead({
             </div>
           </div>
         </div>
-
       </div>
 
       <!-- Loading state -->

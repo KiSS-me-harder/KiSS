@@ -23,8 +23,8 @@
               size="xs"
               color="neutral"
               variant="subtle"
-              @click="resetView"
               title="Clear study plan"
+              @click="resetView"
             >
               <UIcon name="i-lucide-refresh-cw" class="size-3" />
             </UButton>
@@ -39,7 +39,9 @@
         <div class="xl:w-56 xl:shrink-0 space-y-4 overflow-y-auto pr-1 xl:max-h-none max-h-[200px] xl:order-none order-first w-full">
           <!-- Legend -->
           <div class="rounded-xl border border-white/10 bg-black/20 p-3 space-y-2">
-            <p class="text-[10px] font-bold text-white/30 uppercase tracking-wider">Legend</p>
+            <p class="text-[10px] font-bold text-white/30 uppercase tracking-wider">
+              Legend
+            </p>
             <div class="flex items-center gap-2 text-xs text-white/60">
               <span class="w-3 h-3 rounded-full bg-purple-500 shadow shadow-purple-500/50" />
               <span>Student</span>
@@ -69,7 +71,9 @@
           <!-- Degree Filters -->
           <div class="rounded-xl border border-white/10 bg-black/20 p-3 space-y-3">
             <div class="flex items-center justify-between">
-              <p class="text-[10px] font-bold text-white/30 uppercase tracking-wider">Filter Degrees</p>
+              <p class="text-[10px] font-bold text-white/30 uppercase tracking-wider">
+                Filter Degrees
+              </p>
               <button
                 class="text-[10px] text-purple-400 hover:text-purple-300 transition-colors"
                 @click="toggleAllDegrees"
@@ -87,8 +91,8 @@
                 <div class="flex items-center gap-2">
                   <UCheckbox
                     :model-value="selectedDegrees.has(degree.slug)"
-                    @change="onDegreeToggle(degree.slug)"
                     size="xs"
+                    @change="onDegreeToggle(degree.slug)"
                   />
                   <label class="text-xs text-white/70 cursor-pointer select-none" @click="onDegreeToggle(degree.slug)">
                     {{ degree.label }}
@@ -102,10 +106,10 @@
                 >
                   <USelect
                     :model-value="degreeTargetTitle[degree.slug]"
-                    @update:model-value="onTitleChange(degree.slug, $event as string)"
                     :items="getDegreeTitles(degree.slug)"
                     size="xs"
                     class="text-[10px]"
+                    @update:model-value="onTitleChange(degree.slug, $event as string)"
                   />
                 </div>
               </div>
@@ -130,8 +134,12 @@
           <!-- Plan list -->
           <div v-if="studyPlanArray.length" class="rounded-xl border border-white/10 bg-black/20 p-3">
             <div class="flex items-center justify-between mb-2">
-              <p class="text-[10px] font-bold text-white/30 uppercase tracking-wider">Study Plan</p>
-              <UBadge size="xs" variant="subtle" color="info">{{ studyPlanArray.length }}</UBadge>
+              <p class="text-[10px] font-bold text-white/30 uppercase tracking-wider">
+                Study Plan
+              </p>
+              <UBadge size="xs" variant="subtle" color="info">
+                {{ studyPlanArray.length }}
+              </UBadge>
             </div>
             <div class="space-y-1.5">
               <div
@@ -160,10 +168,10 @@
           </p>
         </div>
 
-        <!-- Graph Container -->
+        <!-- Graph Container (hidden on mobile) -->
         <div
-          class="flex-1 relative overflow-hidden rounded-xl border border-white/10 bg-black/30 select-none min-h-[300px] xl:min-h-0"
           ref="graphContainer"
+          class="flex-1 relative overflow-hidden rounded-xl border border-white/10 bg-black/30 select-none min-h-[300px] xl:min-h-0 hidden md:block"
           @mousedown="onMouseDown"
           @mousemove="onGraphMouseMove"
           @mouseup="onMouseUp"
@@ -179,24 +187,38 @@
           >
             <defs>
               <filter id="glow">
-                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                <feGaussianBlur stdDeviation="3" result="coloredBlur" />
                 <feMerge>
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
+                  <feMergeNode in="coloredBlur" />
+                  <feMergeNode in="SourceGraphic" />
                 </feMerge>
               </filter>
-              <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <marker
+                id="arrow"
+                markerWidth="8"
+                markerHeight="6"
+                refX="8"
+                refY="3"
+                orient="auto"
+              >
                 <polygon points="0 0, 8 3, 0 6" fill="rgba(255,255,255,0.15)" />
               </marker>
-              <marker id="arrow-planned" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <marker
+                id="arrow-planned"
+                markerWidth="8"
+                markerHeight="6"
+                refX="8"
+                refY="3"
+                orient="auto"
+              >
                 <polygon points="0 0, 8 3, 0 6" fill="rgba(59,130,246,0.5)" />
               </marker>
               <!-- Clip paths for circular node images -->
-              <clipPath v-for="node in nodes" :key="'clip-' + node.id" :id="'clip-' + node.id">
+              <clipPath v-for="node in nodes" :id="'clip-' + node.id" :key="'clip-' + node.id">
                 <circle
                   :cx="0"
                   :cy="0"
-                  :r="node.id === 'student' ? 20 : 14"
+                  :r="node.id === 'student' ? 28 : 20"
                 />
               </clipPath>
             </defs>
@@ -204,109 +226,127 @@
             <!-- Pan/Zoom transform group -->
             <g :transform="`translate(${panX},${panY}) scale(${zoom})`">
 
-            <!-- Edges -->
-            <g pointer-events="none">
-              <path
-                v-for="edge in edges"
-                :key="edge.key"
-                :d="edge.path"
-                fill="none"
-                :stroke="edge.planned ? 'rgba(59,130,246,0.35)' : 'rgba(255,255,255,0.06)'"
-                :stroke-width="edge.planned ? 2 : 1"
-                :opacity="edge.planned ? 0.9 : 0.4"
-                :marker-end="edge.planned ? 'url(#arrow-planned)' : 'url(#arrow)'"
-                class="transition-all duration-300"
-              />
-            </g>
-
-            <!-- Nodes -->
-            <g>
-              <g
-                v-for="node in nodes"
-                :key="node.id"
-                @click="selectNode(node)"
-                @mouseenter="onNodeHover(node, $event)"
-                @mouseleave="tooltipNode = null"
-                class="cursor-pointer"
-              >
-                <!-- Hit area (larger invisible circle for easier clicking) -->
-                <circle
-                  :cx="node.x"
-                  :cy="node.y"
-                  r="24"
-                  fill="transparent"
+              <!-- Edges -->
+              <g pointer-events="none">
+                <path
+                  v-for="edge in edges"
+                  :key="edge.key"
+                  :d="edge.path"
+                  fill="none"
+                  :stroke="edge.planned ? 'rgba(59,130,246,0.5)' : 'rgba(255,255,255,0.15)'"
+                  :stroke-width="edge.planned ? 2.5 : 1.5"
+                  :opacity="edge.planned ? 0.9 : 0.7"
+                  :marker-end="edge.planned ? 'url(#arrow-planned)' : 'url(#arrow)'"
+                  class="transition-all duration-300"
                 />
-                <!-- Node circle with image -->
-                <g :transform="`translate(${node.x}, ${node.y})`">
-                  <!-- Background fill circle -->
+              </g>
+
+              <!-- Nodes -->
+              <g>
+                <g
+                  v-for="node in nodes"
+                  :key="node.id"
+                  class="cursor-pointer"
+                  @click="selectNode(node)"
+                  @mouseenter="onNodeHover(node, $event)"
+                  @mouseleave="tooltipNode = null"
+                >
+                  <!-- Hit area (larger invisible circle for easier clicking) -->
                   <circle
-                    :cx="0"
-                    :cy="0"
-                    :r="node.id === 'student' ? 20 : 14"
-                    :fill="getNodeFill(node)"
-                    class="transition-all duration-200"
+                    :cx="node.x"
+                    :cy="node.y"
+                    r="32"
+                    fill="transparent"
                   />
-                  <!-- Clipped image overlay -->
-                  <g v-if="node.image" :clip-path="`url(#clip-${node.id})`">
-                    <image
-                      :href="node.image"
-                      :x="node.id === 'student' ? -20 : -14"
-                      :y="node.id === 'student' ? -20 : -14"
-                      :width="node.id === 'student' ? 40 : 28"
-                      :height="node.id === 'student' ? 40 : 28"
-                      preserveAspectRatio="xMidYMid slice"
+                  <!-- Node circle with image -->
+                  <g :transform="`translate(${node.x}, ${node.y})`">
+                    <!-- Background fill circle -->
+                    <circle
+                      :cx="0"
+                      :cy="0"
+                      :r="node.id === 'student' ? 28 : 20"
+                      :fill="getNodeFill(node)"
+                      class="transition-all duration-200"
+                    />
+                    <!-- Clipped image overlay -->
+                    <g v-if="node.image" :clip-path="`url(#clip-${node.id})`">
+                      <image
+                        :href="node.image"
+                        :x="node.id === 'student' ? -28 : -20"
+                        :y="node.id === 'student' ? -28 : -20"
+                        :width="node.id === 'student' ? 56 : 40"
+                        :height="node.id === 'student' ? 56 : 40"
+                        preserveAspectRatio="xMidYMid slice"
+                      />
+                    </g>
+                    <!-- Stroke ring -->
+                    <circle
+                      :cx="0"
+                      :cy="0"
+                      :r="node.id === 'student' ? 28 : 20"
+                      fill="none"
+                      :stroke="getNodeStroke(node)"
+                      stroke-width="2.5"
+                      :filter="(isSelected(node) || isPlanned(node)) && node.id !== 'student' ? 'url(#glow)' : undefined"
+                      class="transition-all duration-200"
                     />
                   </g>
-                  <!-- Stroke ring -->
-                  <circle
-                    :cx="0"
-                    :cy="0"
-                    :r="node.id === 'student' ? 20 : 14"
-                    fill="none"
-                    :stroke="getNodeStroke(node)"
-                    stroke-width="2.5"
-                    :filter="(isSelected(node) || isPlanned(node)) && node.id !== 'student' ? 'url(#glow)' : undefined"
-                    class="transition-all duration-200"
-                  />
+                  <!-- Node label -->
+                  <text
+                    :x="node.x"
+                    :y="node.y + (node.id === 'student' ? 44 : 34)"
+                    text-anchor="middle"
+                    :font-size="node.id === 'student' ? 12 : 10"
+                    :fill="getNodeLabelColor(node)"
+                    font-weight="600"
+                    class="select-none pointer-events-none"
+                  >
+                    {{ node.label }}
+                  </text>
+                  <!-- Level badge -->
+                  <text
+                    v-if="node.level"
+                    :x="node.x"
+                    :y="node.y + (node.id === 'student' ? 56 : 44)"
+                    text-anchor="middle"
+                    fill="rgba(255,255,255,0.3)"
+                    font-size="8"
+                    class="select-none pointer-events-none"
+                  >
+                    Lvl {{ node.level }}
+                  </text>
                 </g>
-                <!-- Node label -->
-                <text
-                  :x="node.x"
-                  :y="node.y + (node.id === 'student' ? 34 : 26)"
-                  text-anchor="middle"
-                  :fill="getNodeLabelColor(node)"
-                  :font-size="node.id === 'student' ? 11 : 9"
-                  font-weight="600"
-                  class="select-none pointer-events-none"
-                >
-                  {{ node.label }}
-                </text>
-                <!-- Level badge -->
-                <text
-                  v-if="node.level"
-                  :x="node.x"
-                  :y="node.y + (node.id === 'student' ? 46 : 36)"
-                  text-anchor="middle"
-                  fill="rgba(255,255,255,0.3)"
-                  font-size="8"
-                  class="select-none pointer-events-none"
-                >
-                  Lvl {{ node.level }}
-                </text>
               </g>
-            </g>
             </g>
           </svg>
 
           <!-- Zoom controls -->
           <div class="absolute bottom-3 right-3 flex flex-col gap-1">
-            <UButton size="xs" color="neutral" variant="outline" @click="zoomIn" title="Zoom in">
+            <UButton
+              size="xs"
+              color="neutral"
+              variant="outline"
+              title="Zoom in"
+              @click="zoomIn"
+            >
               <UIcon name="i-lucide-zoom-in" class="size-3" />
             </UButton>
-            <UButton size="xs" color="neutral" variant="outline" @click="zoomOut" title="Zoom out">
+            <UButton
+              size="xs"
+              color="neutral"
+              variant="outline"
+              title="Zoom out"
+              @click="zoomOut"
+            >
               <UIcon name="i-lucide-zoom-out" class="size-3" />
             </UButton>
-            <UButton size="xs" color="neutral" variant="outline" @click="resetPanZoom" title="Reset view">
+            <UButton
+              size="xs"
+              color="neutral"
+              variant="outline"
+              title="Reset view"
+              @click="resetPanZoom"
+            >
               <UIcon name="i-lucide-maximize" class="size-3" />
             </UButton>
           </div>
@@ -317,9 +357,15 @@
             class="absolute pointer-events-none z-50 bg-black/95 border border-white/20 rounded-lg px-3 py-2 text-xs shadow-2xl backdrop-blur-sm"
             :style="{ left: tooltipX + 'px', top: (tooltipY - 10) + 'px', transform: 'translate(-50%, -100%)' }"
           >
-            <p class="font-bold text-white">{{ tooltipNode.label }}</p>
-            <p v-if="tooltipNode.degreeLabel" class="text-white/50 text-[10px]">{{ tooltipNode.degreeLabel }}</p>
-            <p v-if="tooltipNode.level" class="text-white/40 text-[10px]">Level {{ tooltipNode.level }}</p>
+            <p class="font-bold text-white">
+              {{ tooltipNode.label }}
+            </p>
+            <p v-if="tooltipNode.degreeLabel" class="text-white/50 text-[10px]">
+              {{ tooltipNode.degreeLabel }}
+            </p>
+            <p v-if="tooltipNode.level" class="text-white/40 text-[10px]">
+              Level {{ tooltipNode.level }}
+            </p>
             <div class="flex gap-2 mt-1">
               <span v-if="isEnrolledNode(tooltipNode) && !arePrerequisitesMet(tooltipNode)" class="text-gray-400 text-[10px]">Locked (enrolled)</span>
               <span v-if="isEnrolledNode(tooltipNode) && arePrerequisitesMet(tooltipNode)" class="text-emerald-400 text-[10px]">Enrolled</span>
@@ -327,6 +373,21 @@
               <span v-if="isPlanned(tooltipNode)" class="text-blue-400 text-[10px]">Planned</span>
             </div>
           </div>
+        </div>
+
+        <!-- Mobile Graph Button (visible only on small screens) -->
+        <div class="md:hidden">
+          <UButton
+            size="xs"
+            color="primary"
+            block
+            @click="openGraphPopup"
+          >
+            <template #leading>
+              <UIcon name="i-lucide-share-2" class="size-3" />
+            </template>
+            View Graph
+          </UButton>
         </div>
 
         <!-- Right sidebar: Selected Node Details -->
@@ -337,7 +398,7 @@
                 <span
                   class="w-4 h-4 rounded-full ring-2"
                   :style="{
-                    backgroundColor: getNodeFill(selectedNode),
+                    'backgroundColor': getNodeFill(selectedNode),
                     '--tw-ring-color': getNodeStroke(selectedNode)
                   } as any"
                 />
@@ -360,7 +421,9 @@
                 </span>
               </div>
               <div v-if="selectedNode.dependencies && selectedNode.dependencies.length > 0">
-                <p class="text-white/40 mb-1">Requires</p>
+                <p class="text-white/40 mb-1">
+                  Requires
+                </p>
                 <div class="space-y-1">
                   <div
                     v-for="dep in selectedNode.dependencies"
@@ -378,7 +441,12 @@
                 v-if="selectedNode.path && selectedNode.path !== '/classes/student'"
                 :to="selectedNode.path"
               >
-                <UButton size="xs" class="w-full" variant="subtle" color="neutral">
+                <UButton
+                  size="xs"
+                  class="w-full"
+                  variant="subtle"
+                  color="neutral"
+                >
                   <template #leading>
                     <UIcon name="i-lucide-external-link" class="size-3" />
                   </template>
@@ -391,10 +459,229 @@
       </div>
     </template>
   </UDashboardPanel>
+
+  <!-- Mobile Graph Popup Modal -->
+  <div
+    v-if="showGraphPopup"
+    class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+    @click.self="closeGraphPopup"
+  >
+    <div class="relative w-full h-full flex flex-col">
+      <!-- Modal header -->
+      <div class="flex items-center justify-between p-3 border-b border-white/10">
+        <h2 class="text-sm font-bold text-white">
+          Study Plan Graph
+        </h2>
+        <UButton
+          size="xs"
+          color="neutral"
+          variant="subtle"
+          @click="closeGraphPopup"
+        >
+          <UIcon name="i-lucide-x" class="size-4" />
+        </UButton>
+      </div>
+      <!-- Modal graph container -->
+      <div
+        ref="graphContainerMobile"
+        class="flex-1 relative overflow-hidden bg-black/30 select-none"
+        @mousedown="onMouseDown"
+        @mousemove="onGraphMouseMove"
+        @mouseup="onMouseUp"
+        @mouseleave="onMouseLeaveGraph"
+        @wheel.prevent="onWheel"
+        @touchstart="onTouchStart"
+        @touchmove.prevent="onTouchMove"
+        @touchend="onTouchEnd"
+      >
+        <svg
+          ref="svgElementMobile"
+          class="w-full h-full"
+        >
+          <defs>
+            <filter id="glow-mobile">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <marker
+              id="arrow-mobile"
+              markerWidth="8"
+              markerHeight="6"
+              refX="8"
+              refY="3"
+              orient="auto"
+            >
+              <polygon points="0 0, 8 3, 0 6" fill="rgba(255,255,255,0.15)" />
+            </marker>
+            <marker
+              id="arrow-planned-mobile"
+              markerWidth="8"
+              markerHeight="6"
+              refX="8"
+              refY="3"
+              orient="auto"
+            >
+              <polygon points="0 0, 8 3, 0 6" fill="rgba(59,130,246,0.5)" />
+            </marker>
+            <clipPath v-for="node in nodes" :id="'clip-m-' + node.id" :key="'clip-m-' + node.id">
+              <circle
+                :cx="0"
+                :cy="0"
+                :r="node.id === 'student' ? 28 : 20"
+              />
+            </clipPath>
+          </defs>
+
+          <g :transform="`translate(${panX},${panY}) scale(${zoom})`">
+            <g pointer-events="none">
+              <path
+                v-for="edge in edges"
+                :key="edge.key"
+                :d="edge.path"
+                fill="none"
+                :stroke="edge.planned ? 'rgba(59,130,246,0.5)' : 'rgba(255,255,255,0.15)'"
+                :stroke-width="edge.planned ? 2.5 : 1.5"
+                :opacity="edge.planned ? 0.9 : 0.7"
+                :marker-end="edge.planned ? 'url(#arrow-planned-mobile)' : 'url(#arrow-mobile)'"
+                class="transition-all duration-300"
+              />
+            </g>
+
+            <g>
+              <g
+                v-for="node in nodes"
+                :key="node.id"
+                class="cursor-pointer"
+                @click="selectNodeFromPopup(node)"
+                @mouseenter="onNodeHover(node, $event)"
+                @mouseleave="tooltipNode = null"
+              >
+                <circle
+                  :cx="node.x"
+                  :cy="node.y"
+                  r="32"
+                  fill="transparent"
+                />
+                <g :transform="`translate(${node.x}, ${node.y})`">
+                  <circle
+                    :cx="0"
+                    :cy="0"
+                    :r="node.id === 'student' ? 28 : 20"
+                    :fill="getNodeFill(node)"
+                    class="transition-all duration-200"
+                  />
+                  <g v-if="node.image" :clip-path="`url(#clip-m-${node.id})`">
+                    <image
+                      :href="node.image"
+                      :x="node.id === 'student' ? -28 : -20"
+                      :y="node.id === 'student' ? -28 : -20"
+                      :width="node.id === 'student' ? 56 : 40"
+                      :height="node.id === 'student' ? 56 : 40"
+                      preserveAspectRatio="xMidYMid slice"
+                    />
+                  </g>
+                  <circle
+                    :cx="0"
+                    :cy="0"
+                    :r="node.id === 'student' ? 28 : 20"
+                    fill="none"
+                    :stroke="getNodeStroke(node)"
+                    stroke-width="2.5"
+                    :filter="(isSelected(node) || isPlanned(node)) && node.id !== 'student' ? 'url(#glow-mobile)' : undefined"
+                    class="transition-all duration-200"
+                  />
+                </g>
+                <text
+                  :x="node.x"
+                  :y="node.y + (node.id === 'student' ? 44 : 34)"
+                  text-anchor="middle"
+                  :font-size="node.id === 'student' ? 12 : 10"
+                  :fill="getNodeLabelColor(node)"
+                  font-weight="600"
+                  class="select-none pointer-events-none"
+                >
+                  {{ node.label }}
+                </text>
+                <text
+                  v-if="node.level"
+                  :x="node.x"
+                  :y="node.y + (node.id === 'student' ? 56 : 44)"
+                  text-anchor="middle"
+                  fill="rgba(255,255,255,0.3)"
+                  font-size="8"
+                  class="select-none pointer-events-none"
+                >
+                  Lvl {{ node.level }}
+                </text>
+              </g>
+            </g>
+          </g>
+        </svg>
+
+        <!-- Zoom controls -->
+        <div class="absolute bottom-3 right-3 flex flex-col gap-1">
+          <UButton
+            size="xs"
+            color="neutral"
+            variant="outline"
+            title="Zoom in"
+            @click="zoomIn"
+          >
+            <UIcon name="i-lucide-zoom-in" class="size-3" />
+          </UButton>
+          <UButton
+            size="xs"
+            color="neutral"
+            variant="outline"
+            title="Zoom out"
+            @click="zoomOut"
+          >
+            <UIcon name="i-lucide-zoom-out" class="size-3" />
+          </UButton>
+          <UButton
+            size="xs"
+            color="neutral"
+            variant="outline"
+            title="Reset view"
+            @click="resetPanZoom"
+          >
+            <UIcon name="i-lucide-maximize" class="size-3" />
+          </UButton>
+        </div>
+
+        <!-- Tooltip -->
+        <div
+          v-if="tooltipNode"
+          class="absolute pointer-events-none z-50 bg-black/95 border border-white/20 rounded-lg px-3 py-2 text-xs shadow-2xl backdrop-blur-sm"
+          :style="{ left: tooltipX + 'px', top: (tooltipY - 10) + 'px', transform: 'translate(-50%, -100%)' }"
+        >
+          <p class="font-bold text-white">
+            {{ tooltipNode.label }}
+          </p>
+          <p v-if="tooltipNode.degreeLabel" class="text-white/50 text-[10px]">
+            {{ tooltipNode.degreeLabel }}
+          </p>
+          <p v-if="tooltipNode.level" class="text-white/40 text-[10px]">
+            Level {{ tooltipNode.level }}
+          </p>
+          <div class="flex gap-2 mt-1">
+            <span v-if="isEnrolledNode(tooltipNode) && !arePrerequisitesMet(tooltipNode)" class="text-gray-400 text-[10px]">Locked (enrolled)</span>
+            <span v-if="isEnrolledNode(tooltipNode) && arePrerequisitesMet(tooltipNode)" class="text-emerald-400 text-[10px]">Enrolled</span>
+            <span v-if="isInProgress(tooltipNode)" class="text-amber-400 text-[10px]">In Progress</span>
+            <span v-if="isPlanned(tooltipNode)" class="text-blue-400 text-[10px]">Planned</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import type { BreadcrumbItem } from '@nuxt/ui'
+import { useNuxtApp } from '#app'
 import { useEnrollmentStore } from '~/stores/enrollment'
 
 useHead({ title: 'Study Plan' })
@@ -408,8 +695,12 @@ useSeoMeta({
 })
 
 const store = useEnrollmentStore()
+const planStore = useStudyPlanStore()
 const graphContainer = ref<HTMLElement | null>(null)
 const svgElement = ref<SVGSVGElement | null>(null)
+const graphContainerMobile = ref<HTMLElement | null>(null)
+const svgElementMobile = ref<SVGSVGElement | null>(null)
+const showGraphPopup = ref(false)
 
 /* ── Types ── */
 
@@ -422,7 +713,7 @@ interface GraphNode {
   degreeLabel?: string
   className?: string
   degree?: string
-  dependencies?: { class: string; level: number }[]
+  dependencies?: { class: string, level: number }[]
   path?: string
   image?: string
 }
@@ -451,7 +742,7 @@ const { app } = useRuntimeConfig()
 interface DegreeTitle {
   name: string
   description: string
-  classes: { slug: string; maxLevel: number }[]
+  classes: { slug: string, maxLevel: number }[]
 }
 
 const degreeTitlesMap = computed(() => {
@@ -488,7 +779,7 @@ interface ClassInfo {
   className: string
   classSlug: string
   levels: number[]
-  dependencies: Map<number, { class: string; level: number }[]>
+  dependencies: Map<number, { class: string, level: number }[]>
 }
 
 const classMap = computed(() => {
@@ -521,23 +812,10 @@ const classMap = computed(() => {
   return map
 })
 
-/* ── Study plan state ── */
+/* ── Study plan state (from store) ── */
 
-const studyPlan = ref<Set<string>>(new Set())
-
-function loadStudyPlan() {
-  try {
-    const raw = localStorage.getItem('kiss-study-plan')
-    if (raw) studyPlan.value = new Set(JSON.parse(raw) as string[])
-  } catch { /* ignore */ }
-}
-loadStudyPlan()
-
-watch(studyPlan, (val) => {
-  try { localStorage.setItem('kiss-study-plan', JSON.stringify([...val])) } catch { /* ignore */ }
-}, { deep: true })
-
-const studyPlanArray = computed(() => Array.from(studyPlan.value))
+const studyPlan = computed(() => planStore.studyPlan)
+const studyPlanArray = computed(() => Array.from(planStore.studyPlan))
 
 /* ── Degree filter state ── */
 
@@ -558,88 +836,136 @@ const allDegreesList = computed(() => {
     .sort((a, b) => a.label.localeCompare(b.label))
 })
 
-// Persist selected degrees to localStorage
-const selectedDegrees = ref<Set<string>>(new Set())
-const degreeTargetTitle = ref<Record<string, string>>({})
+// Degree filter state (from store)
+const selectedDegrees = computed(() => planStore.selectedDegrees)
+const degreeTargetTitle = computed(() => planStore.degreeTargetTitle)
 
 function loadFilterState() {
-  try {
-    const rawDeg = localStorage.getItem('kiss-study-plan-degrees')
-    if (rawDeg) selectedDegrees.value = new Set(JSON.parse(rawDeg) as string[])
-    const rawTitle = localStorage.getItem('kiss-study-plan-titles')
-    if (rawTitle) degreeTargetTitle.value = JSON.parse(rawTitle) as Record<string, string>
-  } catch { /* ignore */ }
-  // Default: select only degrees the user is enrolled in
-  if (selectedDegrees.value.size === 0) {
-    // Find degrees where the user has at least one enrollment
-    const enrolledDegrees = new Set<string>()
-    for (const [key] of classMap.value) {
-      if (store.isEnrolled(key)) {
-        const parts = key.split('/')
-        if (parts.length >= 2) {
-          enrolledDegrees.add(parts[0])
-        }
-      }
-    }
-    if (enrolledDegrees.size > 0) {
-      for (const d of allDegreesList.value) {
-        if (enrolledDegrees.has(d.slug)) {
-          selectedDegrees.value.add(d.slug)
-          const titles = getDegreeTitles(d.slug)
-          degreeTargetTitle.value[d.slug] = titles[0] || 'Junior'
-        }
-      }
-    }
-    // If no enrollments, leave all degrees deselected
+  // Find degrees where the user has a degree subscription (primary source)
+  const enrolledDegrees = new Set<string>()
+
+  // Primary: use degree subscriptions (degree + title tracking)
+  for (const degEnrollment of store.degreeEnrollments) {
+    enrolledDegrees.add(degEnrollment.degreeSlug)
   }
-  // Ensure all degrees have a target title
+
+  // Fallback: also include degrees with class-level enrollments (legacy data)
+  for (const [key] of classMap.value) {
+    if (store.isEnrolled(key)) {
+      const parts = key.split('/')
+      if (parts.length >= 2) {
+        enrolledDegrees.add(parts[0])
+      }
+    }
+  }
+
+  // If no degrees are selected, default to enrolled degrees
+  if (planStore.selectedDegrees.size === 0 && enrolledDegrees.size > 0) {
+    for (const d of allDegreesList.value) {
+      if (enrolledDegrees.has(d.slug)) {
+        planStore.selectDegree(d.slug)
+      }
+    }
+  }
+
+  // Determine the correct target title for enrolled degrees
+  // Priority: degree subscription title > determined title from class enrollments > default
   for (const d of allDegreesList.value) {
-    if (!(d.slug in degreeTargetTitle.value)) {
+    if (enrolledDegrees.has(d.slug)) {
+      // Check if there's a degree subscription with a title
+      const degEnrollment = store.getDegreeEnrollment(d.slug)
+      if (degEnrollment) {
+        planStore.setTargetTitle(d.slug, degEnrollment.title)
+      } else {
+        // Fallback: determine from class enrollments
+        const targetTitle = determineTitleForDegree(d.slug)
+        planStore.setTargetTitle(d.slug, targetTitle)
+      }
+    } else if (!planStore.getTargetTitle(d.slug)) {
+      // For non-enrolled degrees, default to the first title
       const titles = getDegreeTitles(d.slug)
-      degreeTargetTitle.value[d.slug] = titles[0] || 'Junior'
+      planStore.setTargetTitle(d.slug, titles[0] || 'Junior')
     }
   }
+
+  // Auto-add target title classes to the study plan
+  autoAddTargetClasses()
 }
-loadFilterState()
 
-watch(selectedDegrees, (val) => {
-  try { localStorage.setItem('kiss-study-plan-degrees', JSON.stringify([...val])) } catch { /* ignore */ }
-}, { deep: true })
+// Determine the best title for a degree based on the user's highest active enrollment level
+function determineTitleForDegree(degreeSlug: string): string {
+  const titles = degreeTitlesMap.value.get(degreeSlug)
+  if (!titles || titles.length === 0) return 'Junior'
 
-watch(degreeTargetTitle, (val) => {
-  try { localStorage.setItem('kiss-study-plan-titles', JSON.stringify(val)) } catch { /* ignore */ }
-}, { deep: true })
+  // Find the highest level the user is enrolled in for any class in this degree
+  let highestEnrolledLevel = 0
+  for (const [key, info] of classMap.value) {
+    if (!key.startsWith(degreeSlug + '/')) continue
+    const enrollment = store.getEnrollment(key)
+    if (enrollment) {
+      // Find the highest level in this enrollment (completed or not)
+      for (const lvl of enrollment.levels) {
+        if (lvl.level > highestEnrolledLevel) {
+          highestEnrolledLevel = lvl.level
+        }
+      }
+    }
+  }
+
+  // If no enrollments, default to the first title
+  if (highestEnrolledLevel === 0) {
+    return titles[0]?.name || 'Junior'
+  }
+
+  // Find the title that covers the highest enrolled level
+  // Iterate from the last title (highest) to the first to find the best match
+  for (let i = titles.length - 1; i >= 0; i--) {
+    const title = titles[i]
+    for (const titleClass of title.classes) {
+      if (highestEnrolledLevel <= titleClass.maxLevel) {
+        return title.name
+      }
+    }
+  }
+
+  // Fallback to the last title if the level is higher than any title's max
+  return titles[titles.length - 1]?.name || titles[0]?.name || 'Junior'
+}
 
 function onDegreeToggle(degreeSlug: string) {
-  if (selectedDegrees.value.has(degreeSlug)) {
-    selectedDegrees.value.delete(degreeSlug)
+  if (planStore.isDegreeSelected(degreeSlug)) {
+    planStore.deselectDegree(degreeSlug)
   } else {
-    selectedDegrees.value.add(degreeSlug)
-    if (!(degreeSlug in degreeTargetTitle.value)) {
+    planStore.selectDegree(degreeSlug)
+    if (!planStore.getTargetTitle(degreeSlug)) {
       const titles = getDegreeTitles(degreeSlug)
-      degreeTargetTitle.value[degreeSlug] = titles[0] || 'Junior'
+      planStore.setTargetTitle(degreeSlug, titles[0] || 'Junior')
     }
   }
+  autoAddTargetClasses()
   buildGraph()
 }
 
 function toggleAllDegrees() {
-  if (selectedDegrees.value.size === allDegreesList.value.length) {
-    selectedDegrees.value.clear()
+  if (planStore.selectedDegrees.size === allDegreesList.value.length) {
+    for (const d of allDegreesList.value) {
+      planStore.deselectDegree(d.slug)
+    }
   } else {
     for (const d of allDegreesList.value) {
-      selectedDegrees.value.add(d.slug)
-      if (!(d.slug in degreeTargetTitle.value)) {
+      planStore.selectDegree(d.slug)
+      if (!planStore.getTargetTitle(d.slug)) {
         const titles = getDegreeTitles(d.slug)
-        degreeTargetTitle.value[d.slug] = titles[0] || 'Junior'
+        planStore.setTargetTitle(d.slug, titles[0] || 'Junior')
       }
     }
   }
+  autoAddTargetClasses()
   buildGraph()
 }
 
 function onTitleChange(degreeSlug: string, titleName: string) {
-  degreeTargetTitle.value[degreeSlug] = titleName
+  planStore.setTargetTitle(degreeSlug, titleName)
   buildGraph()
 }
 
@@ -667,19 +993,27 @@ const titleClassSet = computed(() => {
 const filteredClassMap = computed(() => {
   const map = new Map<string, ClassInfo>()
   for (const [key, info] of classMap.value) {
-    if (!selectedDegrees.value.has(info.degree)) continue
     // Check if this class is required by the selected title
     if (!titleClassSet.value.has(key)) continue
-    // Filter levels to only include those required by the title
-    const targetTitle = degreeTargetTitle.value[info.degree]
-    const titles = degreeTitlesMap.value.get(info.degree)
-    const title = titles?.find(t => t.name === targetTitle)
-    const titleClass = title?.classes.find(c => c.slug === key)
-    const maxLevel = titleClass?.maxLevel ?? 100
+    // Find the maxLevel for this class by checking all selected degree titles
+    // (the class may belong to a different degree than the one selecting it)
+    let maxLevel = 100
+    for (const degreeSlug of selectedDegrees.value) {
+      const targetTitle = degreeTargetTitle.value[degreeSlug]
+      if (!targetTitle) continue
+      const titles = degreeTitlesMap.value.get(degreeSlug)
+      if (!titles) continue
+      const title = titles.find(t => t.name === targetTitle)
+      if (!title) continue
+      const titleClass = title.classes.find(c => c.slug === key)
+      if (titleClass) {
+        maxLevel = Math.max(maxLevel, titleClass.maxLevel)
+      }
+    }
     const filteredLevels = info.levels.filter(l => l <= maxLevel)
     if (filteredLevels.length === 0) continue
     // Filter dependencies to only reference visible levels
-    const filteredDeps = new Map<number, { class: string; level: number }[]>()
+    const filteredDeps = new Map<number, { class: string, level: number }[]>()
     for (const [lvl, deps] of info.dependencies) {
       if (lvl <= maxLevel) {
         filteredDeps.set(lvl, deps)
@@ -698,7 +1032,6 @@ const enrolling = ref(false)
 const enrollableClassesCount = computed(() => {
   let count = 0
   for (const [key, info] of classMap.value) {
-    if (!selectedDegrees.value.has(info.degree)) continue
     if (!titleClassSet.value.has(key)) continue
     if (!store.isEnrolled(key)) {
       count++
@@ -713,15 +1046,22 @@ async function enrollAllSelected() {
   // Small delay so the loading state is visible
   await new Promise(r => setTimeout(r, 300))
   for (const [key, info] of classMap.value) {
-    if (!selectedDegrees.value.has(info.degree)) continue
     if (!titleClassSet.value.has(key)) continue
     if (!store.isEnrolled(key)) {
-      // Enroll with levels up to the title's maxLevel
-      const targetTitle = degreeTargetTitle.value[info.degree]
-      const titles = degreeTitlesMap.value.get(info.degree)
-      const title = titles?.find(t => t.name === targetTitle)
-      const titleClass = title?.classes.find(c => c.slug === key)
-      const maxLevel = titleClass?.maxLevel ?? 100
+      // Find the maxLevel for this class by checking all selected degree titles
+      let maxLevel = 100
+      for (const degreeSlug of selectedDegrees.value) {
+        const targetTitle = degreeTargetTitle.value[degreeSlug]
+        if (!targetTitle) continue
+        const titles = degreeTitlesMap.value.get(degreeSlug)
+        if (!titles) continue
+        const title = titles.find(t => t.name === targetTitle)
+        if (!title) continue
+        const titleClass = title.classes.find(c => c.slug === key)
+        if (titleClass) {
+          maxLevel = Math.max(maxLevel, titleClass.maxLevel)
+        }
+      }
       const levelsToEnroll = info.levels.filter(l => l <= maxLevel)
       store.enrollInClass(key, info.className, info.degree, levelsToEnroll)
     }
@@ -764,9 +1104,11 @@ function onGraphMouseMove(event: MouseEvent) {
     return
   }
   // Tooltip logic
-  if (!graphContainer.value || !svgElement.value) return
-  const rect = graphContainer.value.getBoundingClientRect()
-  const svgRect = svgElement.value.getBoundingClientRect()
+  const container = showGraphPopup.value ? graphContainerMobile.value : graphContainer.value
+  const svg = showGraphPopup.value ? svgElementMobile.value : svgElement.value
+  if (!container || !svg) return
+  const rect = container.getBoundingClientRect()
+  const svgRect = svg.getBoundingClientRect()
   // Convert mouse to SVG coords accounting for pan/zoom
   const svgX = ((event.clientX - svgRect.left) - panX.value) / zoom.value
   const svgY = ((event.clientY - svgRect.top) - panY.value) / zoom.value
@@ -800,12 +1142,13 @@ function onMouseLeaveGraph() {
 function onWheel(event: MouseEvent) {
   const delta = event.deltaY > 0 ? 0.9 : 1.1
   const newZoom = Math.max(0.2, Math.min(5, zoom.value * delta))
-  
+
   // Zoom towards mouse position
-  const rect = graphContainer.value!.getBoundingClientRect()
+  const container = showGraphPopup.value ? graphContainerMobile.value : graphContainer.value
+  const rect = container!.getBoundingClientRect()
   const mouseX = event.clientX - rect.left
   const mouseY = event.clientY - rect.top
-  
+
   const scale = newZoom / zoom.value
   panX.value = mouseX - (mouseX - panX.value) * scale
   panY.value = mouseY - (mouseY - panY.value) * scale
@@ -813,7 +1156,8 @@ function onWheel(event: MouseEvent) {
 }
 
 function zoomIn() {
-  const rect = graphContainer.value?.getBoundingClientRect()
+  const container = showGraphPopup.value ? graphContainerMobile.value : graphContainer.value
+  const rect = container?.getBoundingClientRect()
   const cx = rect ? rect.width / 2 : 0
   const cy = rect ? rect.height / 2 : 0
   const newZoom = Math.min(5, zoom.value * 1.2)
@@ -824,7 +1168,8 @@ function zoomIn() {
 }
 
 function zoomOut() {
-  const rect = graphContainer.value?.getBoundingClientRect()
+  const container = showGraphPopup.value ? graphContainerMobile.value : graphContainer.value
+  const rect = container?.getBoundingClientRect()
   const cx = rect ? rect.width / 2 : 0
   const cy = rect ? rect.height / 2 : 0
   const newZoom = Math.max(0.2, zoom.value / 1.2)
@@ -835,7 +1180,11 @@ function zoomOut() {
 }
 
 function resetPanZoom() {
-  centerGraph()
+  if (showGraphPopup.value) {
+    centerGraphMobile()
+  } else {
+    centerGraph()
+  }
   zoom.value = 1
 }
 
@@ -875,7 +1224,8 @@ function onTouchMove(event: TouchEvent) {
       const newZoom = Math.max(0.2, Math.min(5, lastTouchZoom.value * scale))
 
       // Zoom towards center of two fingers
-      const rect = graphContainer.value?.getBoundingClientRect()
+      const container = showGraphPopup.value ? graphContainerMobile.value : graphContainer.value
+      const rect = container?.getBoundingClientRect()
       if (rect) {
         const midX = (event.touches[0].clientX + event.touches[1].clientX) / 2 - rect.left
         const midY = (event.touches[0].clientY + event.touches[1].clientY) / 2 - rect.top
@@ -1051,10 +1401,26 @@ function centerGraph() {
   panY.value = (containerH - graphH) / 2 - minY
 }
 
+function centerGraphMobile() {
+  if (nodes.value.length === 0 || !graphContainerMobile.value) return
+  const containerRect = graphContainerMobile.value.getBoundingClientRect()
+  const pad = 80
+  const minX = Math.min(...nodes.value.map(n => n.x)) - pad
+  const maxX = Math.max(...nodes.value.map(n => n.x)) + pad
+  const minY = Math.min(...nodes.value.map(n => n.y)) - pad
+  const maxY = Math.max(...nodes.value.map(n => n.y)) + pad
+  const graphW = maxX - minX
+  const graphH = maxY - minY
+  const containerW = containerRect.width
+  const containerH = containerRect.height
+  panX.value = (containerW - graphW) / 2 - minX
+  panY.value = (containerH - graphH) / 2 - minY
+}
+
 function buildGraph() {
   const nodeList: GraphNode[] = []
   const edgeList: GraphEdge[] = []
-  const posMap = new Map<string, { x: number; y: number }>()
+  const posMap = new Map<string, { x: number, y: number }>()
 
   const classes = Array.from(filteredClassMap.value.entries())
 
@@ -1072,9 +1438,9 @@ function buildGraph() {
   nodeList.push(studentNode)
 
   // ── Collect all classes by tier ──
-  const tier100Classes: { key: string; info: ClassInfo }[] = []
-  const tier200Classes: { key: string; info: ClassInfo }[] = []
-  const tier300Classes: { key: string; info: ClassInfo }[] = []
+  const tier100Classes: { key: string, info: ClassInfo }[] = []
+  const tier200Classes: { key: string, info: ClassInfo }[] = []
+  const tier300Classes: { key: string, info: ClassInfo }[] = []
 
   for (const [key, info] of classes) {
     if (info.levels.includes(100)) tier100Classes.push({ key, info })
@@ -1083,7 +1449,7 @@ function buildGraph() {
   }
 
   // Sort each tier by degree then class name for consistent ordering
-  const sortFn = (a: { key: string; info: ClassInfo }, b: { key: string; info: ClassInfo }) => {
+  const sortFn = (a: { key: string, info: ClassInfo }, b: { key: string, info: ClassInfo }) => {
     const dCmp = a.info.degreeLabel.localeCompare(b.info.degreeLabel)
     if (dCmp !== 0) return dCmp
     return a.info.className.localeCompare(b.info.className)
@@ -1096,7 +1462,7 @@ function buildGraph() {
   // Group tier 100 by degree, assign columns per degree group
   const degreeColumns = new Map<string, number>()
   let col = 0
-  const degreeGroups = new Map<string, { key: string; info: ClassInfo }[]>()
+  const degreeGroups = new Map<string, { key: string, info: ClassInfo }[]>()
   for (const { key, info } of tier100Classes) {
     if (!degreeGroups.has(info.degree)) degreeGroups.set(info.degree, [])
     degreeGroups.get(info.degree)!.push({ key, info })
@@ -1211,7 +1577,7 @@ function buildGraph() {
   for (const { key, info } of tier300Classes) {
     const deps = info.dependencies.get(300)!
     let depXSum = 0, depCount = 0
-    const depFromIds: { id: string; pos: { x: number; y: number } }[] = []
+    const depFromIds: { id: string, pos: { x: number, y: number } }[] = []
     for (const dep of deps) {
       for (const [dk, de] of filteredClassMap.value) {
         if (de.className === dep.class) {
@@ -1268,23 +1634,28 @@ function buildGraph() {
     }
   }
 
-  // ── Global centering: offset all nodes so the entire graph is centered around x=0 ──
+  // ── Global centering: center class nodes around the student (x=0) ──
+  // The student node stays at x=0; only class nodes are shifted
   if (nodeList.length > 1) {
-    const allX = nodeList.map(n => n.x)
-    const minX = Math.min(...allX)
-    const maxX = Math.max(...allX)
-    const graphCenterX = (minX + maxX) / 2
+    // Calculate the center of all class nodes (excluding student)
+    const classNodes = nodeList.filter(n => n.id !== 'student')
+    if (classNodes.length > 0) {
+      const allX = classNodes.map(n => n.x)
+      const minX = Math.min(...allX)
+      const maxX = Math.max(...allX)
+      const graphCenterX = (minX + maxX) / 2
 
-    // Shift all nodes so the graph is centered at x=0
-    // (studentNode is already in nodeList, so it gets shifted in the loop)
-    for (const node of nodeList) {
-      node.x -= graphCenterX
-    }
+      // Shift only class nodes so the graph is centered at x=0 (student position)
+      for (const node of classNodes) {
+        node.x -= graphCenterX
+      }
+      // studentNode.x remains 0
 
-    // Rebuild posMap with updated positions
-    posMap.clear()
-    for (const node of nodeList) {
-      posMap.set(node.id, { x: node.x, y: node.y })
+      // Rebuild posMap with updated positions
+      posMap.clear()
+      for (const node of nodeList) {
+        posMap.set(node.id, { x: node.x, y: node.y })
+      }
     }
 
     // Edges from student to tier 100
@@ -1321,8 +1692,8 @@ function buildGraph() {
   nodes.value = nodeList
   edges.value = edgeList
 
-  // Center the view
-  centerGraph()
+  // Center the view after DOM update so container has dimensions
+  nextTick(() => centerGraph())
 }
 
 // Spread nodes horizontally so no two nodes are closer than minSpacing
@@ -1369,6 +1740,22 @@ function selectNode(node: GraphNode) {
   selectedNode.value = node
 }
 
+function selectNodeFromPopup(node: GraphNode) {
+  selectedNode.value = node
+  closeGraphPopup()
+}
+
+function openGraphPopup() {
+  showGraphPopup.value = true
+  nextTick(() => {
+    centerGraphMobile()
+  })
+}
+
+function closeGraphPopup() {
+  showGraphPopup.value = false
+}
+
 function selectPlannedNode(planId: string) {
   const node = nodes.value.find(n => n.id === planId)
   if (node) selectedNode.value = node
@@ -1376,17 +1763,13 @@ function selectPlannedNode(planId: string) {
 
 function togglePlanForNode(node: GraphNode) {
   if (node.id === 'student') return
-  if (studyPlan.value.has(node.id)) {
-    studyPlan.value.delete(node.id)
-  } else {
-    studyPlan.value.add(node.id)
-  }
+  planStore.toggleStudyPlan(node.id)
   // Rebuild to update edge colors
   buildGraph()
 }
 
 function removeFromPlan(planId: string) {
-  studyPlan.value.delete(planId)
+  planStore.removeFromStudyPlan(planId)
   if (selectedNode.value?.id === planId) selectedNode.value = null
   buildGraph()
 }
@@ -1398,24 +1781,83 @@ function getPlanLabel(planId: string) {
 
 function resetView() {
   selectedNode.value = null
-  studyPlan.value.clear()
+  planStore.studyPlan.clear()
   buildGraph()
 }
 
 function onNodeHover(node: GraphNode, event: MouseEvent) {
   tooltipNode.value = node
-  if (graphContainer.value) {
-    const rect = graphContainer.value.getBoundingClientRect()
+  const container = showGraphPopup.value ? graphContainerMobile.value : graphContainer.value
+  if (container) {
+    const rect = container.getBoundingClientRect()
     tooltipX.value = event.clientX - rect.left
     tooltipY.value = event.clientY - rect.top
   }
 }
 
+/* ── Auto-add target title classes to study plan ── */
+
+// When the target title changes for a degree, automatically add its classes to the study plan
+function autoAddTargetClasses() {
+  for (const degreeSlug of selectedDegrees.value) {
+    const targetTitle = degreeTargetTitle.value[degreeSlug]
+    if (!targetTitle) continue
+    const titles = degreeTitlesMap.value.get(degreeSlug)
+    if (!titles) continue
+    const title = titles.find(t => t.name === targetTitle)
+    if (!title) continue
+    for (const cls of title.classes) {
+      const key = `${degreeSlug}/${cls.slug}`
+      planStore.addToStudyPlan(key)
+    }
+  }
+}
+
+watch(degreeTargetTitle, () => {
+  autoAddTargetClasses()
+  buildGraph()
+}, { deep: true })
+
 /* ── Rebuild on plan or filter changes ── */
 
 watch(studyPlan, () => buildGraph(), { deep: true })
 watch(selectedDegrees, () => buildGraph(), { deep: true })
-buildGraph()
+
+// Load filter state after the enrollment store has loaded from localStorage.
+// Watch both class enrollments and degree subscriptions so we know when data is available,
+// rather than relying on hydration timing which is race-prone.
+const storeEnrollments = computed(() => store.enrollments)
+const storeDegreeEnrollments = computed(() => store.degreeEnrollments)
+watch([storeEnrollments, storeDegreeEnrollments], (enrollments, degreeEnrollments) => {
+  // Initialize once either class enrollments or degree subscriptions are loaded
+  if (enrollments.length > 0 || degreeEnrollments.length > 0) {
+    loadFilterState()
+    buildGraph()
+  }
+}, { once: true })
+
+// Fallback: if both enrollments and degree subscriptions are empty after hydration, still initialize
+// (user may have no enrollments at all, or store loaded synchronously)
+const nuxtApp = useNuxtApp()
+if (nuxtApp.isHydrated) {
+  nextTick(() => {
+    if (store.enrollments.length === 0 && store.degreeEnrollments.length === 0 && planStore.selectedDegrees.size === 0) {
+      loadFilterState()
+      buildGraph()
+    }
+  })
+} else {
+  watch(() => nuxtApp.isHydrated, (hydrated) => {
+    if (hydrated) {
+      nextTick(() => {
+        if (store.enrollments.length === 0 && store.degreeEnrollments.length === 0 && planStore.selectedDegrees.size === 0) {
+          loadFilterState()
+          buildGraph()
+        }
+      })
+    }
+  }, { once: true })
+}
 
 /* ── Breadcrumbs ── */
 

@@ -73,7 +73,9 @@
         <!-- Recent Media Section -->
         <div class="space-y-4">
           <div class="flex items-center justify-between">
-            <h2 class="text-white text-sm font-semibold">Recent Media</h2>
+            <h2 class="text-white text-sm font-semibold">
+              Recent Media
+            </h2>
           </div>
 
           <div v-if="recentItems.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -90,7 +92,7 @@
                   :src="item.thumbnail"
                   :alt="item.title"
                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+                >
                 <div v-else class="flex flex-col items-center gap-2">
                   <UIcon
                     :name="getMediaTypeIcon(item.type)"
@@ -157,8 +159,12 @@
           <!-- Empty State -->
           <div v-else class="flex flex-col items-center justify-center py-12 rounded-xl border border-white/10 bg-white/5">
             <UIcon name="i-lucide-library" class="w-12 h-12 text-white/20 mb-3" />
-            <p class="text-white/40 text-sm mb-1">No media found</p>
-            <p class="text-white/30 text-xs">Select a media type above to browse content</p>
+            <p class="text-white/40 text-sm mb-1">
+              No media found
+            </p>
+            <p class="text-white/30 text-xs">
+              Select a media type above to browse content
+            </p>
           </div>
         </div>
       </div>

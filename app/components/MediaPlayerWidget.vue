@@ -88,8 +88,8 @@
                     backgroundColor: channel.enabled ? channel.color : 'transparent',
                     boxShadow: channel.enabled ? `0 0 12px ${channel.color}80` : 'none'
                   }"
-                  @click="mediaPlayer.toggleChannel(index)"
                   :title="`${channel.label} (${channel.beatFrequency}Hz)`"
+                  @click="mediaPlayer.toggleChannel(index)"
                 >
                   <span class="text-xs font-bold text-white/90">{{ channel.label.charAt(0) }}</span>
                 </button>
@@ -108,8 +108,8 @@
                     backgroundColor: channel.enabled ? channel.color : 'transparent',
                     boxShadow: channel.enabled ? `0 0 12px ${channel.color}80` : 'none'
                   }"
-                  @click="mediaPlayer.toggleChannel(index + 3)"
                   :title="`${channel.label} (${channel.beatFrequency}Hz)`"
+                  @click="mediaPlayer.toggleChannel(index + 3)"
                 >
                   <span class="text-xs font-bold text-white/90">{{ channel.label.charAt(0) }}</span>
                 </button>
@@ -142,7 +142,9 @@
             <template v-else-if="mediaPlayer.binauralMode === 'auto'">
               <div class="pointer-events-auto flex flex-col items-center gap-2">
                 <div class="text-center">
-                  <p class="text-white/60 text-xs uppercase tracking-wider">Detected Tempo</p>
+                  <p class="text-white/60 text-xs uppercase tracking-wider">
+                    Detected Tempo
+                  </p>
                   <p class="text-3xl font-bold text-white mt-1">
                     {{ mediaPlayer.autoDetectedBpm || '--' }}
                     <span class="text-sm font-normal text-white/60">BPM</span>
@@ -161,7 +163,9 @@
             class="absolute inset-0 flex items-center justify-center pointer-events-none"
           >
             <div class="text-center">
-              <p class="text-white text-lg font-bold drop-shadow-lg">{{ mediaPlayer.currentMedia?.title }}</p>
+              <p class="text-white text-lg font-bold drop-shadow-lg">
+                {{ mediaPlayer.currentMedia?.title }}
+              </p>
               <p v-if="mediaPlayer.currentMedia?.author" class="text-white/70 text-sm mt-1 drop-shadow">
                 {{ mediaPlayer.currentMedia.author }}
               </p>
@@ -172,8 +176,8 @@
           <div class="absolute bottom-3 left-0 right-0 flex justify-center gap-2 pointer-events-auto">
             <button
               class="w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm flex items-center justify-center transition-colors"
-              @click="togglePlay"
               title="Play/Pause"
+              @click="togglePlay"
             >
               <UIcon
                 :name="mediaPlayer.isPlaying ? 'i-lucide-pause' : 'i-lucide-play'"
@@ -187,8 +191,8 @@
               :class="mediaPlayer.binauralEnabled
                 ? 'bg-purple-500/60 hover:bg-purple-500/80'
                 : 'bg-black/50 hover:bg-black/70'"
-              @click="mediaPlayer.toggleBinaural()"
               title="Toggle binaural beats"
+              @click="mediaPlayer.toggleBinaural()"
             >
               <UIcon name="i-lucide-headphones" class="w-5 h-5 text-white" />
             </button>
@@ -199,16 +203,16 @@
               :class="mediaPlayer.hapticsEnabled
                 ? 'bg-orange-500/60 hover:bg-orange-500/80'
                 : 'bg-black/50 hover:bg-black/70'"
-              @click="mediaPlayer.toggleHaptics()"
               title="Toggle haptics"
+              @click="mediaPlayer.toggleHaptics()"
             >
               <UIcon name="i-lucide-zap" class="w-5 h-5 text-white" />
             </button>
 
             <button
               class="w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm flex items-center justify-center transition-colors"
-              @click="mediaPlayer.toggleSpiral()"
               title="Show cover art"
+              @click="mediaPlayer.toggleSpiral()"
             >
               <UIcon name="i-lucide-image" class="w-5 h-5 text-white" />
             </button>
@@ -221,8 +225,8 @@
             </NuxtLink>
             <button
               class="w-10 h-10 rounded-full bg-black/50 hover:bg-red-500/50 backdrop-blur-sm flex items-center justify-center transition-colors"
-              @click="close"
               title="Stop playing"
+              @click="close"
             >
               <UIcon name="i-lucide-x" class="w-5 h-5 text-white" />
             </button>
@@ -242,7 +246,7 @@
                 :src="mediaPlayer.currentMedia.thumbnail"
                 :alt="mediaPlayer.currentMedia.title"
                 class="w-full h-full object-cover"
-              />
+              >
               <UIcon
                 v-else
                 :name="mediaPlayer.currentMedia.type === 'video' ? 'i-lucide-video' : 'i-lucide-headphones'"
@@ -252,7 +256,9 @@
 
             <!-- Info -->
             <div class="flex-1 min-w-0">
-              <p class="text-white text-sm font-semibold truncate">{{ mediaPlayer.currentMedia?.title }}</p>
+              <p class="text-white text-sm font-semibold truncate">
+                {{ mediaPlayer.currentMedia?.title }}
+              </p>
               <div class="flex items-center gap-2 mt-0.5">
                 <UBadge
                   :label="mediaPlayer.currentMedia?.type === 'video' ? 'Video' : 'Audio'"
@@ -287,8 +293,8 @@
               <!-- Toggle Spiral -->
               <button
                 class="w-10 h-10 rounded-full bg-white/10 hover:bg-purple-500/30 flex items-center justify-center transition-colors"
-                @click="mediaPlayer.toggleSpiral()"
                 title="Toggle hypnotic spiral"
+                @click="mediaPlayer.toggleSpiral()"
               >
                 <UIcon name="i-lucide-eye-off" class="w-5 h-5 text-white" />
               </button>
@@ -299,8 +305,8 @@
                 :class="mediaPlayer.binauralEnabled
                   ? 'bg-purple-500/40 hover:bg-purple-500/60'
                   : 'bg-white/10 hover:bg-purple-500/30'"
-                @click="mediaPlayer.toggleBinaural()"
                 title="Toggle binaural beats"
+                @click="mediaPlayer.toggleBinaural()"
               >
                 <UIcon name="i-lucide-headphones" class="w-5 h-5 text-white" />
               </button>
@@ -311,8 +317,8 @@
                 :class="mediaPlayer.hapticsEnabled
                   ? 'bg-orange-500/40 hover:bg-orange-500/60'
                   : 'bg-white/10 hover:bg-orange-500/30'"
-                @click="mediaPlayer.toggleHaptics()"
                 title="Toggle haptics"
+                @click="mediaPlayer.toggleHaptics()"
               >
                 <UIcon name="i-lucide-zap" class="w-5 h-5 text-white" />
               </button>
@@ -329,8 +335,8 @@
               <!-- Close -->
               <button
                 class="w-10 h-10 rounded-full bg-white/10 hover:bg-red-500/30 flex items-center justify-center transition-colors"
-                @click="close"
                 title="Stop playing"
+                @click="close"
               >
                 <UIcon name="i-lucide-x" class="w-5 h-5 text-white" />
               </button>

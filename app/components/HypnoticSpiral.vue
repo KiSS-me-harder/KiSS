@@ -286,5 +286,4 @@ watch(() => props.playing, (isPlaying) => {
     stop()
   }
 })
-
 </script>

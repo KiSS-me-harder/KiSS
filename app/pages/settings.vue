@@ -16,39 +16,57 @@
           <template #header>
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-bell" class="size-5 text-white/40" />
-              <h2 class="text-lg font-semibold text-white">Notifications</h2>
+              <h2 class="text-lg font-semibold text-white">
+                Notifications
+              </h2>
             </div>
           </template>
 
           <div class="space-y-4">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-white">Email Notifications</p>
-                <p class="text-xs text-white/40 mt-0.5">Receive course updates via email</p>
+                <p class="text-sm text-white">
+                  Email Notifications
+                </p>
+                <p class="text-xs text-white/40 mt-0.5">
+                  Receive course updates via email
+                </p>
               </div>
               <USwitch v-model="settings.emailNotifications" />
             </div>
 
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-white">Push Notifications</p>
-                <p class="text-xs text-white/40 mt-0.5">Browser push notifications for alerts</p>
+                <p class="text-sm text-white">
+                  Push Notifications
+                </p>
+                <p class="text-xs text-white/40 mt-0.5">
+                  Browser push notifications for alerts
+                </p>
               </div>
               <USwitch v-model="settings.pushNotifications" />
             </div>
 
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-white">Class Reminders</p>
-                <p class="text-xs text-white/40 mt-0.5">Reminders for upcoming classes</p>
+                <p class="text-sm text-white">
+                  Class Reminders
+                </p>
+                <p class="text-xs text-white/40 mt-0.5">
+                  Reminders for upcoming classes
+                </p>
               </div>
               <USwitch v-model="settings.classReminders" />
             </div>
 
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-white">Detention Alerts</p>
-                <p class="text-xs text-white/40 mt-0.5">Notifications when assigned detention</p>
+                <p class="text-sm text-white">
+                  Detention Alerts
+                </p>
+                <p class="text-xs text-white/40 mt-0.5">
+                  Notifications when assigned detention
+                </p>
               </div>
               <USwitch v-model="settings.detentionAlerts" />
             </div>
@@ -60,31 +78,45 @@
           <template #header>
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-shield" class="size-5 text-white/40" />
-              <h2 class="text-lg font-semibold text-white">Privacy</h2>
+              <h2 class="text-lg font-semibold text-white">
+                Privacy
+              </h2>
             </div>
           </template>
 
           <div class="space-y-4">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-white">Profile Visibility</p>
-                <p class="text-xs text-white/40 mt-0.5">Allow other students to view your profile</p>
+                <p class="text-sm text-white">
+                  Profile Visibility
+                </p>
+                <p class="text-xs text-white/40 mt-0.5">
+                  Allow other students to view your profile
+                </p>
               </div>
               <USwitch v-model="settings.profileVisibility" />
             </div>
 
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-white">Show Progress</p>
-                <p class="text-xs text-white/40 mt-0.5">Display your progress to peers</p>
+                <p class="text-sm text-white">
+                  Show Progress
+                </p>
+                <p class="text-xs text-white/40 mt-0.5">
+                  Display your progress to peers
+                </p>
               </div>
               <USwitch v-model="settings.showProgress" />
             </div>
 
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-white">Read Receipts</p>
-                <p class="text-xs text-white/40 mt-0.5">Show when you've read messages</p>
+                <p class="text-sm text-white">
+                  Read Receipts
+                </p>
+                <p class="text-xs text-white/40 mt-0.5">
+                  Show when you've read messages
+                </p>
               </div>
               <USwitch v-model="settings.readReceipts" />
             </div>
@@ -96,7 +128,9 @@
           <template #header>
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-palette" class="size-5 text-white/40" />
-              <h2 class="text-lg font-semibold text-white">Appearance</h2>
+              <h2 class="text-lg font-semibold text-white">
+                Appearance
+              </h2>
             </div>
           </template>
 
@@ -113,8 +147,12 @@
 
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-white">Compact Mode</p>
-                <p class="text-xs text-white/40 mt-0.5">Reduce spacing for more content</p>
+                <p class="text-sm text-white">
+                  Compact Mode
+                </p>
+                <p class="text-xs text-white/40 mt-0.5">
+                  Reduce spacing for more content
+                </p>
               </div>
               <USwitch v-model="settings.compactMode" />
             </div>
@@ -126,15 +164,21 @@
           <template #header>
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-headphones" class="size-5 text-white/40" />
-              <h2 class="text-lg font-semibold text-white">Media Player</h2>
+              <h2 class="text-lg font-semibold text-white">
+                Media Player
+              </h2>
             </div>
           </template>
 
           <div class="space-y-4">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-white">Haptics</p>
-                <p class="text-xs text-white/40 mt-0.5">Vibrate in sync with media playback</p>
+                <p class="text-sm text-white">
+                  Haptics
+                </p>
+                <p class="text-xs text-white/40 mt-0.5">
+                  Vibrate in sync with media playback
+                </p>
               </div>
               <USwitch v-model="mediaPlayer.hapticsEnabled" />
             </div>
@@ -176,8 +220,12 @@
 
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-white">Binaural Beats</p>
-                <p class="text-xs text-white/40 mt-0.5">Layer binaural audio tones</p>
+                <p class="text-sm text-white">
+                  Binaural Beats
+                </p>
+                <p class="text-xs text-white/40 mt-0.5">
+                  Layer binaural audio tones
+                </p>
               </div>
               <USwitch v-model="mediaPlayer.binauralEnabled" />
             </div>
@@ -231,8 +279,12 @@
 
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-white">Hypnotic Spiral</p>
-                <p class="text-xs text-white/40 mt-0.5">Show spiral animation instead of cover art</p>
+                <p class="text-sm text-white">
+                  Hypnotic Spiral
+                </p>
+                <p class="text-xs text-white/40 mt-0.5">
+                  Show spiral animation instead of cover art
+                </p>
               </div>
               <USwitch v-model="mediaPlayer.showSpiral" />
             </div>
@@ -244,24 +296,41 @@
           <template #header>
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-key" class="size-5 text-white/40" />
-              <h2 class="text-lg font-semibold text-white">Account</h2>
+              <h2 class="text-lg font-semibold text-white">
+                Account
+              </h2>
             </div>
           </template>
 
           <div class="space-y-4">
             <div>
               <label class="text-xs text-white/40 uppercase tracking-wider">Current Password</label>
-              <UInput v-model="passwords.current" class="mt-1" type="password" placeholder="Enter current password" />
+              <UInput
+                v-model="passwords.current"
+                class="mt-1"
+                type="password"
+                placeholder="Enter current password"
+              />
             </div>
 
             <div>
               <label class="text-xs text-white/40 uppercase tracking-wider">New Password</label>
-              <UInput v-model="passwords.new" class="mt-1" type="password" placeholder="Enter new password" />
+              <UInput
+                v-model="passwords.new"
+                class="mt-1"
+                type="password"
+                placeholder="Enter new password"
+              />
             </div>
 
             <div>
               <label class="text-xs text-white/40 uppercase tracking-wider">Confirm New Password</label>
-              <UInput v-model="passwords.confirm" class="mt-1" type="password" placeholder="Confirm new password" />
+              <UInput
+                v-model="passwords.confirm"
+                class="mt-1"
+                type="password"
+                placeholder="Confirm new password"
+              />
             </div>
           </div>
 
@@ -274,8 +343,12 @@
                 Delete Account
               </UButton>
               <div class="flex gap-2">
-                <UButton variant="subtle" color="neutral">Cancel</UButton>
-                <UButton color="primary" @click="saved = true">Save Changes</UButton>
+                <UButton variant="subtle" color="neutral">
+                  Cancel
+                </UButton>
+                <UButton color="primary" @click="saved = true">
+                  Save Changes
+                </UButton>
               </div>
             </div>
           </template>

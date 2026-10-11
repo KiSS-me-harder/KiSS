@@ -19,7 +19,7 @@
               :src="item.url"
               :alt="item.title"
               class="max-w-full max-h-[70vh] object-contain rounded-lg"
-            />
+            >
           </div>
 
           <!-- Video Player -->
@@ -50,8 +50,12 @@
               <UIcon name="i-lucide-headphones" class="w-12 h-12 text-white/80" />
             </div>
             <div class="text-center">
-              <h3 class="text-white text-lg font-semibold">{{ item.title }}</h3>
-              <p class="text-white/50 text-sm mt-1">{{ item.author }}</p>
+              <h3 class="text-white text-lg font-semibold">
+                {{ item.title }}
+              </h3>
+              <p class="text-white/50 text-sm mt-1">
+                {{ item.author }}
+              </p>
             </div>
             <audio
               ref="audioEl"
@@ -72,7 +76,9 @@
           <!-- Unknown Type -->
           <div v-else class="flex flex-col items-center justify-center py-12 text-center">
             <UIcon name="i-lucide-file" class="w-12 h-12 text-white/20 mb-3" />
-            <p class="text-white/40 text-sm">Unsupported media type</p>
+            <p class="text-white/40 text-sm">
+              Unsupported media type
+            </p>
           </div>
         </div>
 
@@ -82,10 +88,16 @@
           <div class="lg:col-span-2 rounded-xl border border-white/10 bg-white/5 p-6">
             <div class="flex items-center gap-2 mb-4">
               <UIcon name="i-lucide-info" class="w-4 h-4 text-white/60" />
-              <h3 class="text-white text-sm font-semibold">About</h3>
+              <h3 class="text-white text-sm font-semibold">
+                About
+              </h3>
             </div>
-            <h2 class="text-white text-xl font-bold">{{ item.title }}</h2>
-            <p class="text-white/60 text-sm mt-2">{{ item.description }}</p>
+            <h2 class="text-white text-xl font-bold">
+              {{ item.title }}
+            </h2>
+            <p class="text-white/60 text-sm mt-2">
+              {{ item.description }}
+            </p>
             <div class="flex items-center gap-4 mt-4 text-white/40 text-xs">
               <span class="flex items-center gap-1">
                 <UIcon name="i-lucide-user" class="w-3 h-3" />
@@ -122,7 +134,9 @@
               <template #header>
                 <div class="flex items-center gap-2">
                   <UIcon name="i-lucide-share" class="w-4 h-4 text-white/60" />
-                  <h3 class="text-white text-sm font-semibold">Actions</h3>
+                  <h3 class="text-white text-sm font-semibold">
+                    Actions
+                  </h3>
                 </div>
               </template>
               <div class="space-y-2">
@@ -153,7 +167,9 @@
               <template #header>
                 <div class="flex items-center gap-2">
                   <UIcon name="i-lucide-list" class="w-4 h-4 text-white/60" />
-                  <h3 class="text-white text-sm font-semibold">Related Media</h3>
+                  <h3 class="text-white text-sm font-semibold">
+                    Related Media
+                  </h3>
                 </div>
               </template>
               <div class="space-y-2">
@@ -181,7 +197,9 @@
       <!-- Not Found -->
       <div v-else class="flex flex-col items-center justify-center py-12 rounded-xl border border-white/10 bg-white/5">
         <UIcon name="i-lucide-library" class="w-12 h-12 text-white/20 mb-3" />
-        <p class="text-white/40 text-sm mb-1">Media not found</p>
+        <p class="text-white/40 text-sm mb-1">
+          Media not found
+        </p>
         <UButton
           label="Back to Library"
           icon="i-lucide-arrow-left"
@@ -232,7 +250,7 @@ const items = computed<BreadcrumbItem[]>(() => [
   },
   {
     label: item.value?.title || slug,
-    icon: item.value ? getMediaTypeIcon(item.value.type) : 'i-lucide-file',
+    icon: item.value ? getMediaTypeIcon(item.value.type) : 'i-lucide-file'
   }
 ])
 
@@ -298,7 +316,7 @@ const isFavorite = ref(false)
 const relatedItems = computed<LibraryItem[]>(() => {
   if (!item.value || !allItems.value) return []
   const currentTags = new Set(item.value.tags || [])
-  return allItems.value.filter(i => {
+  return allItems.value.filter((i) => {
     if (i.path === item.value?.path) return false
     const tags = new Set(i.tags || [])
     for (const tag of currentTags) {

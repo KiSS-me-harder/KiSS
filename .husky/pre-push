@@ -1,0 +1,5 @@
+# Lint check on staged files before push
+staged_files=$(git diff --cached --name-only --diff-filter=d | grep -E '\.(ts|js|vue|mts|mjs)$' || true)
+if [ -n "$staged_files" ]; then
+  pnpm lint -- $staged_files
+fi

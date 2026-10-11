@@ -18,7 +18,7 @@
             :src="classData.image"
             :alt="classData.title"
             class="w-full h-48 object-cover"
-          />
+          >
           <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/20" />
           <div class="absolute bottom-0 left-0 right-0 p-4">
             <div class="flex items-center gap-2 mb-1">
@@ -86,7 +86,7 @@
         <!-- Level Groups -->
         <div v-for="group in levelGroups" :key="group.label" class="space-y-3">
           <!-- Group Header -->
-          <button @click="toggleGroup(group.label)" type="button" class="flex items-center gap-3 w-full group/header text-left">
+          <button type="button" class="flex items-center gap-3 w-full group/header text-left" @click="toggleGroup(group.label)">
             <div class="flex items-center gap-2">
               <span
                 class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
@@ -98,7 +98,9 @@
                 <h2 class="text-sm font-semibold text-white">
                   {{ group.label }}
                 </h2>
-                <p class="text-[10px] text-muted">{{ group.count }} levels</p>
+                <p class="text-[10px] text-muted">
+                  {{ group.count }} levels
+                </p>
               </div>
             </div>
             <div class="flex-1 h-px bg-white/10" />
@@ -128,7 +130,7 @@
                   :src="classData.image"
                   :alt="level.title"
                   class="absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover/level:scale-110"
-                />
+                >
 
                 <!-- Dark Overlay with gradient -->
                 <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
@@ -192,7 +194,7 @@
                   :src="classData.image"
                   :alt="level.title"
                   class="absolute inset-0 w-full h-full object-cover blur-md"
-                />
+                >
 
                 <!-- Dark Overlay with gradient -->
                 <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
@@ -244,8 +246,12 @@
                 class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 z-50 opacity-0 group-hover/level:opacity-100 pointer-events-none group-hover/level:pointer-events-none transition-opacity duration-200"
               >
                 <div class="rounded-lg border border-white/20 bg-gray-900/95 backdrop-blur-sm p-3 shadow-xl">
-                  <p class="text-white text-xs font-semibold mb-1">Lvl {{ level.level }}: {{ level.title }}</p>
-                  <p class="text-white/70 text-xs leading-relaxed line-clamp-4">{{ level.description }}</p>
+                  <p class="text-white text-xs font-semibold mb-1">
+                    Lvl {{ level.level }}: {{ level.title }}
+                  </p>
+                  <p class="text-white/70 text-xs leading-relaxed line-clamp-4">
+                    {{ level.description }}
+                  </p>
                 </div>
                 <!-- Tooltip arrow -->
                 <div class="w-3 h-3 bg-gray-900/95 border-r border-b border-white/20 rotate-45 mx-auto -mt-1.5" />
@@ -322,7 +328,7 @@ const classData = computed(() => {
 // Build a lookup of all classes by their class name + level for dependency resolution
 const classLookup = computed(() => {
   if (!allClasses.value) return new Map()
-  const map = new Map<string, { stem: string; title: string }>()
+  const map = new Map<string, { stem: string, title: string }>()
   for (const item of allClasses.value) {
     const key = `${(item as any).meta?.class}-${(item as any).meta?.level}`
     map.set(key, {
@@ -342,7 +348,7 @@ const levelGroups = computed(() => {
     badge: string
     badgeColor: string
     count: number
-    levels: { level: number; title: string; description: string; dependencies: { class: string; level: number; title?: string; stem?: string }[] }[]
+    levels: { level: number, title: string, description: string, dependencies: { class: string, level: number, title?: string, stem?: string }[] }[]
   }[] = [
     { label: 'Beginner', badge: '1', badgeColor: 'bg-green-500', count: 0, levels: [] },
     { label: 'Intermediate', badge: '2', badgeColor: 'bg-blue-500', count: 0, levels: [] },
@@ -452,7 +458,7 @@ function isLevelCompleted(level: number): boolean {
   return store.isLevelCompleted(classSlug.value, level)
 }
 
-function isEligible(level: { level: number; dependencies: { class: string; level: number }[] }): boolean {
+function isEligible(level: { level: number, dependencies: { class: string, level: number }[] }): boolean {
   if (!level.dependencies.length) return true
   return store.areDependenciesMet(classSlug.value, level.level, level.dependencies)
 }

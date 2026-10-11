@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { useEnrollmentStore } from '~/stores/enrollment'
+import { useScheduleStore } from '~/stores/schedule'
 
 const store = useEnrollmentStore()
+const scheduleStore = useScheduleStore()
 const { app } = useRuntimeConfig()
 
 // Fetch all classes from content to get titles and metadata
@@ -52,7 +54,7 @@ const enrolledClasses = computed<EnrolledClassInfo[]>(() => {
   return classes.sort((a, b) => a.title.localeCompare(b.title))
 })
 
-// Schedule entry stored in localStorage
+// Schedule entries from store
 interface ScheduleEntry {
   id: number
   classSlug: string
@@ -60,35 +62,8 @@ interface ScheduleEntry {
   section: string
 }
 
-const scheduleEntries = ref<ScheduleEntry[]>([])
+const scheduleEntries = computed(() => scheduleStore.scheduleEntries)
 const editMode = ref(false)
-
-// Load schedule from localStorage
-function loadSchedule() {
-  if (!process.client) return
-  try {
-    const raw = localStorage.getItem('kiss-class-schedule')
-    if (raw) scheduleEntries.value = JSON.parse(raw) as ScheduleEntry[]
-  } catch { /* ignore */ }
-}
-loadSchedule()
-
-// Save schedule to localStorage
-function saveSchedule() {
-  if (!process.client) return
-  try {
-    localStorage.setItem('kiss-class-schedule', JSON.stringify(scheduleEntries.value))
-  } catch { /* ignore */ }
-}
-
-// Auto-save on changes
-watch(scheduleEntries, () => saveSchedule(), { deep: true })
-
-// Also poll for same-tab changes
-if (process.client) {
-  const pollInterval = setInterval(() => loadSchedule(), 2000)
-  onUnmounted(() => clearInterval(pollInterval))
-}
 
 // Classes that are not yet scheduled
 const unscheduledClasses = computed(() => {
@@ -133,17 +108,11 @@ const handleDrop = (event: DragEvent, day: number, section: string) => {
 
   // If dragging from an existing entry, remove it first
   if (draggedFromEntryId.value !== null) {
-    scheduleEntries.value = scheduleEntries.value.filter(e => e.id !== draggedFromEntryId.value)
+    scheduleStore.removeScheduleEntry(draggedFromEntryId.value)
   }
 
   // Add to the target day/section
-  const newId = scheduleEntries.value.length ? Math.max(...scheduleEntries.value.map(e => e.id)) + 1 : 1
-  scheduleEntries.value.push({
-    id: newId,
-    classSlug: draggedClassSlug.value,
-    day,
-    section
-  })
+  scheduleStore.addScheduleEntry(draggedClassSlug.value, day, section)
 
   draggedClassSlug.value = null
   draggedFromEntryId.value = null
@@ -157,11 +126,10 @@ const handleDragEnd = () => {
 }
 
 const removeEntry = (entryId: number) => {
-  scheduleEntries.value = scheduleEntries.value.filter(e => e.id !== entryId)
+  scheduleStore.removeScheduleEntry(entryId)
 }
 
 const saveChanges = () => {
-  saveSchedule()
   editMode.value = false
 }
 </script>
@@ -172,8 +140,12 @@ const saveChanges = () => {
     <UCard>
       <div class="flex items-center justify-between">
         <div>
-          <h2 class="text-base font-semibold">Weekly Schedule</h2>
-          <p class="text-sm text-muted mt-1">Drag your enrolled classes onto days and time slots to schedule them.</p>
+          <h2 class="text-base font-semibold">
+            Weekly Schedule
+          </h2>
+          <p class="text-sm text-muted mt-1">
+            Drag your enrolled classes onto days and time slots to schedule them.
+          </p>
         </div>
         <div class="flex items-center gap-2">
           <UButton
@@ -206,8 +178,12 @@ const saveChanges = () => {
     <UCard v-if="enrolledClasses.length === 0">
       <div class="text-center py-8 text-muted">
         <UIcon name="i-lucide-book-open" class="w-10 h-10 mx-auto mb-3 opacity-50" />
-        <p class="text-sm font-medium mb-1">No classes enrolled yet</p>
-        <p class="text-xs mb-4">Enroll in classes to start building your weekly schedule.</p>
+        <p class="text-sm font-medium mb-1">
+          No classes enrolled yet
+        </p>
+        <p class="text-xs mb-4">
+          Enroll in classes to start building your weekly schedule.
+        </p>
         <UButton variant="outline" size="sm" to="/degrees">
           <template #leading>
             <UIcon name="i-lucide-graduation-cap" class="size-3" />
@@ -237,7 +213,9 @@ const saveChanges = () => {
 
     <!-- Draggable unscheduled classes -->
     <div v-if="editMode && unscheduledClasses.length > 0" class="space-y-2">
-      <p class="text-sm font-medium text-muted">Drag classes to schedule them</p>
+      <p class="text-sm font-medium text-muted">
+        Drag classes to schedule them
+      </p>
       <div class="flex flex-wrap gap-2">
         <div
           v-for="cls in unscheduledClasses"
@@ -247,15 +225,21 @@ const saveChanges = () => {
           @dragstart="handleDragStart(cls.slug)"
           @dragend="handleDragEnd"
         >
-          <p class="text-sm font-medium">{{ cls.title }}</p>
-          <p class="text-xs text-muted">{{ cls.degreeLabel }}</p>
+          <p class="text-sm font-medium">
+            {{ cls.title }}
+          </p>
+          <p class="text-xs text-muted">
+            {{ cls.degreeLabel }}
+          </p>
         </div>
       </div>
     </div>
 
     <!-- All enrolled classes (for re-scheduling in edit mode) -->
     <div v-if="editMode && enrolledClasses.length > 0" class="space-y-2">
-      <p class="text-sm font-medium text-muted">All enrolled classes (drag to reassign)</p>
+      <p class="text-sm font-medium text-muted">
+        All enrolled classes (drag to reassign)
+      </p>
       <div class="flex flex-wrap gap-2">
         <div
           v-for="cls in enrolledClasses"
@@ -265,8 +249,12 @@ const saveChanges = () => {
           @dragstart="handleDragStart(cls.slug)"
           @dragend="handleDragEnd"
         >
-          <p class="text-sm font-medium">{{ cls.title }}</p>
-          <p class="text-xs text-muted">{{ cls.degreeLabel }}</p>
+          <p class="text-sm font-medium">
+            {{ cls.title }}
+          </p>
+          <p class="text-xs text-muted">
+            {{ cls.degreeLabel }}
+          </p>
         </div>
       </div>
     </div>
@@ -280,7 +268,9 @@ const saveChanges = () => {
       >
         <!-- Day header -->
         <div class="text-center py-2 rounded-lg bg-elevated">
-          <p class="text-sm font-semibold">{{ day }}</p>
+          <p class="text-sm font-semibold">
+            {{ day }}
+          </p>
         </div>
 
         <!-- Time sections -->
