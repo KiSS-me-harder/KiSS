@@ -1,6 +1,7 @@
 ---
 title: "Strip Dance Club"
 description: "Learn the art of seductive movement and performance, from beginner routines to full stage shows."
+requiredDegree: "performance"
 clubActivities:
   - squat-hold
   - hip-flexor-stretch

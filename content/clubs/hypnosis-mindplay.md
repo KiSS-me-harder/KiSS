@@ -1,6 +1,7 @@
 ---
 title: "Hypnosis & Mindplay Club"
 description: "Dive deeper into trance states and subconscious exploration with guided hypnosis sessions and workshops."
+requiredDegree: "hypnosub"
 clubActivities:
   - hypnosis-videos
 activities:

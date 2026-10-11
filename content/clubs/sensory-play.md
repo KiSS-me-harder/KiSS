@@ -1,6 +1,7 @@
 ---
 title: "Sensory Play Club"
 description: "Explore sensation and deprivation through blindfolds, restraints, temperature play, and more."
+requiredDegree: "sensory"
 clubActivities:
   - sensory-deprivation
 activities:

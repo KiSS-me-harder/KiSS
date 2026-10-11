@@ -1,6 +1,7 @@
 ---
 title: "Impact Play Club"
 description: "Learn the fundamentals of impact play, from light spanking to advanced techniques, with a focus on safety and aftercare."
+requiredDegree: "impact"
 clubActivities:
   - impact-reception
 activities:

@@ -42,6 +42,17 @@
               {{ club.description }}
             </p>
 
+            <!-- Required Degree Badge -->
+            <div v-if="club.meta?.requiredDegree" class="mt-1.5">
+              <NuxtLink
+                :to="`/degrees/${club.meta.requiredDegree}`"
+                class="inline-flex items-center gap-1 text-[10px] font-medium text-purple-300 bg-purple-500/20 border border-purple-500/30 rounded-full px-2 py-0.5 hover:bg-purple-500/30 transition-colors"
+              >
+                <UIcon name="i-lucide-graduation-cap" class="w-3 h-3" />
+                {{ club.meta.requiredDegree }}
+              </NuxtLink>
+            </div>
+
             <!-- Hover indicator line -->
             <div class="mt-2 h-0.5 w-0 group-hover:w-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500" />
           </div>

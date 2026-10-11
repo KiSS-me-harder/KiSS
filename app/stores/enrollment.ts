@@ -687,12 +687,22 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
 
   // --- Clubs ---
 
-  function joinClub(clubSlug: string) {
-    if (clubMemberships.value.some(m => m.clubSlug === clubSlug)) return
+  // Check if the user is enrolled in at least one class belonging to a degree
+  function hasDegreeEnrollment(degreeSlug: string): boolean {
+    return enrollments.value.some(e => e.degree === degreeSlug)
+  }
+
+  function joinClub(clubSlug: string, requiredDegree?: string): boolean {
+    if (clubMemberships.value.some(m => m.clubSlug === clubSlug)) return true
+    // Check prerequisite: user must be enrolled in the required degree
+    if (requiredDegree && !hasDegreeEnrollment(requiredDegree)) {
+      return false
+    }
     clubMemberships.value.push({
       clubSlug,
       joinedAt: Date.now()
     })
+    return true
   }
 
   function leaveClub(clubSlug: string) {
@@ -887,6 +897,7 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
     joinClub,
     leaveClub,
     isClubMember,
+    hasDegreeEnrollment,
     getClubActivitySlugs,
     // Exam Tasks
     examTasks,

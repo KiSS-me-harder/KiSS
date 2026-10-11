@@ -1,6 +1,7 @@
 ---
 title: "Nudity & Freedom Club"
 description: "Explore body positivity and comfort with nudity in a safe, judgment-free environment."
+requiredDegree: "freedom"
 clubActivities:
   - breast-measurement
   - body-measurements

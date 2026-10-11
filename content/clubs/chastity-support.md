@@ -1,6 +1,7 @@
 ---
 title: "Chastity Support Club"
 description: "Find community and encouragement on your chastity journey with peers who understand the experience."
+requiredDegree: "chaste"
 clubActivities:
   - chastity-lock
 activities:

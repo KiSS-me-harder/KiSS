@@ -1,6 +1,7 @@
 ---
 title: "Bimbo Social Club"
 description: "Embrace your inner bimbo with fashion, makeup, and playful social events celebrating the bimbo lifestyle."
+requiredDegree: "bimbo"
 clubActivities:
   - breast-measurement
   - body-measurements

@@ -1,6 +1,7 @@
 ---
 title: "Fitness Club"
 description: "Get in shape for submission with workouts designed to strengthen your body for endurance and performance."
+requiredDegree: "fitness"
 clubActivities:
   - squat-hold
   - hip-flexor-stretch

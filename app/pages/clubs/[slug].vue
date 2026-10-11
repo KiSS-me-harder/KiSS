@@ -25,6 +25,17 @@ const title = computed(() => club.value?.title)
 const description = computed(() => club.value?.description)
 const body = computed(() => club.value?.body)
 
+// Required degree prerequisite
+const requiredDegree = computed(() => {
+  const meta = (club.value as any)?.meta
+  return meta?.requiredDegree as string | undefined
+})
+
+const hasPrerequisite = computed(() => {
+  if (!requiredDegree.value) return true
+  return store.hasDegreeEnrollment(requiredDegree.value)
+})
+
 interface Activity {
   type: 'challenge' | 'game' | 'task'
   title: string
@@ -60,12 +71,21 @@ const clubActivities = computed(() => {
 })
 
 const isMember = computed(() => store.isClubMember(slug.value))
+const joinFailed = ref(false)
 
 function toggleMembership() {
   if (isMember.value) {
     store.leaveClub(slug.value)
+    joinFailed.value = false
   } else {
-    store.joinClub(slug.value)
+    const success = store.joinClub(slug.value, requiredDegree.value)
+    if (!success) {
+      joinFailed.value = true
+      // Clear the notification after 5 seconds
+      setTimeout(() => {
+        joinFailed.value = false
+      }, 5000)
+    }
   }
 }
 
@@ -237,6 +257,42 @@ useHead({
 
           <!-- Content -->
           <div class="relative p-6 sm:p-8">
+            <!-- Prerequisite Not Met Warning -->
+            <div
+              v-if="!isMember && requiredDegree && !hasPrerequisite"
+              class="mb-4 flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4"
+            >
+              <UIcon name="i-lucide-shield-alert" class="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <p class="text-sm font-medium text-amber-400">Prerequisite Required</p>
+                <p class="text-xs text-amber-200/70 mt-1">
+                  To join this club, you must be enrolled in the
+                  <NuxtLink :to="`/degrees/${requiredDegree}`" class="underline font-medium hover:text-amber-300">
+                    {{ requiredDegree }}
+                  </NuxtLink>
+                  degree.
+                </p>
+              </div>
+            </div>
+
+            <!-- Join Failed Notification -->
+            <div
+              v-if="joinFailed"
+              class="mb-4 flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-4"
+            >
+              <UIcon name="i-lucide-circle-x" class="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+              <div>
+                <p class="text-sm font-medium text-red-400">Unable to Join</p>
+                <p class="text-xs text-red-200/70 mt-1">
+                  You must be enrolled in the
+                  <NuxtLink :to="`/degrees/${requiredDegree}`" class="underline font-medium hover:text-red-300">
+                    {{ requiredDegree }}
+                  </NuxtLink>
+                  degree to join this club.
+                </p>
+              </div>
+            </div>
+
             <div class="flex items-start justify-between gap-4">
               <div class="flex-1 min-w-0">
                 <h1 class="text-2xl font-bold text-white mb-2">
@@ -251,6 +307,7 @@ useHead({
                   :variant="isMember ? 'solid' : 'outline'"
                   :color="isMember ? 'primary' : 'secondary'"
                   size="lg"
+                  :disabled="!isMember && requiredDegree && !hasPrerequisite"
                   @click="toggleMembership"
                 >
                   {{ isMember ? 'Leave Club' : 'Join Club' }}

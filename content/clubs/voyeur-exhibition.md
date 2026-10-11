@@ -1,6 +1,7 @@
 ---
 title: "Voyeur & Exhibition Club"
 description: "Explore the thrill of watching and being watched in controlled, consensual settings."
+requiredDegree: "voyeur"
 clubActivities:
   - exhibition-exposure
 activities:

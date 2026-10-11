@@ -1,6 +1,7 @@
 ---
 title: "Pet Play Club"
 description: "Explore your inner animal through pet play roleplay, and community events."
+requiredDegree: "pet"
 clubActivities:
   - pet-crawl
 activities:
