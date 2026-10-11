@@ -58,7 +58,16 @@
                   <UIcon :name="activity.icon || 'i-lucide-dumbbell'" class="w-5 h-5 text-purple-400" />
                 </div>
                 <div class="flex-1 min-w-0">
-                  <h3 class="text-base font-semibold text-white">{{ activity.title }}</h3>
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-base font-semibold text-white">{{ activity.title }}</h3>
+                    <button
+                      @click="selectedActivity = activity; showHelp = true"
+                      class="shrink-0 w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/40 hover:text-white/70 transition-colors"
+                      title="What is this activity?"
+                    >
+                      <UIcon name="i-lucide-circle-help" class="w-4 h-4" />
+                    </button>
+                  </div>
                   <p class="text-sm text-white/50 mt-0.5">{{ activity.description }}</p>
                   <!-- Contributed metrics -->
                   <div v-if="activity.contributions.length > 0" class="flex flex-wrap gap-1.5 mt-2">
@@ -144,6 +153,23 @@
       </div>
     </template>
   </UDashboardPanel>
+
+  <!-- Activity Help Dialog -->
+  <UModal v-model:open="showHelp" class="max-w-lg">
+    <template #header>
+      <div class="text-lg font-semibold text-white">{{ selectedActivity?.title || '' }}</div>
+    </template>
+    <template #body>
+      <div v-if="selectedActivity" class="py-2">
+        <p class="text-white/70 leading-relaxed">{{ selectedActivity.longDescription || selectedActivity.description }}</p>
+      </div>
+    </template>
+    <template #footer>
+      <div class="flex justify-end">
+        <UButton label="Close" color="neutral" variant="outline" @click="showHelp = false" />
+      </div>
+    </template>
+  </UModal>
 </template>
 
 <script setup lang="ts">
@@ -151,6 +177,8 @@ import type { BreadcrumbItem } from '@nuxt/ui'
 import { useEnrollmentStore } from '~/stores/enrollment'
 
 const store = useEnrollmentStore()
+const showHelp = ref(false)
+const selectedActivity = ref(null)
 
 const items = ref<BreadcrumbItem[]>([
   {
@@ -250,13 +278,15 @@ const activities = computed(() => {
     const activitySlug = parts[1]
 
     if (parts[2] === '_index') {
-      const meta = (item as any).meta || {}
+      const itemAny = item as any
+      const meta = itemAny.meta || {}
       const fields = meta.fields || []
       const contribs = meta.contributions || []
       activityMap.set(activitySlug, {
         slug: activitySlug,
-        title: item.title || activitySlug.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+        title: itemAny.title || activitySlug.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
         description: meta.description || '',
+        longDescription: meta.longDescription || '',
         icon: meta.icon || 'i-lucide-dumbbell',
         category: meta.category || 'General',
         fields: Array.isArray(fields) ? fields : [],

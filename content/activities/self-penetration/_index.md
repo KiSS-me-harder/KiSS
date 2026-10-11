@@ -1,6 +1,7 @@
 ---
 title: "Self Penetration"
 description: "Penetrate yourself with a dildo or similar toy. Record the dimensions and duration."
+longDescription: "Penetrate yourself with a dildo or similar toy to build internal stretch capacity and control. Record the dimensions of the toy and the duration to track your progress over time. Use plenty of lubrication and go slowly, listening to your body. This activity contributes to both your anal-stretch and anal-endurance metrics."
 icon: "i-lucide-scala"
 category: "Anal Training"
 fields:

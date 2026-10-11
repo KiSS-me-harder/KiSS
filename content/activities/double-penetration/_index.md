@@ -1,6 +1,7 @@
 ---
 title: "Double Penetration Practice"
 description: "Practice taking two objects simultaneously. Record the sizes of both objects."
+longDescription: "Practice taking two objects simultaneously to build advanced stretch capacity and control. Record the sizes of both objects to track your progression. This is an advanced activity that requires a strong foundation in basic stretch training. Proceed carefully and gradually, ensuring proper lubrication and relaxation techniques."
 icon: "i-lucide-split"
 category: "Anal Training"
 fields:

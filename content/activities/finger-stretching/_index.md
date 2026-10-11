@@ -1,6 +1,7 @@
 ---
 title: "Finger Stretching"
 description: "Stretch yourself using fingers. Record how many fingers and the depth achieved."
+longDescription: "Stretch yourself using fingers to build anal capacity and flexibility. Record how many fingers you can accommodate and the depth achieved to track your progress. Start gently and progress gradually, using proper lubrication and relaxation techniques. This activity contributes to your anal-stretch metric, building the foundation for more advanced training."
 icon: "i-lucide-hand"
 category: "Anal Training"
 fields:
