@@ -11,7 +11,7 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@nuxtjs/seo'
   ],
-  ssr: true,
+  ssr: false,
   devtools: {
     enabled: false
   },
@@ -25,7 +25,7 @@ export default defineNuxtConfig({
     baseURL: '/KiSS/'
   },
   site: {
-    url: 'https://kiss-academy.github.io',
+    url: 'https://kiss-me-harder.github.io',
     name: 'KiSS Academy',
     description: 'KiSS Academy - A gamified learning platform for personal transformation and self-improvement.',
     defaultLocale: 'en'

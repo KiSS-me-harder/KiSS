@@ -324,15 +324,17 @@ const { data: classLevels } = await useAsyncData(
   }
 )
 
-// Sort levels
+// Sort levels - exclude _index.md items which have no level
 const sortedLevelsData = computed(() => {
   if (!classLevels.value) return []
   return classLevels.value
+    .filter(item => !(item as any).stem?.endsWith('/_index'))
     .map(item => ({
       level: parseInt((item as any).meta?.level, 10),
-      title: (item as any).meta?.title,
+      title: (item as any).title,
       item
     }))
+    .filter(l => !isNaN(l.level))
     .sort((a, b) => a.level - b.level)
 })
 
@@ -362,12 +364,12 @@ const lessonData = computed(() => {
 
   const itemAny = item as any
   const level = parseInt(itemAny.meta?.level, 10)
-  const className = itemAny.meta?.class || slug.value.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+  const className = itemAny.class || slug.value.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
   const degreeLabel = degree.value.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
   const flashcards = itemAny.meta?.flashcards || []
 
   return {
-    title: itemAny.meta?.title,
+    title: itemAny.title,
     level,
     className,
     degree: degree.value,
@@ -409,7 +411,7 @@ function resetCurrentLevel() {
 }
 
 function handleEnroll() {
-  const levels = sortedLevelsData.value.map(l => l.level)
+  const levels = sortedLevelsData.value.filter(l => !isNaN(l.level)).map(l => l.level)
   store.enrollInClass(classSlug.value, slug.value, degree.value, levels)
 }
 

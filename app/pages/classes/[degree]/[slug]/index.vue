@@ -109,7 +109,7 @@
           </button>
 
           <!-- Level Cards Grid -->
-          <div v-show="!collapsedGroups.has(group.label)" class="grid gap-3 grid-cols-[repeat(auto-fill,minmax(9rem,1fr))]">
+          <div v-show="!collapsedGroups.has(group.label)" class="grid gap-3 grid-cols-[repeat(auto-fit,minmax(9rem,1fr))]">
             <div
               v-for="level in group.levels"
               :key="level.level"

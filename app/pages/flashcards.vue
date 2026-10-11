@@ -71,7 +71,7 @@ const allDeckCards = computed<Flashcard[]>(() => {
   // Only include flashcards from enrolled classes
   for (const item of allClasses.value) {
     const itemAny = item as any
-    const flashcardsData = itemAny.flashcards
+    const flashcardsData = itemAny.meta?.flashcards
     if (!flashcardsData || !Array.isArray(flashcardsData) || flashcardsData.length === 0) continue
 
     // Extract degree and class slug from stem: "classes/degree/class-slug/level"
@@ -79,8 +79,8 @@ const allDeckCards = computed<Flashcard[]>(() => {
     if (stemParts.length < 3) continue
     const degree = stemParts[1] || ''
     const classSlug = `${degree}/${stemParts[2]}`
-    const className = itemAny.class || ''
-    const level = parseInt(itemAny.level, 10)
+    const className = itemAny.meta?.class || ''
+    const level = parseInt(itemAny.meta?.level, 10)
 
     // Skip if not enrolled in this class
     if (!store.isEnrolled(classSlug)) continue

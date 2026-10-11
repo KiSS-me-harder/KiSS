@@ -456,7 +456,7 @@ const degreeTitlesMap = computed(() => {
   for (const degree of allDegrees.value) {
     const stem = (degree as any).stem || ''
     const slug = stem.split('/').pop() || ''
-    const levels = (degree as any).levels || []
+    const levels = (degree as any).meta?.levels || []
     const titles: DegreeTitle[] = levels.map((l: any) => ({
       name: l.name || '',
       description: l.description || '',
@@ -499,10 +499,10 @@ const classMap = computed(() => {
     const degree = parts[1]
     const classSlug = parts[2]
     const key = `${degree}/${classSlug}`
-    const level = parseInt((item as any).level, 10)
-    const classTitle = (item as any).class || classSlug.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    const level = parseInt((item as any).meta?.level, 10)
+    const classTitle = (item as any).meta?.class || classSlug.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
     const degreeLabel = degree.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-    const deps = (item as any).dependencies || []
+    const deps = (item as any).meta?.dependencies || []
 
     if (!map.has(key)) {
       map.set(key, { degree, degreeLabel, className: classTitle, classSlug, levels: [], dependencies: new Map() })
@@ -565,13 +565,28 @@ function loadFilterState() {
     const rawTitle = localStorage.getItem('kiss-study-plan-titles')
     if (rawTitle) degreeTargetTitle.value = JSON.parse(rawTitle) as Record<string, string>
   } catch { /* ignore */ }
-  // Default: select all degrees at first title (Junior)
+  // Default: select only degrees the user is enrolled in
   if (selectedDegrees.value.size === 0) {
-    for (const d of allDegreesList.value) {
-      selectedDegrees.value.add(d.slug)
-      const titles = getDegreeTitles(d.slug)
-      degreeTargetTitle.value[d.slug] = titles[0] || 'Junior'
+    // Find degrees where the user has at least one enrollment
+    const enrolledDegrees = new Set<string>()
+    for (const [key] of classMap.value) {
+      if (store.isEnrolled(key)) {
+        const parts = key.split('/')
+        if (parts.length >= 2) {
+          enrolledDegrees.add(parts[0])
+        }
+      }
     }
+    if (enrolledDegrees.size > 0) {
+      for (const d of allDegreesList.value) {
+        if (enrolledDegrees.has(d.slug)) {
+          selectedDegrees.value.add(d.slug)
+          const titles = getDegreeTitles(d.slug)
+          degreeTargetTitle.value[d.slug] = titles[0] || 'Junior'
+        }
+      }
+    }
+    // If no enrollments, leave all degrees deselected
   }
   // Ensure all degrees have a target title
   for (const d of allDegreesList.value) {
@@ -987,9 +1002,9 @@ function buildGraph() {
   const classes = Array.from(filteredClassMap.value.entries())
 
   // Layout constants
-  const nodeSpacingX = 130
-  const intraGroupSpacingX = 90
-  const tierSpacingY = 180
+  const nodeSpacingX = 160
+  const intraGroupSpacingX = 140
+  const tierSpacingY = 200
   const studentY = 40
   const tier100Y = studentY + tierSpacingY
   const tier200Y = tier100Y + tierSpacingY
@@ -1066,6 +1081,8 @@ function buildGraph() {
       posMap.set(key, { x, y: tier100Y })
     }
   }
+  // Resolve horizontal overlaps for tier 100 using bucket-based approach
+  spreadNodesHorizontally(tier100Nodes, nodeSpacingX)
   nodeList.push(...tier100Nodes)
 
   // ── Place Tier 200 nodes ──
