@@ -8,7 +8,7 @@
 |-----------|---------|
 | `app/` | All application code — pages, components, logic |
 | `content/` | Markdown/YAML data files queried at build time via Contentlayer |
-| `features/` | Gherkin feature specs — source of truth for expected behavior |
+| `features/` | Gherkin feature specs — source of truth for expected behavior (see below) |
 | `test/` | Tests: `unit/` (Vitest), `nuxt/` (Nuxt test utils), `e2e/` (Playwright) |
 | `public/` | Static assets served as-is (favicon, icons, etc.) |
 | `dist/` | Generated static output from `pnpm generate` |
@@ -26,6 +26,18 @@
 | `layouts/` | Page layouts (`default.vue`, `blank.vue`). |
 | `assets/` | Compiled assets (styles, images processed by Vite). |
 | `utils/` | Utility functions and helpers. |
+
+## `features/` Structure
+
+Gherkin feature specs organized by artifact type. Feature files are the source of truth for expected behavior — read them before implementing changes.
+
+**Top-level categories:**
+- `features/pages/` — Page-level features for route-based pages.
+- `features/components/` — Component-level features for reusable UI components.
+
+**Subdirectories can be nested at any depth.** For example, `features/pages/degrees/` contains degree-related page features, and `features/components/home/` contains today-related component features. New domains may add deeper nesting as needed.
+
+**To find a feature file, always search recursively** through all subdirectories rather than assuming a fixed path. Use glob patterns like `features/**/*.feature` or `find features/ -name '*.feature'` to locate the correct file.
 
 ## `content/` Structure
 

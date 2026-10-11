@@ -40,7 +40,7 @@ let lastBeatTimes: number[] = []
 
 function initAudio() {
   if (audioCtx) return
-  audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
+  audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
   masterGain = audioCtx.createGain()
   masterGain.gain.value = props.volume
   masterGain.connect(audioCtx.destination)

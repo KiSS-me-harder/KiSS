@@ -1,3 +1,5 @@
+import { storageGetItem, storageSetItem } from '~/utils/storage'
+
 export interface LevelProgress {
   level: number
   completed: boolean
@@ -710,7 +712,6 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
 
   // Check if an activity has been logged today (any data point with this activitySlug within the last 24h)
   function hasActivityLoggedToday(activitySlug: string): boolean {
-    const now = Date.now()
     const startOfToday = new Date()
     startOfToday.setHours(0, 0, 0, 0)
     const todayStart = startOfToday.getTime()
@@ -820,7 +821,7 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
         version: 10
       }
       try {
-        localStorage.setItem('kiss-enrollment', JSON.stringify(data))
+        storageSetItem('kiss-enrollment', JSON.stringify(data))
       } catch {
         // Storage might be unavailable
       }
@@ -830,7 +831,7 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
   function loadFromStorage() {
     if (!import.meta.client) return
     try {
-      const raw = localStorage.getItem('kiss-enrollment')
+      const raw = storageGetItem('kiss-enrollment')
       if (!raw) return
 
       const data = JSON.parse(raw)

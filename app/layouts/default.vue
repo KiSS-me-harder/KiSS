@@ -69,13 +69,13 @@ const classesChildren = computed(() => {
   if (!allClasses.value) return []
   const classMap = new Map<string, { label: string, to: string }>()
   for (const item of allClasses.value) {
-    const parts = (item as any).stem?.split('/') || []
+    const parts = (item as Record<string, unknown>).stem?.split('/') || []
     if (parts.length < 4) continue
     const degree = parts[1]
     const className = parts[2]
     const classSlug = `${degree}/${className}`
     if (!classMap.has(classSlug)) {
-      const classTitle = (item as any).meta?.class || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+      const classTitle = (item as Record<string, unknown>).meta?.class || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
       classMap.set(classSlug, {
         label: classTitle,
         to: `/classes/${classSlug}`
@@ -115,7 +115,7 @@ const punishmentsChildren = computed(() =>
 const facultyChildren = computed(() =>
   (faculty.value || []).map(item => ({
     label: item.title,
-    to: `/teachers/${(item as any).path.split('/').pop()}`,
+    to: `/teachers/${(item as Record<string, unknown>).path.split('/').pop()}`,
     onSelect: () => {
       open.value = false
     }

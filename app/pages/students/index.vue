@@ -63,7 +63,7 @@
                       </p>
                       <UBadge
                         :label="getCategoryLabel(thread.category)"
-                        :color="getCategoryColor(thread.category) as any"
+                        :color="getCategoryColor(thread.category) as Record<string, unknown>"
                         variant="subtle"
                         size="xs"
                       />

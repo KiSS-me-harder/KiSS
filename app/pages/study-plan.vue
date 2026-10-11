@@ -400,7 +400,7 @@
                   :style="{
                     'backgroundColor': getNodeFill(selectedNode),
                     '--tw-ring-color': getNodeStroke(selectedNode)
-                  } as any"
+                  } as Record<string, unknown>"
                 />
                 <span class="font-bold text-sm text-white truncate">{{ selectedNode.label }}</span>
               </div>
@@ -749,13 +749,13 @@ const degreeTitlesMap = computed(() => {
   const map = new Map<string, DegreeTitle[]>()
   if (!allDegrees.value) return map
   for (const degree of allDegrees.value) {
-    const stem = (degree as any).stem || ''
+    const stem = (degree as Record<string, unknown>).stem || ''
     const slug = stem.split('/').pop() || ''
-    const levels = (degree as any).meta?.levels || []
-    const titles: DegreeTitle[] = levels.map((l: any) => ({
+    const levels = (degree as Record<string, unknown>).meta?.levels || []
+    const titles: DegreeTitle[] = levels.map((l: Record<string, unknown>) => ({
       name: l.name || '',
       description: l.description || '',
-      classes: (l.classes || []).map((c: any) => ({
+      classes: (l.classes || []).map((c: Record<string, unknown>) => ({
         slug: c.slug || '',
         maxLevel: c.maxLevel || 100
       }))
@@ -788,16 +788,16 @@ const classMap = computed(() => {
   if (!allClasses.value) return map
 
   for (const item of allClasses.value) {
-    const parts = (item as any).stem?.split('/') || []
+    const parts = (item as Record<string, unknown>).stem?.split('/') || []
     if (parts.length < 4) continue
 
     const degree = parts[1]
     const classSlug = parts[2]
     const key = `${degree}/${classSlug}`
-    const level = parseInt((item as any).meta?.level, 10)
-    const classTitle = (item as any).meta?.class || classSlug.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    const level = parseInt((item as Record<string, unknown>).meta?.level, 10)
+    const classTitle = (item as Record<string, unknown>).meta?.class || classSlug.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
     const degreeLabel = degree.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-    const deps = (item as any).meta?.dependencies || []
+    const deps = (item as Record<string, unknown>).meta?.dependencies || []
 
     if (!map.has(key)) {
       map.set(key, { degree, degreeLabel, className: classTitle, classSlug, levels: [], dependencies: new Map() })
@@ -818,11 +818,6 @@ const studyPlan = computed(() => planStore.studyPlan)
 const studyPlanArray = computed(() => Array.from(planStore.studyPlan))
 
 /* ── Degree filter state ── */
-
-interface DegreeEntry {
-  slug: string
-  label: string
-}
 
 const allDegreesList = computed(() => {
   const degreeSet = new Map<string, string>()
@@ -899,7 +894,7 @@ function determineTitleForDegree(degreeSlug: string): string {
 
   // Find the highest level the user is enrolled in for any class in this degree
   let highestEnrolledLevel = 0
-  for (const [key, info] of classMap.value) {
+  for (const [key] of classMap.value) {
     if (!key.startsWith(degreeSlug + '/')) continue
     const enrollment = store.getEnrollment(key)
     if (enrollment) {
@@ -1031,7 +1026,7 @@ const enrolling = ref(false)
 // Count all non-enrolled classes required by selected titles
 const enrollableClassesCount = computed(() => {
   let count = 0
-  for (const [key, info] of classMap.value) {
+  for (const [key] of classMap.value) {
     if (!titleClassSet.value.has(key)) continue
     if (!store.isEnrolled(key)) {
       count++

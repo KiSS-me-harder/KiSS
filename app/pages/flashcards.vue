@@ -70,7 +70,7 @@ const allDeckCards = computed<Flashcard[]>(() => {
 
   // Only include flashcards from enrolled classes
   for (const item of allClasses.value) {
-    const itemAny = item as any
+    const itemAny = item as Record<string, unknown>
     const flashcardsData = itemAny.meta?.flashcards
     if (!flashcardsData || !Array.isArray(flashcardsData) || flashcardsData.length === 0) continue
 

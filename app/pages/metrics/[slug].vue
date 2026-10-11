@@ -303,17 +303,17 @@ const { data: allMetrics } = await useAsyncData(
 
 const metricData = computed(() => {
   if (!allMetrics.value) return null
-  return allMetrics.value.find(item => (item as any).stem?.endsWith('/_index')) || null
+  return allMetrics.value.find(item => (item as Record<string, unknown>).stem?.endsWith('/_index')) || null
 })
 
 const levelsData = computed(() => {
   if (!allMetrics.value) return null
-  return allMetrics.value.find(item => (item as any).stem?.endsWith('/levels')) || null
+  return allMetrics.value.find(item => (item as Record<string, unknown>).stem?.endsWith('/levels')) || null
 })
 
 const metric = computed(() => {
   if (!metricData.value) return null
-  const item = metricData.value as any
+  const item = metricData.value as Record<string, unknown>
   const meta = item.meta || {}
   return {
     slug: slug.value,
@@ -325,14 +325,14 @@ const metric = computed(() => {
 
 const fields = computed<MetricField[]>(() => {
   if (!metricData.value) return []
-  const item = metricData.value as any
+  const item = metricData.value as Record<string, unknown>
   const meta = item.meta || {}
   return meta.fields || []
 })
 
 const milestones = computed<MetricMilestone[]>(() => {
   if (!levelsData.value) return []
-  const item = levelsData.value as any
+  const item = levelsData.value as Record<string, unknown>
   const meta = item.meta || {}
   return meta.milestones || []
 })

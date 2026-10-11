@@ -292,16 +292,16 @@ const { data: allActivities } = await useAsyncData('activities-all', () => query
 const activities = computed(() => {
   if (!allActivities.value) return []
 
-  const activityMap = new Map<string, any>()
+  const activityMap = new Map<string, Record<string, unknown>>()
 
   for (const item of allActivities.value) {
-    const stem = (item as any).stem || ''
+    const stem = (item as Record<string, unknown>).stem || ''
     const parts = stem.split('/')
     if (parts.length < 3) continue
     const activitySlug = parts[1]
 
     if (parts[2] === '_index') {
-      const itemAny = item as any
+      const itemAny = item as Record<string, unknown>
       const meta = itemAny.meta || {}
       const fields = meta.fields || []
       const contribs = meta.contributions || []
@@ -381,7 +381,7 @@ const categories = computed(() => {
   })
 })
 
-function submitSession(activity: any) {
+function submitSession(activity: Record<string, unknown>) {
   if (!activity) return
 
   if (activity.contributions && activity.contributions.length > 0) {
@@ -398,13 +398,13 @@ function submitSession(activity: any) {
   }
 }
 
-function getFieldUnit(activity: any, fieldId: string): string {
-  const field = activity.fields?.find((f: any) => f.id === fieldId)
+function getFieldUnit(activity: Record<string, unknown>, fieldId: string): string {
+  const field = activity.fields?.find((f: Record<string, unknown>) => f.id === fieldId)
   return field?.unit || ''
 }
 
 // Get recent sessions from metric data points
-function getRecentSessions(activity: any) {
+function getRecentSessions(activity: Record<string, unknown>) {
   if (!activity || !activity.contributions.length) return []
 
   const sessions: Array<{ timestamp: number, values: Record<string, number> }> = []
@@ -435,7 +435,7 @@ function getRecentSessions(activity: any) {
   return sessions.sort((a, b) => b.timestamp - a.timestamp)
 }
 
-function deleteSession(activity: any, sessionIndex: number) {
+function deleteSession(activity: Record<string, unknown>, sessionIndex: number) {
   const sessions = getRecentSessions(activity)
   const session = sessions[sessionIndex]
   if (!session) return

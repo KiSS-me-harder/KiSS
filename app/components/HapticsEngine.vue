@@ -86,7 +86,7 @@ function initAudioAnalyser() {
   if (!props.mediaElement) return
 
   if (!audioCtx) {
-    audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
   }
 
   if (audioCtx.state === 'suspended') {

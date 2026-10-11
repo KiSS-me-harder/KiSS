@@ -1,3 +1,5 @@
+import { storageGetItem, storageSetItem } from '~/utils/storage'
+
 export const useScheduleStore = defineStore('schedule', () => {
   // ── State ──
 
@@ -23,12 +25,12 @@ export const useScheduleStore = defineStore('schedule', () => {
   function saveToStorage() {
     if (import.meta.client) {
       try {
-        localStorage.setItem('kiss-routine-assignments', JSON.stringify(routineAssignments.value))
-        localStorage.setItem('kiss-class-schedule', JSON.stringify(scheduleEntries.value))
+        storageSetItem('kiss-routine-assignments', JSON.stringify(routineAssignments.value))
+        storageSetItem('kiss-class-schedule', JSON.stringify(scheduleEntries.value))
 
         // Save each daily completion set
         for (const [key, set] of Object.entries(dailyCompleted.value)) {
-          localStorage.setItem(`kiss-daily-${key}`, JSON.stringify([...set]))
+          storageSetItem(`kiss-daily-${key}`, JSON.stringify([...set]))
         }
       } catch {
         // Storage might be unavailable
@@ -39,10 +41,10 @@ export const useScheduleStore = defineStore('schedule', () => {
   function loadFromStorage() {
     if (!import.meta.client) return
     try {
-      const rawRoutine = localStorage.getItem('kiss-routine-assignments')
+      const rawRoutine = storageGetItem('kiss-routine-assignments')
       if (rawRoutine) routineAssignments.value = JSON.parse(rawRoutine) as RoutineAssignment[]
 
-      const rawSchedule = localStorage.getItem('kiss-class-schedule')
+      const rawSchedule = storageGetItem('kiss-class-schedule')
       if (rawSchedule) scheduleEntries.value = JSON.parse(rawSchedule) as ScheduleEntry[]
     } catch {
       // Corrupted data, start fresh
@@ -53,7 +55,7 @@ export const useScheduleStore = defineStore('schedule', () => {
   function loadDailyCompleted(dateKey: string) {
     if (!import.meta.client) return
     try {
-      const raw = localStorage.getItem(`kiss-daily-${dateKey}`)
+      const raw = storageGetItem(`kiss-daily-${dateKey}`)
       if (raw) {
         dailyCompleted.value[dateKey] = new Set(JSON.parse(raw) as string[])
       }
@@ -147,7 +149,7 @@ export const useScheduleStore = defineStore('schedule', () => {
     // Save this specific day
     if (import.meta.client) {
       try {
-        localStorage.setItem(`kiss-daily-${dateKey}`, JSON.stringify([...set]))
+        storageSetItem(`kiss-daily-${dateKey}`, JSON.stringify([...set]))
       } catch {
         // Storage might be unavailable
       }

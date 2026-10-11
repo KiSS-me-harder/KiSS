@@ -5,12 +5,6 @@ import { useScheduleStore } from '~/stores/schedule'
 const store = useEnrollmentStore()
 const scheduleStore = useScheduleStore()
 
-const now = new Date()
-const hours = now.getHours()
-const minutes = now.getMinutes()
-const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
-const dayName = now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()
-
 // ── Fetch clubs and activities ──
 
 const { data: allClubs } = await useAsyncData('routine-clubs', () => queryCollection('clubs').all())
@@ -21,8 +15,8 @@ const clubActivitiesMap = computed(() => {
   const map: Record<string, string[]> = {}
   if (!allClubs.value) return map
   for (const club of allClubs.value) {
-    const clubSlug = (club as any).stem.slice(6)
-    const meta = (club as any)?.meta
+    const clubSlug = (club as Record<string, unknown>).stem.slice(6)
+    const meta = (club as Record<string, unknown>)?.meta
     const clubActs = meta?.clubActivities
     if (clubSlug && clubActs.length > 0) {
       map[clubSlug] = clubActs
@@ -39,13 +33,13 @@ const subscribedActivitySlugs = computed(() => {
 // All activities available to add to routine — extract short slugs matching the activities page format
 const availableActivities = computed(() => {
   if (!allActivities.value) return []
-  const activityMap = new Map<string, any>()
+  const activityMap = new Map<string, Record<string, unknown>>()
   for (const item of allActivities.value) {
-    const stem = (item as any).stem || ''
+    const stem = (item as Record<string, unknown>).stem || ''
     const parts = stem.split('/')
     if (parts.length < 3 || parts[2] !== '_index') continue
     const activitySlug = parts[1]
-    const meta = (item as any).meta || {}
+    const meta = (item as Record<string, unknown>).meta || {}
     const fields = meta.fields || []
     const contribs = meta.contributions || []
     activityMap.set(activitySlug, {
@@ -58,7 +52,7 @@ const availableActivities = computed(() => {
       contributions: Array.isArray(contribs) ? contribs : []
     })
   }
-  return Array.from(activityMap.values()).sort((a: any, b: any) => a.title.localeCompare(b.title))
+  return Array.from(activityMap.values()).sort((a: Record<string, unknown>, b: Record<string, unknown>) => a.title.localeCompare(b.title))
 })
 
 // ── Routine slot definitions ──
@@ -78,8 +72,6 @@ const slotDefinitions: RoutineSlotDef[] = [
 ]
 
 // ── Routine assignments (from store) ──
-
-const routineAssignments = computed(() => scheduleStore.routineAssignments)
 
 // Get assignments for a specific slot
 function getSlotAssignments(slotId: string) {

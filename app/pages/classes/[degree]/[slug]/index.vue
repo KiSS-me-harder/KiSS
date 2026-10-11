@@ -293,7 +293,7 @@ const { data: allClasses } = await useAsyncData(
 const filteredClasses = computed(() => {
   if (!allClasses.value) return []
   const prefix = `classes/${degree.value}/${slug.value}/`
-  return allClasses.value.filter(item => (item as any).stem?.startsWith(prefix))
+  return allClasses.value.filter(item => (item as Record<string, unknown>).stem?.startsWith(prefix))
 })
 
 const classData = computed(() => {
@@ -305,15 +305,15 @@ const classData = computed(() => {
   const degreeLabel = degreeValue.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
   // Find the _index.md item for class-level metadata (title, description)
-  const indexItem = classes.find(item => (item as any).stem?.endsWith('/_index'))
+  const indexItem = classes.find(item => (item as Record<string, unknown>).stem?.endsWith('/_index'))
 
   // Get title: prefer _index.md title, then slug fallback
   const title = indexItem
-    ? ((indexItem as any).title || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '))
+    ? ((indexItem as Record<string, unknown>).title || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '))
     : className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
   // Get description from _index.md frontmatter
-  const description = indexItem ? (indexItem as any).description || '' : ''
+  const description = indexItem ? (indexItem as Record<string, unknown>).description || '' : ''
 
   return {
     slug: classSlug.value,
@@ -330,10 +330,10 @@ const classLookup = computed(() => {
   if (!allClasses.value) return new Map()
   const map = new Map<string, { stem: string, title: string }>()
   for (const item of allClasses.value) {
-    const key = `${(item as any).meta?.class}-${(item as any).meta?.level}`
+    const key = `${(item as Record<string, unknown>).meta?.class}-${(item as Record<string, unknown>).meta?.level}`
     map.set(key, {
-      stem: (item as any).stem,
-      title: (item as any).meta?.title
+      stem: (item as Record<string, unknown>).stem,
+      title: (item as Record<string, unknown>).meta?.title
     })
   }
   return map
@@ -356,7 +356,7 @@ const levelGroups = computed(() => {
   ]
 
   for (const item of classes) {
-    const level = parseInt((item as any).meta?.level, 10)
+    const level = parseInt((item as Record<string, unknown>).meta?.level, 10)
     let groupIndex: number | undefined
 
     if (level >= 100 && level < 200) {
@@ -372,8 +372,8 @@ const levelGroups = computed(() => {
     const gi = groups[groupIndex]
     if (gi) {
       // Resolve dependencies with titles
-      const rawDeps = (item as any).meta?.dependencies || []
-      const dependencies = rawDeps.map((dep: any) => {
+      const rawDeps = (item as Record<string, unknown>).meta?.dependencies || []
+      const dependencies = rawDeps.map((dep: Record<string, unknown>) => {
         const lookupKey = `${dep.class}-${dep.level}`
         const lookup = classLookup.value.get(lookupKey)
         return {
@@ -386,17 +386,12 @@ const levelGroups = computed(() => {
 
       // Extract description from body text
       let description = ''
-      const body = (item as any).body
+      const body = (item as Record<string, unknown>).body
       if (body && typeof body === 'string') {
         description = body.replace(/\*\*[^*]*\*\*/g, '').replace(/\* Key Takeaways:[\s\S]*/i, '').trim()
       } else if (body && typeof body === 'object' && body.children) {
-        let inKeyTakeaways = false
         const parts: string[] = []
         for (const child of body.children) {
-          if (child.tag === 'strong' && child.value && /key takeaways/i.test(child.value)) {
-            inKeyTakeaways = true
-            break
-          }
           if (child.value) {
             parts.push(child.value)
           }
@@ -406,7 +401,7 @@ const levelGroups = computed(() => {
 
       gi.levels.push({
         level,
-        title: (item as any).title,
+        title: (item as Record<string, unknown>).title,
         description,
         dependencies
       })
@@ -442,7 +437,7 @@ const isEnrolled = computed(() => store.isEnrolled(classSlug.value))
 const enrollment = computed(() => store.getEnrollment(classSlug.value))
 
 // Exclude _index.md from level count
-const totalLevels = computed(() => filteredClasses.value.filter(item => !(item as any).stem?.endsWith('/_index')).length)
+const totalLevels = computed(() => filteredClasses.value.filter(item => !(item as Record<string, unknown>).stem?.endsWith('/_index')).length)
 
 const completedCount = computed(() => {
   if (!enrollment.value) return 0
@@ -463,19 +458,10 @@ function isEligible(level: { level: number, dependencies: { class: string, level
   return store.areDependenciesMet(classSlug.value, level.level, level.dependencies)
 }
 
-function toggleLevelComplete(level: number) {
-  if (!isEnrolled.value) return
-  if (isLevelCompleted(level)) {
-    store.resetLevel(classSlug.value, level)
-  } else {
-    store.completeLevel(classSlug.value, level)
-  }
-}
-
 function handleEnroll() {
   const levels = filteredClasses.value
-    .filter(item => !(item as any).stem?.endsWith('/_index'))
-    .map(item => parseInt((item as any).meta?.level, 10))
+    .filter(item => !(item as Record<string, unknown>).stem?.endsWith('/_index'))
+    .map(item => parseInt((item as Record<string, unknown>).meta?.level, 10))
   store.enrollInClass(classSlug.value, slug.value, degree.value, levels)
 }
 

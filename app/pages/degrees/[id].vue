@@ -101,7 +101,7 @@ interface DegreeLevel {
 }
 
 const degreeLevels = computed<DegreeLevel[]>(() => {
-  return (home.value as any)?.meta?.levels || []
+  return (home.value as Record<string, unknown>)?.meta?.levels || []
 })
 
 // Selected target level index
@@ -146,11 +146,11 @@ const classInfos = computed<ClassInfo[]>(() => {
     // Find all levels for this class
     const prefix = `classes/${dc.slug}/`
     const classLevels = allClasses.value
-      .filter(item => (item as any).stem?.startsWith(prefix))
+      .filter(item => (item as Record<string, unknown>).stem?.startsWith(prefix))
       .map(item => ({
-        level: parseInt((item as any).level, 10),
-        title: (item as any).title,
-        classTitle: (item as any).class
+        level: parseInt((item as Record<string, unknown>).level, 10),
+        title: (item as Record<string, unknown>).title,
+        classTitle: (item as Record<string, unknown>).class
       }))
       .filter(item => !isNaN(item.level))
       .sort((a, b) => a.level - b.level)
@@ -222,8 +222,8 @@ function handleEnrollInDegree() {
       // Find available levels for this class up to maxLevel
       const prefix = `classes/${dc.slug}/`
       const levels = allClasses.value!
-        .filter(item => (item as any).stem?.startsWith(prefix))
-        .map(item => parseInt((item as any).level, 10))
+        .filter(item => (item as Record<string, unknown>).stem?.startsWith(prefix))
+        .map(item => parseInt((item as Record<string, unknown>).level, 10))
         .filter(l => !isNaN(l) && l <= dc.maxLevel)
         .sort((a, b) => a - b)
 
@@ -260,8 +260,8 @@ function isTitleCompleted(titleIndex: number): boolean {
     // Check if all levels up to maxLevel are completed
     const prefix = `classes/${dc.slug}/`
     const levels = allClasses.value
-      .filter(item => (item as any).stem?.startsWith(prefix))
-      .map(item => parseInt((item as any).level, 10))
+      .filter(item => (item as Record<string, unknown>).stem?.startsWith(prefix))
+      .map(item => parseInt((item as Record<string, unknown>).level, 10))
       .filter(l => !isNaN(l) && l <= dc.maxLevel)
       .sort((a, b) => a - b)
 
@@ -271,14 +271,6 @@ function isTitleCompleted(titleIndex: number): boolean {
   }
   return true
 }
-
-// Get the highest completed title index
-const highestCompletedTitleIndex = computed(() => {
-  for (let i = degreeLevels.value.length - 1; i >= 0; i--) {
-    if (isTitleCompleted(i)) return i
-  }
-  return -1
-})
 
 // --- Level tier colors ---
 function getTierColor(maxLevel: number) {

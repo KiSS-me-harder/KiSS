@@ -4,7 +4,7 @@ import { useScheduleStore } from '~/stores/schedule'
 
 const store = useEnrollmentStore()
 const scheduleStore = useScheduleStore()
-const { app } = useRuntimeConfig()
+useRuntimeConfig()
 
 // Fetch all classes from content to get titles
 const { data: allClassesContent } = await useAsyncData('today-schedule-classes', () => queryCollection('classes').all())
@@ -27,9 +27,9 @@ const enrolledClasses = computed<EnrolledClassInfo[]>(() => {
 
     // Find the class index file to get the title
     const prefix = `classes/${degree}/${className}/_index`
-    const classIndex = allClassesContent.value.find(item => (item as any).stem === prefix)
+    const classIndex = allClassesContent.value.find(item => (item as Record<string, unknown>).stem === prefix)
 
-    const title = (classIndex as any)?.title || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    const title = (classIndex as Record<string, unknown>)?.title || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
     const degreeLabel = degree.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
     classes.push({ slug, title, degree, degreeLabel })
@@ -39,13 +39,6 @@ const enrolledClasses = computed<EnrolledClassInfo[]>(() => {
 })
 
 // Schedule entries from store (same source as TodayScheduleEdit)
-interface ScheduleEntry {
-  id: number
-  classSlug: string
-  day: number // 0=Monday ... 6=Sunday
-  section: string
-}
-
 const scheduleEntries = computed(() => scheduleStore.scheduleEntries)
 
 // Today's day index (0=Monday ... 6=Sunday)

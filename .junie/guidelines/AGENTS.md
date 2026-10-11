@@ -20,7 +20,9 @@ When asked to implement a feature, work in **sequential, separate tasks**:
 
 Always read the relevant `features/*.feature` file before implementing changes. Feature files are the source of truth for expected behavior.
 
-**Available feature files:** `dashboard`, `degrees`, `classes`, `study-plan`, `clubs`, `activities`, `detention`, `flashcards`, `library`, `teachers`, `students`, `metrics`, `settings`, `profile`.
+**Feature files are organized under `features/pages/` and `features/components/`, with subdirectories that can be nested at any depth.** For example, `features/pages/degrees/` contains degree-related page features, and `features/components/home/` contains today-related component features.
+
+**To find the feature file for a given page or component, always search recursively** through all subdirectories — do not assume a fixed path. Use glob patterns like `features/**/*.feature` or `find features/ -name '*.feature'` to locate the correct file.
 
 ## Building and Validating
 

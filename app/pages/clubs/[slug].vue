@@ -29,7 +29,7 @@ const body = computed(() => club.value?.body)
 
 // Required degree prerequisite
 const requiredDegree = computed(() => {
-  const meta = (club.value as any)?.meta
+  const meta = (club.value as Record<string, unknown>)?.meta
   return meta?.requiredDegree as string | undefined
 })
 
@@ -47,7 +47,7 @@ interface Activity {
 }
 
 const activities = computed<Activity[]>(() => {
-  const meta = (club.value as any)?.meta
+  const meta = (club.value as Record<string, unknown>)?.meta
   const raw = meta?.activities
   if (!Array.isArray(raw) || raw.length === 0) return []
   return raw
@@ -55,7 +55,7 @@ const activities = computed<Activity[]>(() => {
 
 // Club-associated activities from the activities system
 const clubActivitySlugs = computed(() => {
-  const meta = (club.value as any)?.meta
+  const meta = (club.value as Record<string, unknown>)?.meta
   const clubActs = meta?.clubActivities
   if (!Array.isArray(clubActs) || clubActs.length === 0) return []
   return clubActs
@@ -65,7 +65,7 @@ const clubActivities = computed(() => {
   if (!allActivities.value || clubActivitySlugs.value.length === 0) return []
   const slugs = new Set(clubActivitySlugs.value)
   return allActivities.value.filter((a) => {
-    const stem = (a as any).stem || ''
+    const stem = (a as Record<string, unknown>).stem || ''
     const parts = stem.split('/')
     if (parts.length < 3) return false
     return slugs.has(parts[1])
@@ -354,7 +354,7 @@ useHead({
               :color="activeFilter === typeKey ? typeInfo.color : 'default'"
               size="xs"
               class="text-xs"
-              @click="activeFilter = typeKey as any"
+              @click="activeFilter = typeKey as Record<string, unknown>"
             >
               <UIcon :name="typeInfo.icon" class="w-3.5 h-3.5 mr-1" />
               {{ typeInfo.label }}s ({{ activities.filter(a => a.type === typeKey).length }})
@@ -452,26 +452,26 @@ useHead({
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div
               v-for="activity in clubActivities"
-              :key="(activity as any).stem"
+              :key="(activity as Record<string, unknown>).stem"
               class="group relative rounded-xl border border-white/10 bg-white/5 p-4 hover:border-white/20 transition-all duration-200"
             >
               <div class="flex items-start gap-3">
                 <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-500/10 shrink-0">
                   <UIcon
-                    :name="(activity as any).meta?.icon || 'i-lucide-circle-dot'"
+                    :name="(activity as Record<string, unknown>).meta?.icon || 'i-lucide-circle-dot'"
                     class="w-5 h-5 text-emerald-400"
                   />
                 </div>
                 <div class="flex-1 min-w-0">
                   <h3 class="text-sm font-semibold text-foreground">
-                    {{ (activity as any).title }}
+                    {{ (activity as Record<string, unknown>).title }}
                   </h3>
-                  <p v-if="(activity as any).meta?.description" class="text-xs text-muted-foreground mt-1 line-clamp-2">
-                    {{ (activity as any).meta.description }}
+                  <p v-if="(activity as Record<string, unknown>).meta?.description" class="text-xs text-muted-foreground mt-1 line-clamp-2">
+                    {{ (activity as Record<string, unknown>).meta.description }}
                   </p>
-                  <div v-if="(activity as any).meta?.category" class="mt-2">
+                  <div v-if="(activity as Record<string, unknown>).meta?.category" class="mt-2">
                     <span class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                      {{ (activity as any).meta.category }}
+                      {{ (activity as Record<string, unknown>).meta.category }}
                     </span>
                   </div>
                 </div>

@@ -19,11 +19,11 @@ const clubActivitiesMap = computed(() => {
   const map: Record<string, string[]> = {}
   if (!allClubs.value) return map
   for (const club of allClubs.value) {
-    const meta = (club as any)?.meta
+    const meta = (club as Record<string, unknown>)?.meta
     const clubActs = meta?.clubActivities
     if (Array.isArray(clubActs) && clubActs.length > 0) {
       // Use the slug field directly
-      const clubSlug = (club as any).slug
+      const clubSlug = (club as Record<string, unknown>).slug
       if (clubSlug) {
         map[clubSlug] = clubActs
       }
@@ -42,7 +42,7 @@ const subscribedActivities = computed(() => {
   if (!allActivities.value || subscribedActivitySlugs.value.length === 0) return []
   const slugs = new Set(subscribedActivitySlugs.value)
   return allActivities.value.filter((a) => {
-    const stem = (a as any).stem || ''
+    const stem = (a as Record<string, unknown>).stem || ''
     const parts = stem.split('/')
     if (parts.length < 3) return false
     return slugs.has(parts[1])
@@ -50,7 +50,7 @@ const subscribedActivities = computed(() => {
 })
 
 // Helper: extract short activity slug from stem
-function getActivitySlug(activity: any): string {
+function getActivitySlug(activity: Record<string, unknown>): string {
   const stem = activity?.stem || ''
   const parts = stem.split('/')
   return parts.length >= 2 ? parts[1] : stem
@@ -58,9 +58,9 @@ function getActivitySlug(activity: any): string {
 
 // Group subscribed activities by category
 const subscribedActivityGroups = computed(() => {
-  const groups: Record<string, any[]> = {}
+  const groups: Record<string, unknown[]> = {}
   for (const activity of subscribedActivities.value) {
-    const meta = (activity as any)?.meta || {}
+    const meta = (activity as Record<string, unknown>)?.meta || {}
     const category = meta.category || 'General'
     if (!groups[category]) groups[category] = []
     groups[category].push(activity)
@@ -123,7 +123,7 @@ const enrolledTaskGroups = computed(() => {
 
     // Find all lessons for this class
     const prefix = `classes/${degree}/${className}/`
-    const classLessons = allClasses.value.filter(item => (item as any).stem?.startsWith(prefix))
+    const classLessons = allClasses.value.filter(item => (item as Record<string, unknown>).stem?.startsWith(prefix))
 
     if (classLessons.length === 0) continue
 
@@ -135,13 +135,13 @@ const enrolledTaskGroups = computed(() => {
 
     // Find the lesson for the current level
     const currentLesson = classLessons.find((item) => {
-      const level = parseInt((item as any).meta?.level, 10)
+      const level = parseInt((item as Record<string, unknown>).meta?.level, 10)
       return level === currentLevel
     })
 
     if (!currentLesson) continue
 
-    const meta = (currentLesson as any).meta || {}
+    const meta = (currentLesson as Record<string, unknown>).meta || {}
     const examTasks = (meta.exam || []).map((task: string, i: number) => ({
       id: `${slug}-${currentLevel}-exam-${i}`,
       title: task,
@@ -150,7 +150,7 @@ const enrolledTaskGroups = computed(() => {
     }))
 
     // Build metrics from lesson
-    const lessonMetrics: LessonMetric[] = (meta.metrics || []).map((m: any) => ({
+    const lessonMetrics: LessonMetric[] = (meta.metrics || []).map((m: Record<string, unknown>) => ({
       id: m.id,
       label: m.label,
       unit: m.unit,
@@ -176,8 +176,6 @@ const enrolledTaskGroups = computed(() => {
 })
 
 // ── Metric activities removed — metrics are now milestone-based, not daily tasks ──
-
-const metricActivityGroups = computed(() => [])
 
 // ── Single-shot task queue ──
 // These are one-time tasks that auto-dismiss when the condition is resolved
@@ -261,7 +259,7 @@ const singleShotTasks = computed(() => {
   // 3. Club activities not in routine — suggest adding them
   const routineActivitySlugs = new Set(routineAssignments.value.map(a => a.activitySlug))
   const unsubscribedActivities = subscribedActivities.value.filter((a) => {
-    const stem = (a as any).stem || ''
+    const stem = (a as Record<string, unknown>).stem || ''
     const parts = stem.split('/')
     if (parts.length < 3) return false
     return !routineActivitySlugs.has(parts[1])
@@ -271,7 +269,7 @@ const singleShotTasks = computed(() => {
     // Group by category for the task descriptions
     const categories = new Set()
     for (const a of unsubscribedActivities) {
-      const meta = (a as any)?.meta || {}
+      const meta = (a as Record<string, unknown>)?.meta || {}
       categories.add(meta.category || 'General')
     }
     const categoryList = [...categories].join(', ')
@@ -301,15 +299,6 @@ const singleShotTasks = computed(() => {
 })
 
 // ── Study plan classes (planned but not yet enrolled) ──
-
-interface PlannedClassInfo {
-  slug: string
-  name: string
-  degree: string
-  degreeLabel: string
-  image: string
-  to: string
-}
 
 const plannedClasses = computed(() => {
   const planIds = Array.from(planStore.studyPlan)
@@ -535,16 +524,16 @@ const hasTasks = computed(() => singleShotTasks.value.length > 0 || enrolledTask
                 >
                   <div class="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
                     <UIcon
-                      :name="(activity as any).meta?.icon || 'i-lucide-circle-dot'"
+                      :name="(activity as Record<string, unknown>).meta?.icon || 'i-lucide-circle-dot'"
                       class="w-4 h-4 text-purple-400"
                     />
                   </div>
                   <div class="flex-1 min-w-0">
                     <p class="text-sm text-white truncate">
-                      {{ (activity as any).title }}
+                      {{ (activity as Record<string, unknown>).title }}
                     </p>
-                    <p v-if="(activity as any).meta?.description" class="text-xs text-muted line-clamp-1">
-                      {{ (activity as any).meta.description }}
+                    <p v-if="(activity as Record<string, unknown>).meta?.description" class="text-xs text-muted line-clamp-1">
+                      {{ (activity as Record<string, unknown>).meta.description }}
                     </p>
                   </div>
                   <NuxtLink

@@ -74,8 +74,6 @@
 </template>
 
 <script setup lang="ts">
-import type { BreadcrumbItem } from '@nuxt/ui'
-
 useHead({
   title: 'Teachers'
 })
@@ -118,20 +116,8 @@ useHead({
   ]
 })
 
-interface TeacherData {
-  title: string
-  role: string
-  department: string
-  avatar: string
-  color: string
-  description: string
-  systemPrompt: string
-  path: string
-  id: string
-}
-
 const { data: facultyData } = await useAsyncData('faculty', () => {
-  return queryCollection('faculty').all() as unknown as Promise<any[]>
+  return queryCollection('faculty').all() as unknown as Promise<Record<string, unknown>[]>
 })
 
 const teachers = computed(() => {

@@ -46,7 +46,7 @@ useSeoMeta({
 })
 
 // Age verification modal is client-only
-const modal = ref<any>(null)
+const modal = ref<unknown>(null)
 onMounted(() => {
   modal.value = overlay.create(AgeVerificationModal)
   if (ageCookie.value !== 'yes') {

@@ -161,7 +161,7 @@ const metrics = computed(() => {
   const metricMap = new Map<string, { slug: string, title: string, description: string, icon: string, milestones: MetricMilestone[] }>()
 
   for (const item of allMetrics.value) {
-    const stem = (item as any).stem || ''
+    const stem = (item as Record<string, unknown>).stem || ''
     const parts = stem.split('/')
     if (parts.length < 3) continue
     const metricSlug = parts[1]
@@ -178,7 +178,7 @@ const metrics = computed(() => {
 
     const metric = metricMap.get(metricSlug)!
 
-    const meta = (item as any).meta || {}
+    const meta = (item as Record<string, unknown>).meta || {}
     // _index.md has the metric definition
     if (parts[2] === '_index') {
       metric.title = item.title || metricSlug.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')

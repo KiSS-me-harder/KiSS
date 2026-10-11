@@ -9,6 +9,19 @@ Feature: Study Plan
     And enrolled classes are highlighted
     And target-level classes are automatically included in my plan
 
+  Scenario: Filter section is visible
+    Given I am on the Study Plan page
+    Then I see a filter section with degree checkboxes
+    And each degree has a target title dropdown
+
+  Scenario: Enrolled degrees are auto-selected on page load
+    Given I am enrolled in one or more degrees with target titles
+    When I open the Study Plan page
+    Then the filter section has all my enrolled degrees selected
+    And each selected degree shows the target title level I am aiming for
+    And all classes required by those target titles are added to my plan
+    And the dependency paths from me to those classes are highlighted
+
   Scenario: Filter by degree
     Given I am on the Study Plan page
     When I toggle degree filters

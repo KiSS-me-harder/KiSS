@@ -1,3 +1,5 @@
+import { storageGetItem, storageSetItem } from '~/utils/storage'
+
 export const useStudyPlanStore = defineStore('studyPlan', () => {
   // ── State ──
 
@@ -10,9 +12,9 @@ export const useStudyPlanStore = defineStore('studyPlan', () => {
   function saveToStorage() {
     if (import.meta.client) {
       try {
-        localStorage.setItem('kiss-study-plan', JSON.stringify([...studyPlan.value]))
-        localStorage.setItem('kiss-study-plan-degrees', JSON.stringify([...selectedDegrees.value]))
-        localStorage.setItem('kiss-study-plan-titles', JSON.stringify(degreeTargetTitle.value))
+        storageSetItem('kiss-study-plan', JSON.stringify([...studyPlan.value]))
+        storageSetItem('kiss-study-plan-degrees', JSON.stringify([...selectedDegrees.value]))
+        storageSetItem('kiss-study-plan-titles', JSON.stringify(degreeTargetTitle.value))
       } catch {
         // Storage might be unavailable
       }
@@ -22,13 +24,13 @@ export const useStudyPlanStore = defineStore('studyPlan', () => {
   function loadFromStorage() {
     if (!import.meta.client) return
     try {
-      const raw = localStorage.getItem('kiss-study-plan')
+      const raw = storageGetItem('kiss-study-plan')
       if (raw) studyPlan.value = new Set(JSON.parse(raw) as string[])
 
-      const rawDeg = localStorage.getItem('kiss-study-plan-degrees')
+      const rawDeg = storageGetItem('kiss-study-plan-degrees')
       if (rawDeg) selectedDegrees.value = new Set(JSON.parse(rawDeg) as string[])
 
-      const rawTitle = localStorage.getItem('kiss-study-plan-titles')
+      const rawTitle = storageGetItem('kiss-study-plan-titles')
       if (rawTitle) degreeTargetTitle.value = JSON.parse(rawTitle) as Record<string, string>
     } catch {
       // Corrupted data, start fresh

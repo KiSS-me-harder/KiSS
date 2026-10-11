@@ -482,10 +482,10 @@ const { data: classLevels } = await useAsyncData(
 const sortedLevelsData = computed(() => {
   if (!classLevels.value) return []
   return classLevels.value
-    .filter(item => !(item as any).stem?.endsWith('/_index'))
+    .filter(item => !(item as Record<string, unknown>).stem?.endsWith('/_index'))
     .map(item => ({
-      level: parseInt((item as any).meta?.level, 10),
-      title: (item as any).title,
+      level: parseInt((item as Record<string, unknown>).meta?.level, 10),
+      title: (item as Record<string, unknown>).title,
       item
     }))
     .filter(l => !isNaN(l.level))
@@ -500,7 +500,7 @@ const currentLevelItem = computed(() => {
 
 // Build a lookup of all levels by their item for dependency resolution
 const levelItemMap = computed(() => {
-  const map = new Map<number, any>()
+  const map = new Map<number, Record<string, unknown>>()
   for (const l of sortedLevelsData.value) {
     map.set(l.level, l.item)
   }
@@ -511,7 +511,7 @@ const levelItemMap = computed(() => {
 function isLevelUnlockedByLevel(levelNum: number): boolean {
   const item = levelItemMap.value.get(levelNum)
   if (!item) return false
-  const deps = (item as any).meta?.dependencies || []
+  const deps = (item as Record<string, unknown>).meta?.dependencies || []
   if (!deps.length) return true
   return store.areDependenciesMet(classSlug.value, levelNum, deps)
 }
@@ -525,7 +525,7 @@ function isSidebarLevelUnlocked(levelNum: number): boolean {
 const currentLevelDeps = computed(() => {
   const item = currentLevelItem.value
   if (!item) return []
-  return (item as any).meta?.dependencies || []
+  return (item as Record<string, unknown>).meta?.dependencies || []
 })
 
 const isLevelUnlocked = computed(() => {
@@ -560,7 +560,7 @@ const lessonData = computed(() => {
   const item = currentLevelItem.value
   if (!item) return null
 
-  const itemAny = item as any
+  const itemAny = item as Record<string, unknown>
   const level = parseInt(itemAny.meta?.level, 10)
   const className = itemAny.class || slug.value.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
   const degreeLabel = degree.value.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
@@ -657,17 +657,17 @@ function getFlashcardOptionClass(fcIndex: number, optIndex: number) {
 // - An object with { type: 'checklist', text: string }
 // - An object with { type: 'milestone', text: string, metric: string, field: string, target: number, unit: string, label?: string }
 
-function getExamTaskType(task: any): string {
+function getExamTaskType(task: Record<string, unknown>): string {
   if (typeof task === 'string') return 'checklist'
   return task.type || 'checklist'
 }
 
-function getExamTaskText(task: any): string {
+function getExamTaskText(task: Record<string, unknown>): string {
   if (typeof task === 'string') return task
   return task.text || ''
 }
 
-function getExamTaskMetric(task: any): { label: string, target: number, unit: string } {
+function getExamTaskMetric(task: Record<string, unknown>): { label: string, target: number, unit: string } {
   if (typeof task === 'object' && task.type === 'milestone') {
     return {
       label: task.label || task.field || '',
@@ -701,7 +701,7 @@ const getExamCompletedCount = computed(() => {
   return count
 })
 
-function getMilestoneCurrentValue(task: any): number {
+function getMilestoneCurrentValue(task: Record<string, unknown>): number {
   if (typeof task !== 'object' || task.type !== 'milestone') return 0
   const metricSlug = task.metric
   const fieldId = task.field
@@ -709,7 +709,7 @@ function getMilestoneCurrentValue(task: any): number {
   return store.getMetricValueField(metricSlug, fieldId)
 }
 
-function isMilestoneAchieved(task: any): boolean {
+function isMilestoneAchieved(task: Record<string, unknown>): boolean {
   if (typeof task !== 'object' || task.type !== 'milestone') return false
   const current = getMilestoneCurrentValue(task)
   return current >= (task.target || 0)
@@ -723,7 +723,7 @@ useSeoMeta({
     const body = lessonData.value.body
     if (typeof body === 'string') return body.slice(0, 160)
     if (typeof body === 'object' && body.children) {
-      return body.children.map((c: any) => c.value || '').join('').slice(0, 160)
+      return body.children.map((c: Record<string, unknown>) => c.value || '').join('').slice(0, 160)
     }
     return ''
   })

@@ -105,25 +105,11 @@
 </template>
 
 <script setup lang="ts">
-import type { BreadcrumbItem } from '@nuxt/ui'
-
 const route = useRoute()
 const slug = route.params.slug as string
 
-interface TeacherData {
-  title: string
-  role: string
-  department: string
-  avatar: string
-  color: string
-  description: string
-  systemPrompt: string
-  path: string
-  id: string
-}
-
 const { data: facultyData } = await useAsyncData('faculty-all', () => {
-  return queryCollection('faculty').all() as unknown as Promise<any[]>
+  return queryCollection('faculty').all() as unknown as Promise<Record<string, unknown>[]>
 })
 
 const teacher = computed(() => {
@@ -249,7 +235,7 @@ async function sendMessage() {
 
     messages.value.push({
       role: 'assistant',
-      content: typeof response === 'string' ? response : (response as any).reply || 'Sorry, I could not process your request.',
+      content: typeof response === 'string' ? response : (response as Record<string, unknown>).reply || 'Sorry, I could not process your request.',
       time: getTimeString()
     })
   } catch (error) {

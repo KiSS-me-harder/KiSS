@@ -192,7 +192,7 @@ function initWebGL() {
   gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0)
 
   // Store uniforms on gl for convenience
-  ;(gl as any)._uniforms = {
+  ;(gl as WebGL2RenderingContext)._uniforms = {
     uResolution: gl.getUniformLocation(program, 'uResolution'),
     uTime: gl.getUniformLocation(program, 'uTime'),
     uSpeed: gl.getUniformLocation(program, 'uSpeed'),
@@ -227,7 +227,7 @@ function render(time: number) {
   const elapsed = now - startTime
 
   const config = getConfig()
-  const uniforms = (gl as any)._uniforms
+  const uniforms = (gl as WebGL2RenderingContext & { _uniforms?: Record<string, GLfloat> })._uniforms
 
   if (!uniforms) return
 

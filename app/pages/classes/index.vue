@@ -197,15 +197,6 @@ interface ClassLevelEntry {
   dependencies: { class: string, level: number }[]
 }
 
-interface LevelGroup {
-  level: number
-  label: string
-  badge: string
-  badgeColor: string
-  classCount: number
-  classes: ClassLevelEntry[]
-}
-
 const { data: allClasses } = await useAsyncData('all-classes', () => {
   return queryCollection('classes').all()
 })
@@ -216,10 +207,10 @@ const classLevelCounts = computed(() => {
   if (!allClasses.value) return new Map<string, number>()
   const map = new Map<string, Set<number>>()
   for (const item of allClasses.value) {
-    const parts = (item as any).stem?.split('/') || []
+    const parts = (item as Record<string, unknown>).stem?.split('/') || []
     if (parts.length < 4) continue
     const classSlug = `${parts[1]}/${parts[2]}`
-    const level = parseInt((item as any).meta?.level, 10)
+    const level = parseInt((item as Record<string, unknown>).meta?.level, 10)
     if (isNaN(level)) continue
     if (!map.has(classSlug)) {
       map.set(classSlug, new Set())
@@ -254,11 +245,11 @@ const levelGroups = computed(() => {
     const seenClasses = new Set<string>()
 
     for (const item of classesData) {
-      const level = parseInt((item as any).meta?.level, 10)
+      const level = parseInt((item as Record<string, unknown>).meta?.level, 10)
       // Only include the base level of each tier
       if (level !== tierLevel) continue
 
-      const parts = (item as any).stem?.split('/') || []
+      const parts = (item as Record<string, unknown>).stem?.split('/') || []
       if (parts.length < 4) continue
 
       const degree = parts[1]
@@ -270,21 +261,16 @@ const levelGroups = computed(() => {
       seenClasses.add(classSlug)
 
       const degreeLabel = degree.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-      const classTitle = (item as any).meta?.class || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+      const classTitle = (item as Record<string, unknown>).meta?.class || className.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
       // Extract description from body text
       let description = ''
-      const body = (item as any).body
+      const body = (item as Record<string, unknown>).body
       if (body && typeof body === 'string') {
         description = body.replace(/\*\*[^*]*\*\*/g, '').replace(/\* Key Takeaways:[\s\S]*/i, '').trim()
       } else if (body && typeof body === 'object' && body.children) {
-        let inKeyTakeaways = false
         const parts: string[] = []
         for (const child of body.children) {
-          if (child.tag === 'strong' && child.value && /key takeaways/i.test(child.value)) {
-            inKeyTakeaways = true
-            break
-          }
           if (child.value) {
             parts.push(child.value)
           }
@@ -292,12 +278,12 @@ const levelGroups = computed(() => {
         description = parts.join('').replace(/\*\*[^*]*\*\*/g, '').trim()
       }
 
-      const dependencies = (item as any).meta?.dependencies || []
+      const dependencies = (item as Record<string, unknown>).meta?.dependencies || []
 
       classes.push({
         path: `/classes/${classSlug}`,
         classTitle,
-        title: (item as any).title,
+        title: (item as Record<string, unknown>).title,
         degree,
         degreeLabel,
         level,

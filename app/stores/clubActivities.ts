@@ -1,3 +1,5 @@
+import { storageGetItem, storageSetItem } from '~/utils/storage'
+
 export const useClubActivitiesStore = defineStore('clubActivities', () => {
   // ── State ──
 
@@ -11,7 +13,7 @@ export const useClubActivitiesStore = defineStore('clubActivities', () => {
       try {
         const set = completedActivities.value[clubSlug]
         if (set) {
-          localStorage.setItem(`club-activities-${clubSlug}`, JSON.stringify([...set]))
+          storageSetItem(`club-activities-${clubSlug}`, JSON.stringify([...set]))
         }
       } catch {
         // Storage might be unavailable
@@ -22,7 +24,7 @@ export const useClubActivitiesStore = defineStore('clubActivities', () => {
   function loadFromStorage(clubSlug: string) {
     if (!import.meta.client) return
     try {
-      const stored = localStorage.getItem(`club-activities-${clubSlug}`)
+      const stored = storageGetItem(`club-activities-${clubSlug}`)
       if (stored) {
         completedActivities.value[clubSlug] = new Set(JSON.parse(stored) as string[])
       }
@@ -31,11 +33,7 @@ export const useClubActivitiesStore = defineStore('clubActivities', () => {
     }
   }
 
-  // Load from localStorage after Nuxt hydration for all known clubs
-  if (import.meta.client) {
-    const nuxtApp = useNuxtApp()
-    // No initial load needed — clubs are loaded on demand when visited
-  }
+  // No initial load needed — clubs are loaded on demand when visited
 
   // ── Actions ──
 
