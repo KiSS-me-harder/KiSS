@@ -86,6 +86,7 @@ useHead({
 
 // --- Enrollment Store ---
 const store = useEnrollmentStore()
+const { app } = useRuntimeConfig()
 
 // --- Target Levels from degree frontmatter ---
 interface DegreeLevelClass {
@@ -179,7 +180,7 @@ const classInfos = computed<ClassInfo[]>(() => {
       isEnrolled,
       completedLevels,
       totalLevels: availableLevels.length,
-      image: `/img/degrees/${degree}.webp`,
+      image: `${app.baseURL}img/degrees/${degree}.webp`,
       degreeLabel,
       isCrossDegree
     })
@@ -320,7 +321,7 @@ const levelBadgeColors = [
           <div class="lg:col-span-2">
             <div class="relative rounded-lg overflow-hidden sticky top-4">
               <img
-                :src="`/img/degrees/${id}.webp`"
+                :src="`${app.baseURL}img/degrees/${id}.webp`"
                 :alt="title"
                 class="w-full object-cover"
               />

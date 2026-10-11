@@ -111,7 +111,7 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
     name: 'Kisses Hugs',
     email: 'student@kiss.school',
     degree: 'Sissy',
-    avatarSrc: '/img/placeholder.webp',
+    avatarSrc: useRuntimeConfig().app.baseURL + 'img/placeholder.webp',
     stats: { ...defaultStats },
     customization: { ...defaultCustomization },
     achievements: defaultAchievements.map(a => ({ ...a })),

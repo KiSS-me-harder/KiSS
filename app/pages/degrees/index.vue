@@ -19,7 +19,7 @@
         >
           <!-- Background Image -->
           <img
-            :src="`/img/degrees/${degree.stem.split('/').pop()}.webp`"
+            :src="`${app.baseURL}img/degrees/${degree.stem.split('/').pop()}.webp`"
             :alt="degree.title"
             class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
@@ -121,6 +121,7 @@ useHead({
 const { data: degrees } = await useAsyncData('degrees', () => {
   return queryCollection('degrees').all()
 })
+const { app } = useRuntimeConfig()
 
 const items = ref<BreadcrumbItem[]>([
   {

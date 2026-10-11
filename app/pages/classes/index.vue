@@ -203,6 +203,7 @@ interface LevelGroup {
 const { data: allClasses } = await useAsyncData('all-classes', () => {
   return queryCollection('classes').all()
 })
+const { app } = useRuntimeConfig()
 
 // Build a map of class slugs to their total level count
 const classLevelCounts = computed(() => {
@@ -294,7 +295,7 @@ const levelGroups = computed(() => {
         degree,
         degreeLabel,
         level,
-        image: `/img/degrees/${degree}.webp`,
+        image: `${app.baseURL}img/degrees/${degree}.webp`,
         totalLevels: classLevelCounts.value.get(classSlug) || 0,
         description,
         classSlug,

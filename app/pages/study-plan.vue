@@ -441,6 +441,7 @@ const { data: allClasses } = await useAsyncData('study-plan-classes', () => {
 const { data: allDegrees } = await useAsyncData('study-plan-degrees', () => {
   return queryCollection('degrees').all()
 })
+const { app } = useRuntimeConfig()
 
 /* ── Degree titles map: degree slug → list of titles with their class requirements ── */
 
@@ -1011,7 +1012,7 @@ function buildGraph() {
   const tier300Y = tier200Y + tierSpacingY
 
   // Student node (will be centered after all nodes are placed)
-  const studentNode: GraphNode = { id: 'student', label: 'Student', x: 0, y: studentY, image: '/img/placeholder.webp' }
+  const studentNode: GraphNode = { id: 'student', label: 'Student', x: 0, y: studentY, image: `${app.baseURL}img/placeholder.webp` }
   nodeList.push(studentNode)
 
   // ── Collect all classes by tier ──
@@ -1075,7 +1076,7 @@ function buildGraph() {
         degree: info.degree,
         dependencies: info.dependencies.get(100) || [],
         path: `/classes/${key}`,
-        image: `/img/degrees/${info.degree}.webp`
+        image: `${app.baseURL}img/degrees/${info.degree}.webp`
       }
       tier100Nodes.push(node)
       posMap.set(key, { x, y: tier100Y })
@@ -1117,7 +1118,7 @@ function buildGraph() {
       degree: info.degree,
       dependencies: deps,
       path: `/classes/${key}/200`,
-      image: `/img/degrees/${info.degree}.webp`
+      image: `${app.baseURL}img/degrees/${info.degree}.webp`
     }
     tier200Nodes.push(node)
 
@@ -1183,7 +1184,7 @@ function buildGraph() {
       degree: info.degree,
       dependencies: deps,
       path: `/classes/${key}/300`,
-      image: `/img/degrees/${info.degree}.webp`
+      image: `${app.baseURL}img/degrees/${info.degree}.webp`
     }
     tier300Nodes.push(node)
 

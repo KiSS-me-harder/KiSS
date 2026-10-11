@@ -306,6 +306,7 @@
 import { useEnrollmentStore } from '~/stores/enrollment'
 
 const route = useRoute()
+const { app } = useRuntimeConfig()
 
 const degree = computed(() => route.params.degree as string)
 const slug = computed(() => route.params.slug as string)
@@ -374,7 +375,7 @@ const lessonData = computed(() => {
     className,
     degree: degree.value,
     degreeLabel,
-    image: `/img/degrees/${degree.value}.webp`,
+    image: `${app.baseURL}img/degrees/${degree.value}.webp`,
     body: itemAny.body,
     contentItem: item,
     flashcards,

@@ -212,6 +212,7 @@ import type { BreadcrumbItem } from '@nuxt/ui'
 import { useEnrollmentStore } from '~/stores/enrollment'
 
 const route = useRoute()
+const { app } = useRuntimeConfig()
 
 const degree = computed(() => route.params.degree as string)
 const slug = computed(() => route.params.slug as string)
@@ -257,7 +258,7 @@ const classData = computed(() => {
     title,
     degree: degreeValue,
     degreeLabel,
-    image: `/img/degrees/${degreeValue}.webp`,
+    image: `${app.baseURL}img/degrees/${degreeValue}.webp`,
     description
   }
 })

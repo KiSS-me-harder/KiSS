@@ -46,6 +46,9 @@ export default defineNuxtConfig({
   ogImage: {
     enabled: false
   },
+  image: {
+    inject: false
+  },
   eslint: {
     config: {
       stylistic: {
