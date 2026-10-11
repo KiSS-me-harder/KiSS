@@ -62,7 +62,7 @@
     "@cucumber/pretty-formatter": "^4.1.0",
     "@nuxt/eslint": "^1.17.0",
     "@playwright/test": "^1.64.0",
-    "eslint": "^9.39.2",
+    "eslint": "^9.39.5",
     "husky": "^9.1.7",
     "start-server-and-test": "^3.0.13",
     "ts-node": "^10.9.2",
