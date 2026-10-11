@@ -45,7 +45,8 @@ jobs:
       - name: Install dependencies
         run: pnpm i -r --frozen-lockfile
       - name: Static HTML export with Nuxt
-        run: NUXT_APP_BASE_URL="/KiSS/" pnpm build --prerender --preset github_pages
+        run: NUXT_APP_BASE_URL="/KiSS/" pnpm generate
+#        run: NUXT_APP_BASE_URL="/KiSS/" pnpm build --prerender --preset github_pages
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
