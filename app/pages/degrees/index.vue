@@ -10,7 +10,7 @@
     </template>
 
     <template #body>
-      <div v-if="degrees" class="grid grid-cols-3 gap-3">
+      <div v-if="degrees" class="grid grid-cols-2 md:grid-cols-3 gap-3">
         <NuxtLink
           v-for="degree in degrees"
           :key="degree.id"
