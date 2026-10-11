@@ -16,6 +16,7 @@ const { data: club } = await useAsyncData(
     watch: [slug]
   }
 )
+const { app } = useRuntimeConfig()
 
 // Also load all activities from the activities system
 const { data: allActivities } = await useAsyncData('club-activities-all', () => queryCollection('activities').all())
@@ -207,47 +208,6 @@ useHead({
   ]
 })
 
-const clubGradients = [
-  'bg-gradient-to-br from-pink-600 to-rose-800',
-  'bg-gradient-to-br from-purple-600 to-indigo-800',
-  'bg-gradient-to-br from-blue-600 to-cyan-800',
-  'bg-gradient-to-br from-emerald-600 to-teal-800',
-  'bg-gradient-to-br from-amber-600 to-orange-800',
-  'bg-gradient-to-br from-red-600 to-pink-800',
-  'bg-gradient-to-br from-violet-600 to-purple-800',
-  'bg-gradient-to-br from-cyan-600 to-blue-800',
-  'bg-gradient-to-br from-lime-600 to-green-800',
-  'bg-gradient-to-br from-fuchsia-600 to-pink-800',
-  'bg-gradient-to-br from-sky-600 to-indigo-800',
-  'bg-gradient-to-br from-rose-600 to-red-800',
-  'bg-gradient-to-br from-teal-600 to-emerald-800'
-]
-
-const clubIcons = [
-  'i-lucide-dumbbell',
-  'i-lucide-music',
-  'i-lucide-heart',
-  'i-lucide-eye',
-  'i-lucide-lock',
-  'i-lucide-smile',
-  'i-lucide-paw-print',
-  'i-lucide-brain',
-  'i-lucide-aperture',
-  'i-lucide-sparkles',
-  'i-lucide-hand-helping',
-  'i-lucide-ear',
-  'i-lucide-zap'
-]
-
-const gradientIndex = computed(() => {
-  // Use a hash of the slug to consistently pick a gradient/icon
-  let hash = 0
-  for (let i = 0; i < slug.value.length; i++) {
-    hash = ((hash << 5) - hash) + slug.value.charCodeAt(i)
-    hash |= 0
-  }
-  return Math.abs(hash)
-})
 </script>
 
 <template>
@@ -264,24 +224,37 @@ const gradientIndex = computed(() => {
     <template #body>
       <div v-if="club" class="space-y-4">
         <!-- Hero Section -->
-        <div
-          class="relative rounded-xl overflow-hidden border border-white/10 shadow-lg"
-          :class="clubGradients[gradientIndex % clubGradients.length]"
-        >
-          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        <div class="relative rounded-xl overflow-hidden border border-white/10 shadow-lg">
+          <!-- Background Image -->
+          <img
+            :src="`${app.baseURL}img/placeholder.webp`"
+            :alt="title"
+            class="absolute inset-0 w-full h-full object-cover"
+          />
+
+          <!-- Dark Overlay -->
+          <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30" />
+
+          <!-- Content -->
           <div class="relative p-6 sm:p-8">
-            <div class="flex items-start gap-4">
-              <UIcon
-                :name="clubIcons[gradientIndex % clubIcons.length]"
-                class="w-12 h-12 text-white/40 shrink-0 mt-1"
-              />
-              <div class="flex-1">
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1 min-w-0">
                 <h1 class="text-2xl font-bold text-white mb-2">
                   {{ title }}
                 </h1>
                 <p v-if="description" class="text-white/70 text-sm leading-relaxed">
                   {{ description }}
                 </p>
+              </div>
+              <div class="shrink-0">
+                <UButton
+                  :variant="isMember ? 'solid' : 'outline'"
+                  :color="isMember ? 'primary' : 'secondary'"
+                  size="lg"
+                  @click="toggleMembership"
+                >
+                  {{ isMember ? 'Leave Club' : 'Join Club' }}
+                </UButton>
               </div>
             </div>
           </div>
@@ -470,18 +443,6 @@ const gradientIndex = computed(() => {
           </div>
         </div>
 
-        <!-- Join Club Button -->
-        <div class="pt-2">
-          <UButton
-            :variant="isMember ? 'solid' : 'outline'"
-            :color="isMember ? 'primary' : 'secondary'"
-            size="md"
-            class="w-full sm:w-auto"
-            @click="toggleMembership"
-          >
-            {{ isMember ? 'Leave Club' : 'Join Club' }}
-          </UButton>
-        </div>
       </div>
 
       <!-- Loading state -->

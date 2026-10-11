@@ -10,17 +10,18 @@
     </template>
 
     <template #body>
-      <div v-if="clubs" class="grid grid-cols-3 gap-3">
+      <div v-if="clubs" class="grid grid-cols-2 md:grid-cols-3 gap-3">
         <NuxtLink
           v-for="club in clubs"
           :key="club.id"
           :to="club.path"
           class="group relative aspect-square rounded-xl overflow-hidden border border-white/10 shadow-lg shadow-black/20 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/10 hover:border-white/20 hover:-translate-y-1"
         >
-          <!-- Background gradient based on club index -->
-          <div
-            class="absolute inset-0 transition-transform duration-500 group-hover:scale-110"
-            :class="clubGradients[clubs.indexOf(club) % clubGradients.length]"
+          <!-- Background Image -->
+          <img
+            :src="`${app.baseURL}img/placeholder.webp`"
+            :alt="club.title"
+            class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
 
           <!-- Dark Overlay with gradient -->
@@ -28,14 +29,6 @@
 
           <!-- Shimmer effect on hover -->
           <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-tr from-purple-500/10 via-transparent to-pink-500/10" />
-
-          <!-- Icon -->
-          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-            <UIcon
-              :name="clubIcons[clubs.indexOf(club) % clubIcons.length]"
-              class="w-16 h-16 text-white/20 transition-all duration-300 group-hover:text-white/40 group-hover:scale-110"
-            />
-          </div>
 
           <!-- Content Area -->
           <div class="absolute bottom-0 left-0 right-0 p-3">
@@ -109,6 +102,7 @@ useHead({
 const { data: clubs } = await useAsyncData('clubs', () => {
   return queryCollection('clubs').all()
 })
+const { app } = useRuntimeConfig()
 
 const items = ref<BreadcrumbItem[]>([
   {
@@ -118,35 +112,4 @@ const items = ref<BreadcrumbItem[]>([
   }
 ])
 
-const clubGradients = [
-  'bg-gradient-to-br from-pink-600 to-rose-800',
-  'bg-gradient-to-br from-purple-600 to-indigo-800',
-  'bg-gradient-to-br from-blue-600 to-cyan-800',
-  'bg-gradient-to-br from-emerald-600 to-teal-800',
-  'bg-gradient-to-br from-amber-600 to-orange-800',
-  'bg-gradient-to-br from-red-600 to-pink-800',
-  'bg-gradient-to-br from-violet-600 to-purple-800',
-  'bg-gradient-to-br from-cyan-600 to-blue-800',
-  'bg-gradient-to-br from-lime-600 to-green-800',
-  'bg-gradient-to-br from-fuchsia-600 to-pink-800',
-  'bg-gradient-to-br from-sky-600 to-indigo-800',
-  'bg-gradient-to-br from-rose-600 to-red-800',
-  'bg-gradient-to-br from-teal-600 to-emerald-800'
-]
-
-const clubIcons = [
-  'i-lucide-dumbbell',
-  'i-lucide-music',
-  'i-lucide-heart',
-  'i-lucide-eye',
-  'i-lucide-lock',
-  'i-lucide-smile',
-  'i-lucide-paw-print',
-  'i-lucide-brain',
-  'i-lucide-aperture',
-  'i-lucide-sparkles',
-  'i-lucide-hand-helping',
-  'i-lucide-ear',
-  'i-lucide-zap'
-]
 </script>

@@ -109,6 +109,16 @@ export interface ClubMembership {
   joinedAt: number
 }
 
+// --- Exam Tasks System ---
+
+export interface ExamTaskCompletion {
+  classSlug: string // "degree/class-name"
+  level: number
+  taskId: number // index in the exam array
+  completed: boolean
+  completedAt?: number
+}
+
 export const useEnrollmentStore = defineStore('enrollment', () => {
   // --- User Profile ---
   const defaultStats: CharacterStats = {
@@ -172,6 +182,9 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
 
   // --- Clubs ---
   const clubMemberships = ref<ClubMembership[]>([])
+
+  // --- Exam Tasks ---
+  const examTasks = ref<ExamTaskCompletion[]>([])
 
   // --- Computed ---
 
@@ -693,6 +706,39 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
     return clubMemberships.value.some(m => m.clubSlug === clubSlug)
   }
 
+  // --- Exam Tasks ---
+
+  function toggleExamTask(classSlug: string, level: number, taskId: number) {
+    let task = examTasks.value.find(
+      t => t.classSlug === classSlug && t.level === level && t.taskId === taskId
+    )
+    if (!task) {
+      task = {
+        classSlug,
+        level,
+        taskId,
+        completed: true,
+        completedAt: Date.now()
+      }
+      examTasks.value.push(task)
+    } else {
+      if (task.completed) {
+        task.completed = false
+        task.completedAt = undefined
+      } else {
+        task.completed = true
+        task.completedAt = Date.now()
+      }
+    }
+  }
+
+  function isExamTaskCompleted(classSlug: string, level: number, taskId: number): boolean {
+    const task = examTasks.value.find(
+      t => t.classSlug === classSlug && t.level === level && t.taskId === taskId
+    )
+    return task?.completed ?? false
+  }
+
   // Get all activity slugs from joined clubs
   function getClubActivitySlugs(clubActivitiesMap: Record<string, string[]>): string[] {
     const slugs = new Set<string>()
@@ -719,7 +765,8 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
         detentionCount: detentionCount.value,
         metricProgress: metricProgress.value,
         clubMemberships: clubMemberships.value,
-        version: 8
+        examTasks: examTasks.value,
+        version: 9
       }
       try {
         localStorage.setItem('kiss-enrollment', JSON.stringify(data))
@@ -756,6 +803,8 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
       if (data.metricProgress && data.version >= 7) metricProgress.value = data.metricProgress
       // Only load club memberships if version supports them
       if (data.clubMemberships && data.version >= 8) clubMemberships.value = data.clubMemberships
+      // Only load exam tasks if version supports them
+      if (data.examTasks && data.version >= 9) examTasks.value = data.examTasks
     } catch {
       // Corrupted data, start fresh
     }
@@ -776,7 +825,7 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
   }
 
   // Auto-save on changes
-  watch([profile, enrollments, flashcardAnswers, cardSpacedRep, detentionCount, metricProgress, clubMemberships], () => {
+  watch([profile, enrollments, flashcardAnswers, cardSpacedRep, detentionCount, metricProgress, clubMemberships, examTasks], () => {
     saveToStorage()
   }, { deep: true })
 
@@ -839,6 +888,10 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
     leaveClub,
     isClubMember,
     getClubActivitySlugs,
+    // Exam Tasks
+    examTasks,
+    toggleExamTask,
+    isExamTaskCompleted,
     // Persistence
     loadFromStorage,
     saveToStorage

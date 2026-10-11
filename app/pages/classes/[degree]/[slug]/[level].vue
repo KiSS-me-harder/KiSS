@@ -1,5 +1,5 @@
 <template>
-  <div class="relative min-h-screen overflow-hidden">
+  <div class="relative min-h-screen">
     <!-- Ambient Background -->
     <div class="fixed inset-0 z-0">
       <img
@@ -151,6 +151,122 @@
                 <span v-else>
                   Incorrect — the answer is <strong>"{{ flashcard.options[flashcard.correctIndex] }}"</strong>
                 </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Exam Section -->
+        <div v-if="lessonData.exam && lessonData.exam.length > 0" class="mt-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-file-text" class="size-5 text-amber-400" />
+              <h2 class="text-lg font-semibold text-white">Exam Requirements</h2>
+            </div>
+            <span class="text-xs text-white/50">
+              {{ getExamCompletedCount }}/{{ lessonData.exam.length }} done
+            </span>
+          </div>
+
+          <div class="space-y-3">
+            <template v-for="(task, taskIndex) in lessonData.exam" :key="taskIndex">
+              <!-- Checklist task: interactive checkbox -->
+              <div
+                v-if="getExamTaskType(task) === 'checklist'"
+                class="rounded-xl border backdrop-blur-sm p-4 flex items-start gap-3 transition-all duration-200 cursor-pointer"
+                :class="isExamTaskDone(taskIndex)
+                  ? 'border-emerald-500/30 bg-emerald-500/5'
+                  : 'border-white/10 bg-white/5 hover:bg-white/10'"
+                @click="toggleExamTaskDone(taskIndex)"
+              >
+                <div
+                  class="flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center mt-0.5 transition-all duration-200"
+                  :class="isExamTaskDone(taskIndex)
+                    ? 'border-emerald-400 bg-emerald-500/30'
+                    : 'border-white/30 bg-transparent'"
+                >
+                  <UIcon v-if="isExamTaskDone(taskIndex)" name="i-lucide-check" class="size-3 text-emerald-400" />
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm" :class="isExamTaskDone(taskIndex) ? 'text-emerald-300 line-through opacity-70' : 'text-white/80'">
+                    {{ getExamTaskText(task) }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Milestone task: metric-based progress -->
+              <div
+                v-else
+                class="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-5 space-y-3"
+              >
+                <div class="flex items-start gap-2">
+                  <span class="flex-shrink-0 w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-bold flex items-center justify-center mt-0.5">
+                    <UIcon name="i-lucide-target" class="size-3" />
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm font-medium text-white">{{ getExamTaskText(task) }}</p>
+                    <p class="text-xs text-white/40 mt-1">
+                      Metric: {{ getExamTaskMetric(task).label }}
+                      <span v-if="getExamTaskMetric(task).target">
+                        — Target: {{ getExamTaskMetric(task).target }} {{ getExamTaskMetric(task).unit }}
+                      </span>
+                    </p>
+                    <!-- Progress bar -->
+                    <div class="mt-2">
+                      <div class="flex items-center justify-between text-xs mb-1">
+                        <span class="text-white/50">Progress</span>
+                        <span class="text-cyan-400 font-medium">
+                          {{ getMilestoneCurrentValue(task) }}/{{ getExamTaskMetric(task).target }} {{ getExamTaskMetric(task).unit }}
+                        </span>
+                      </div>
+                      <div class="h-2 rounded-full bg-white/10 overflow-hidden">
+                        <div
+                          class="h-full rounded-full transition-all duration-500"
+                          :class="isMilestoneAchieved(task) ? 'bg-emerald-500' : 'bg-cyan-500'"
+                          :style="{ width: Math.min(100, (getMilestoneCurrentValue(task) / (getExamTaskMetric(task).target || 1)) * 100) + '%' }"
+                        />
+                      </div>
+                    </div>
+                    <div v-if="isMilestoneAchieved(task)" class="mt-2 flex items-center gap-1.5 text-xs text-emerald-400">
+                      <UIcon name="i-lucide-check-circle" class="size-3" />
+                      <span>Milestone achieved!</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Metrics Requirements Section -->
+        <div v-if="lessonData.metrics && lessonData.metrics.length > 0" class="mt-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-bar-chart-3" class="size-5 text-cyan-400" />
+              <h2 class="text-lg font-semibold text-white">Metrics Requirements</h2>
+            </div>
+            <span class="text-xs text-white/50">
+              {{ lessonData.metrics.length }} metrics
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div
+              v-for="(metric, metricIndex) in lessonData.metrics"
+              :key="metricIndex"
+              class="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-5 space-y-3"
+            >
+              <div class="flex items-start gap-2">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-bold flex items-center justify-center mt-0.5">
+                  {{ metricIndex + 1 }}
+                </span>
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-medium text-white">{{ metric.label }}</p>
+                  <p class="text-xs text-white/40 mt-0.5">
+                    Target: {{ metric.target }} {{ metric.unit }}
+                    <span v-if="metric.increment">(increment: {{ metric.increment }} {{ metric.unit }})</span>
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -321,6 +437,10 @@
 <script setup lang="ts">
 import { useEnrollmentStore } from '~/stores/enrollment'
 
+definePageMeta({
+  layout: 'blank'
+})
+
 const route = useRoute()
 const { app } = useRuntimeConfig()
 
@@ -428,6 +548,8 @@ const lessonData = computed(() => {
   const className = itemAny.class || slug.value.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
   const degreeLabel = degree.value.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
   const flashcards = itemAny.meta?.flashcards || []
+  const exam = itemAny.meta?.exam || []
+  const metrics = itemAny.meta?.metrics || []
 
   return {
     title: itemAny.title,
@@ -439,6 +561,8 @@ const lessonData = computed(() => {
     body: itemAny.body,
     contentItem: item,
     flashcards,
+    exam,
+    metrics,
     previousLevel: previousLevel.value,
     nextLevel: nextLevel.value
   }
@@ -507,6 +631,71 @@ function getFlashcardOptionClass(fcIndex: number, optIndex: number) {
     return 'border-red-500/20 bg-red-500/5 text-white/30 cursor-not-allowed'
   }
   return 'border-white/5 bg-transparent text-white/20 cursor-not-allowed'
+}
+
+// --- Exam Task Helpers ---
+
+// Exam tasks can be:
+// - A string (treated as a checklist item)
+// - An object with { type: 'checklist', text: string }
+// - An object with { type: 'milestone', text: string, metric: string, field: string, target: number, unit: string, label?: string }
+
+function getExamTaskType(task: any): string {
+  if (typeof task === 'string') return 'checklist'
+  return task.type || 'checklist'
+}
+
+function getExamTaskText(task: any): string {
+  if (typeof task === 'string') return task
+  return task.text || ''
+}
+
+function getExamTaskMetric(task: any): { label: string; target: number; unit: string } {
+  if (typeof task === 'object' && task.type === 'milestone') {
+    return {
+      label: task.label || task.field || '',
+      target: task.target || 0,
+      unit: task.unit || ''
+    }
+  }
+  return { label: '', target: 0, unit: '' }
+}
+
+function isExamTaskDone(taskIndex: number): boolean {
+  return store.isExamTaskCompleted(classSlug.value, levelParam.value, taskIndex)
+}
+
+function toggleExamTaskDone(taskIndex: number) {
+  store.toggleExamTask(classSlug.value, levelParam.value, taskIndex)
+}
+
+const getExamCompletedCount = computed(() => {
+  if (!lessonData.value?.exam) return 0
+  let count = 0
+  for (let i = 0; i < lessonData.value.exam.length; i++) {
+    const task = lessonData.value.exam[i]
+    if (getExamTaskType(task) === 'checklist') {
+      if (isExamTaskDone(i)) count++
+    } else {
+      // Milestone: count as done if the metric target is met
+      if (isMilestoneAchieved(task)) count++
+    }
+  }
+  return count
+})
+
+function getMilestoneCurrentValue(task: any): number {
+  if (typeof task !== 'object' || task.type !== 'milestone') return 0
+  const metricSlug = task.metric
+  const fieldId = task.field
+  if (!metricSlug || !fieldId) return 0
+  return store.getMetricValueField(metricSlug, fieldId)
+}
+
+function isMilestoneAchieved(task: any): boolean {
+  if (typeof task !== 'object' || task.type !== 'milestone') return false
+  const current = getMilestoneCurrentValue(task)
+  return current >= (task.target || 0)
 }
 
 // --- SEO ---
