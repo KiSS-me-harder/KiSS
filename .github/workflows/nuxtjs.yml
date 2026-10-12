@@ -48,7 +48,7 @@ jobs:
         run: NUXT_APP_BASE_URL="/KiSS/" pnpm generate
 #        run: NUXT_APP_BASE_URL="/KiSS/" pnpm build --prerender --preset github_pages
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./.output/public
 
