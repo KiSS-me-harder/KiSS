@@ -56,6 +56,10 @@ defineProps<{
             <span>·</span>
             <span>Levels up to {{ courseInfo.maxLevel }}</span>
           </div>
+          <div v-if="courseInfo.prerequisites.length" class="mt-0.5 flex items-center gap-1">
+            <UIcon name="i-lucide-link" class="w-3 h-3 text-amber-400/60" />
+            <span class="text-[10px] text-amber-400/60">{{ courseInfo.prerequisites.length }} prerequisite{{ courseInfo.prerequisites.length > 1 ? 's' : '' }}</span>
+          </div>
         </div>
         <div class="shrink-0">
           <template v-if="courseInfo.isEnrolled">

@@ -15,7 +15,7 @@ export function buildDegreeTitlesMap(degrees: unknown[]): Map<string, DegreeTitl
   for (const degree of degrees) {
     const stem = (degree as { stem?: string }).stem || ''
     const slug = stem.split('/').pop() || ''
-    const levels = (degree as { levels?: unknown[] }).levels || []
+    const levels = (degree as { meta?: { levels?: unknown[] } }).meta?.levels || []
     const titles: DegreeTitle[] = ((levels as unknown[]) as { name?: string, description?: string, courses?: unknown[] }[]).map(l => ({
       name: (l.name as string) || '',
       description: (l.description as string) || '',

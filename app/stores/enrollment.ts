@@ -10,12 +10,18 @@ export type {
 export const useEnrollmentStore = defineStore('enrollment', () => {
   const logic = useEnrollmentLogic()
 
-  // Load from localStorage after component mounts
-  // Use onMounted as a reliable way to run after hydration in all contexts
+  // Load from localStorage after Nuxt hydration
   if (import.meta.client) {
-    onMounted(() => {
+    const nuxtApp = useNuxtApp()
+    if (nuxtApp.isHydrated) {
       logic.loadFromStorage()
-    })
+    } else {
+      watch(() => nuxtApp.isHydrated, (hydrated) => {
+        if (hydrated) {
+          logic.loadFromStorage()
+        }
+      }, { once: true })
+    }
   }
 
   watch([

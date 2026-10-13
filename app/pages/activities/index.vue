@@ -103,6 +103,7 @@
 </template>
 
 <script setup lang="ts">
+import ActivityCard from '~/components/activities/ActivityCard.vue'
 import { useActivitiesIndex } from '~/composables/useActivitiesIndex'
 
 const {

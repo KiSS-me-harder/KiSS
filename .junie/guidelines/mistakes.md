@@ -31,6 +31,11 @@
 - **Why:** Slow, loads unnecessary data into memory during SSR.
 - **Fix:** Use `.where({ field: value })` to filter at the query level.
 
+### Runtime data fetching with `useAsyncData`/`useFetch`
+- **Mistake:** Calling `useAsyncData()` or `useFetch()` inside event handlers, `watch` callbacks, or any code path that executes after the component has mounted — produces error `NUXT_E3003`.
+- **Why:** These functions must be called during component setup so Nuxt can await the data fetch before rendering. Calling them after mount means the fetch cannot be awaited, breaking SSR and causing runtime errors.
+- **Fix:** Move `useAsyncData`/`useFetch` calls to the top level of `<script setup>` or a composable called during setup. For post-mount requests (e.g., button clicks, search input), use `$fetch()` instead.
+
 ## Build & Validation
 
 ### Running `pnpm test` without a dev server
@@ -60,10 +65,10 @@
 - **Fix:** Assume the dev server picks up changes automatically. Save files and refresh the browser. If changes still don't appear, check for the real issue rather than restarting.
 
 ### Running the full test suite to check a specific page
-- **Mistake:** Running `pnpm test:e2e` without arguments to check console logs or behavior of a single page, executing all 118 scenarios when only one is relevant.
+- **Mistake:** Running `pnpm test:e2e` to check console logs or behavior of a single page, executing all 118 scenarios when only one is relevant. Note that `pnpm test:e2e` always runs the full suite — it does not accept a feature file argument.
 - **Why:** Wastes significant time running unrelated scenarios — the diagnostics console logs are captured per-feature-file in `test/reports/`, so running the full suite produces many log files when you only need one.
-- **Fix:** Run only the relevant feature file, e.g., `pnpm test:e2e features/pages/study-plan.feature` to test just that page. Feature files are organized under `features/pages/` and `features/components/` with potentially deep nesting — use `glob_search` or `find` to locate the correct file.
-- **Exception:** If you need a screenshot to understand what the user is requesting, it is perfectly fine to run the E2E test suite for just the feature file corresponding to the page or component they need to work on. This generates a screenshot in `test/results/screenshots/success/` that you can inspect to see the current visual state of the page.
+- **Fix:** Use `pnpm test:e2e:single` with the feature file path, e.g., `pnpm test:e2e:single features/pages/study-plan.feature` to test just that page. Feature files are organized under `features/pages/` and `features/components/` with potentially deep nesting — use `glob_search` or `find` to locate the correct file.
+- **Exception:** If you need a screenshot to understand what the user is requesting, it is perfectly fine to run `pnpm test:e2e:single` for just the feature file corresponding to the page or component they need to work on. This generates a screenshot in `test/results/screenshots/success/` that you can inspect to see the current visual state of the page.
 
 ### Running the full test suite when `@rerun.txt` has contents
 - **Mistake:** Running `pnpm test:e2e` (full suite) when `@rerun.txt` already lists failing scenarios.
@@ -108,6 +113,14 @@
 - **Mistake:** Putting navigation helpers, assertion utilities, or other step-level functions in `test/e2e/support/`.
 - **Why:** `support/` is reserved for test framework infrastructure (world, setup, diagnostics) — mixing in step helpers blurs the boundary and makes the wrong files get imported.
 - **Fix:** Place helpers used inside step definitions in `test/e2e/utils/`. See `.junie/guidelines/architecture.md` section "`test/e2e/` Structure" for the convention.
+
+### Dumping all diagnostic context into responses
+- **Mistake:** Reading and including every available screenshot, console log, or test result file in full — even when only one or two are relevant to the current issue.
+- **Why:** Payload size limits are exceeded frequently, truncating responses and losing the actual analysis. Screenshots are base64-encoded and can be megabytes each; raw console JSONL files are 1+ MB.
+- **Fix:** Use diagnostic artifacts judiciously — be aware of what's available but only inspect what's directly relevant:
+  - **Screenshots:** Open only the screenshot for the specific failing scenario or page you're investigating. Never read all screenshots in a batch. Skip screenshots entirely when the issue is clearly non-visual (e.g., logic errors, type errors, lint failures).
+  - **Console logs:** Use the summary script (see code-quality skill) to get counts and error messages — never read raw JSONL files. Only drill into a specific log file if the summary reveals an unfamiliar error worth investigating.
+  - **Test output:** Pipe test commands to a file and read only the exit code and last ~50 lines (failure summary). Never include full test run output in responses.
 
 ## Code Quality
 

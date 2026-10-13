@@ -62,13 +62,17 @@
                 <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/20" />
 
                 <!-- Lock Badge for unmet prerequisites -->
-                <div
+                <NuxtLink
                   v-if="!isEligible(item)"
+                  :to="`/courses/${getUnmetDependency(item)?.course || ''}`"
                   data-lock-badge="true"
-                  class="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 flex items-center justify-center shadow-lg"
+                  class="absolute top-2 right-2 z-10 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 flex items-center gap-0.5 shadow-lg hover:bg-black/80 transition-colors duration-200"
                 >
-                  <UIcon name="i-lucide-lock" class="w-3.5 h-3.5 text-white/80" />
-                </div>
+                  <UIcon name="i-lucide-lock" class="w-3 h-3 text-white/80" />
+                  <span class="text-white/90 text-[10px] font-bold leading-none">
+                    {{ getAbbrLabel(getUnmetDependency(item)!) }}
+                  </span>
+                </NuxtLink>
 
                 <!-- Shimmer effect on hover -->
                 <div class="absolute inset-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 bg-gradient-to-tr from-purple-500/10 via-transparent to-pink-500/10" />
@@ -125,7 +129,7 @@
 <script setup lang="ts">
 import { useCoursesIndex } from '~/composables/useCoursesIndex'
 
-const { levelGroups, isEligible, breadcrumbs } = useCoursesIndex()
+const { levelGroups, isEligible, getUnmetDependency, getAbbrLabel, breadcrumbs } = useCoursesIndex()
 const collapsedGroups = ref(new Set<number>())
 
 function toggleGroup(level: number) {

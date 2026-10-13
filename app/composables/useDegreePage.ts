@@ -6,22 +6,23 @@
 import type { BreadcrumbItem } from '@nuxt/ui'
 import { useEnrollmentStore } from '~/stores/enrollment'
 import {
-  buildCourseInfos, enrollInDegreeForPage, unenrollFromDegreeForPage, checkTitleCompleted,
+  buildCumulativeCourseInfos, enrollInDegreeForPage, unenrollFromDegreeForPage, checkTitleCompleted,
+  checkAndEnrollAvailableCourses,
   getTierColor, getTierLabel, buildDegreeStructuredData
 } from '~/utils/degreePageHelpers'
 import type { DegreeLevel } from '~/utils/degreePageHelpers'
 
-export async function useDegreePage(id: ComputedRef<string>) {
+export function useDegreePage(id: ComputedRef<string>) {
   const store = useEnrollmentStore()
   const { app } = useRuntimeConfig()
 
-  const { data: home } = await useAsyncData(
+  const { data: home } = useAsyncData(
     () => `degree-${id.value}`,
     () => queryCollection('degrees').path(`/degrees/${id.value}`).first(),
     { watch: [id] }
   )
 
-  const { data: allCourses } = await useAsyncData('all-courses-degree', () => queryCollection('courses').all())
+  const { data: allCourses } = useAsyncData('all-courses-degree', () => queryCollection('courses').all())
 
   const title = computed(() => home.value?.title)
   const description = computed(() => home.value?.description)
@@ -41,7 +42,7 @@ export async function useDegreePage(id: ComputedRef<string>) {
   })
 
   const degreeLevels = computed<DegreeLevel[]>(() =>
-    (home.value as { levels?: DegreeLevel[] })?.levels || []
+    (home.value as { meta?: { levels?: DegreeLevel[] } })?.meta?.levels || []
   )
 
   const selectedLevelIndex = ref(0)
@@ -52,7 +53,7 @@ export async function useDegreePage(id: ComputedRef<string>) {
   })
 
   const courseInfos = computed(() =>
-    buildCourseInfos(selectedLevel.value, allCourses.value || [], id.value, app.baseURL, store)
+    buildCumulativeCourseInfos(degreeLevels.value, selectedLevelIndex.value, allCourses.value || [], id.value, app.baseURL, store)
   )
 
   const isDegreeFullyEnrolled = computed(() =>
@@ -67,10 +68,36 @@ export async function useDegreePage(id: ComputedRef<string>) {
     return total === 0 ? 0 : Math.round((completed / total) * 100)
   })
 
+  /**
+   * Handles enrolling in a degree, only enrolling in courses with met prerequisites.
+   */
   function handleEnrollInDegree() {
     if (!selectedLevel.value) return
     enrollInDegreeForPage(id.value, selectedLevel.value.name, selectedLevel.value, allCourses.value || [], store)
   }
+
+  /**
+   * Handles "Complete Enrollment" — re-checks and enrolls in newly available courses.
+   */
+  function handleCompleteEnrollment() {
+    if (!selectedLevel.value) return
+    checkAndEnrollAvailableCourses(id.value, selectedLevel.value, allCourses.value || [], store)
+  }
+
+  // Auto-enrollment: watch for enrollment changes and check for newly available courses
+  watch(
+    () => (store.enrollments as unknown as CourseEnrollment[]).map(
+      (e: { slug: string, levels: { level: number, completed: boolean }[] }) => ({
+        slug: e.slug,
+        levels: e.levels.map((l: { level: number, completed: boolean }) => ({ level: l.level, completed: l.completed }))
+      })
+    ),
+    () => {
+      if (!selectedLevel.value) return
+      checkAndEnrollAvailableCourses(id.value, selectedLevel.value, allCourses.value || [], store)
+    },
+    { deep: true }
+  )
 
   function handleUnenrollFromDegree() {
     if (!selectedLevel.value) return
@@ -92,7 +119,7 @@ export async function useDegreePage(id: ComputedRef<string>) {
     home, title, description, body, items,
     degreeLevels, selectedLevelIndex, selectedLevel,
     courseInfos, isDegreeFullyEnrolled, isDegreePartiallyEnrolled,
-    overallProgress, handleEnrollInDegree, handleUnenrollFromDegree,
+    overallProgress, handleEnrollInDegree, handleCompleteEnrollment, handleUnenrollFromDegree,
     isTitleCompleted, getTierColor, getTierLabel,
     levelNameColors, levelBadgeColors
   }

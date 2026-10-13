@@ -5,7 +5,7 @@
  */
 import type { BreadcrumbItem } from '@nuxt/ui'
 import { useEnrollmentStore } from '~/stores/enrollment'
-import { buildLevelGroups, isCourseEligible, type CourseLevelEntry } from '~/utils/coursesHelpers'
+import { buildLevelGroups, getAbbreviatedLabel, getFirstUnmetDependency, isCourseEligible, type CourseLevelEntry } from '~/utils/coursesHelpers'
 
 export function useCoursesIndex() {
   const { app } = useRuntimeConfig()
@@ -22,9 +22,27 @@ export function useCoursesIndex() {
     return isCourseEligible(item, store)
   }
 
+  /**
+   * Gets the first unmet dependency for a course level entry.
+   * @param item - The course level entry.
+   * @returns The first unmet dependency or null.
+   */
+  function getUnmetDependency(item: CourseLevelEntry) {
+    return getFirstUnmetDependency(item, store)
+  }
+
+  /**
+   * Generates an abbreviated label for a dependency.
+   * @param dep - The dependency object.
+   * @returns Abbreviated label string.
+   */
+  function getAbbrLabel(dep: { course: string, level: number }) {
+    return getAbbreviatedLabel(dep)
+  }
+
   const breadcrumbs = ref<BreadcrumbItem[]>([
     { label: 'Courses', icon: 'i-lucide-book-open', to: '/courses' }
   ])
 
-  return { levelGroups, isEligible, breadcrumbs }
+  return { levelGroups, isEligible, getUnmetDependency, getAbbrLabel, breadcrumbs }
 }

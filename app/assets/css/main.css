@@ -14,3 +14,20 @@ body {
 :root {
   --ui-radius: 0.375rem;
 }
+
+/**
+ * Brief flash animation to highlight a section when navigating to it
+ * from the sidebar or via URL hash.
+ */
+@keyframes section-flash {
+  0% {
+    background-color: var(--ui-primary);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.section-flash {
+  animation: section-flash 1.5s ease-out;
+}

@@ -98,9 +98,18 @@ The code-quality skill is strictly limited to two types of changes:
 
 - `pnpm lint` — Lint check (use `pnpm lint --fix` for auto-fixable issues first).
 - `pnpm typecheck` — TypeScript type checking.
-- `pnpm test:e2e` — Full E2E test suite (requires dev server on port 3000, use a 5-minute timeout).
+- `pnpm test:e2e` — Full E2E test suite (**always** runs all scenarios, requires dev server on port 3000, use a 5-minute timeout).
+- `pnpm test:e2e:single` — Run a single feature file (e.g., `pnpm test:e2e:single features/pages/study-plan.feature`, requires dev server on port 3000).
 - `pnpm test:e2e:rerun` — Run only failed tests from `@rerun.txt` (requires dev server on port 3000, use a 5-minute timeout).
 - `pnpm dev` — Start dev server (run in background if port 3000 is not in use before testing).
+
+## Context Management
+
+**Use diagnostic artifacts judiciously — do not read or include everything available.** Payload size limits are exceeded frequently when agents dump all screenshots, console logs, and test output into responses.
+
+- **Screenshots:** Open only the screenshot for the specific failing scenario you're investigating. Never read all screenshots in a batch. Skip screenshots entirely when the issue is clearly non-visual (e.g., logic errors, type errors, lint failures).
+- **Console logs:** Use the summary script below to get counts and error messages — never read raw JSONL files (1+ MB each). Only drill into a specific log file if the summary reveals an unfamiliar error worth investigating.
+- **Test output:** Always pipe test commands to a file and read only the exit code and last ~50 lines. Never include full test run output in responses.
 
 ## When to Stop
 

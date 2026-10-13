@@ -32,12 +32,12 @@ Feature: Degree Details
     Given I navigate to a degree detail page with body content
     Then I see the body content rendered below the description
 
-  ## Target Title selector
+  ## Title selector
 
-  Scenario: Target Title section is displayed
+  Scenario: Title selector is displayed without header
     Given I navigate to a degree detail page
-    Then I see a "Target Title" section header with a target icon
-    And I see the degree subtitle "Choose your target title for this degree."
+    Then I see a title selector card
+    And I do not see a "Target Title" section header
 
   Scenario: Title levels are listed with details
     Given I navigate to a degree detail page
@@ -50,8 +50,7 @@ Feature: Degree Details
     And the first title level is selected
     When I click on the second title level
     Then the second title level becomes selected
-    And the Target Goal section updates to show courses for the selected level
-    And the Curriculum section updates to show courses for the selected level
+    And the Curriculum section updates to show cumulative courses up to the selected level
 
   Scenario: Completed title levels show a trophy icon
     Given I am enrolled in a degree title and have completed it
@@ -69,55 +68,29 @@ Feature: Degree Details
     And the second title level badge has blue styling
     And the third title level badge has purple styling
 
-  ## Target Goal — Prerequisite courses
+  ## Enrollment button
 
-  Scenario: Target Goal section lists prerequisite courses
+  Scenario: Enrollment button is displayed below title selector
     Given I navigate to a degree detail page
-    Then I see a "Target Goal" section header with a flag icon
-    And I see the text "To earn the" followed by the selected title name
-    And I see a list of required classes for the selected title
-
-  Scenario: Prerequisite course cards display required information
-    Given I navigate to a degree detail page
-    Then each prerequisite course card displays:
-      | Element       | Description                                      |
-      | Thumbnail     | Shows a course image                             |
-      | Title         | Shows the course title                           |
-      | Tier badge    | Shows the tier level (Tier 1, Tier 2, Tier 3)   |
-      | Max level     | Shows "Levels up to N" text                      |
-      | Status icon   | Shows enrollment/completion status               |
-
-  Scenario: Prerequisite course tier badges have distinct colors
-    Given I navigate to a degree detail page with courses of multiple tiers
-    Then Tier 1 course badges have green background
-    And Tier 2 course badges have blue background
-    And Tier 3 course badges have red background
-
-  Scenario: Cross-degree courses show a degree label badge
-    Given I navigate to a degree detail page with cross-degree courses
-    Then I see a purple badge on cross-degree course cards
-    And the badge shows the source degree label
-
-  Scenario: Target Goal shows title progress summary
-    Given I navigate to a degree detail page
-    Then I see a "Title progress" summary at the bottom of the Target Goal section
-    And the summary shows completed class count out of total classes
-    And I see a progress bar reflecting the title completion percentage
-
-  Scenario: Prerequisite course status icons reflect enrollment state
-    Given I am enrolled in some courses of a degree title
-    When I view the Target Goal section
-    Then completed courses show a green check circle icon
-    And in-progress courses show an amber clock icon
-    And not-enrolled courses show a gray circle icon
+    And I am not enrolled in the degree
+    Then I see an enrollment confirmation button below the title selector
+    And the button text includes the selected title name
 
   ## Curriculum section
 
-  Scenario: Curriculum section is displayed for selected title
+  Scenario: Curriculum section shows cumulative courses from all titles
     Given I navigate to a degree detail page
     Then I see a "Curriculum" section header with a book icon
     And the section header shows the selected title name
     And a badge shows the total course count
+    And the curriculum lists all courses from the selected title and all lower titles
+
+  Scenario: Selecting higher title adds courses from lower titles
+    Given I navigate to a degree detail page
+    And the first title level is selected
+    When I click on the second title level
+    Then the curriculum includes courses from both the first and second title levels
+    And duplicate courses are not listed multiple times
 
   Scenario: Curriculum course cards are clickable links
     Given I navigate to a degree detail page
@@ -148,23 +121,31 @@ Feature: Degree Details
 
   ## Enrollment actions
 
-  Scenario: Enroll button is visible when not enrolled
+  Scenario: Enroll button is visible below title selector when not enrolled
     Given I navigate to a degree detail page
     And I am not enrolled in the degree
-    Then I see an "Enroll in" button with a plus icon
+    Then I see an "Enroll in" button below the title selector
     And the button text includes the selected title name
 
-  Scenario: Enrolling enrolls in all courses for the selected title
+  Scenario: Enrolling enrolls only in courses with met prerequisites
     Given I navigate to a degree detail page
     And I am not enrolled in the degree
     When I click the enroll button
-    Then I am enrolled in all courses for the selected title
+    Then I am enrolled in the degree
+    And I am enrolled only in courses whose prerequisites are met
+    And I am not enrolled in courses whose prerequisites are not met
     And the enroll button text changes to reflect enrollment status
+
+  Scenario: Complete Enrollment adds newly available courses
+    Given I am enrolled in a degree and have completed some courses
+    When I click the "Complete Enrollment" button
+    Then I am enrolled in any additional courses whose prerequisites are now met
+    And I am still not enrolled in courses whose prerequisites remain unmet
 
   Scenario: Complete Enrollment button shows for partial enrollment
     Given I am partially enrolled in a degree title
     When I view the degree detail page
-    Then I see a "Complete Enrollment for" button for degree enrollment
+    Then I see a "Complete Enrollment" button below the title selector
     And I see the text "You're partially enrolled" below the button
 
   Scenario: Unenroll button is visible when partially enrolled
@@ -182,6 +163,20 @@ Feature: Degree Details
     Given I am fully enrolled in a degree title
     When I view the degree detail page
     Then I do not see an "Enroll in" button
+
+  ## Auto enrollment on course completion
+
+  Scenario: Completing a course unlocks and enrolls in dependent courses
+    Given I am enrolled in a degree
+    And I am enrolled in a course with no prerequisites
+    And there is a course in my degree that depends on the course I just completed
+    When I complete all levels of the prerequisite course
+    Then I am automatically enrolled in the dependent course
+
+  Scenario: Multiple degree enrollments are checked on course completion
+    Given I am enrolled in multiple degrees
+    And I complete a course that is a prerequisite for courses in both degrees
+    Then I am automatically enrolled in the newly available courses for both degrees
 
   ## Final Grade section
 

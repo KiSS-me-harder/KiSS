@@ -14,50 +14,52 @@
       <div v-if="courseData" class="space-y-6">
         <!-- Header Section -->
         <div class="relative rounded-xl overflow-hidden border border-white/10 shadow-lg">
-          <img :src="courseData.image" :alt="courseData.title" class="w-full h-48 object-cover">
-          <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/20" />
-          <div class="absolute bottom-0 left-0 right-0 p-4">
-            <div class="flex items-center gap-2 mb-1">
-              <span v-if="isEnrolled" class="px-2 py-0.5 rounded-md bg-emerald-500/90 backdrop-blur-sm text-white text-[9px] font-bold uppercase tracking-wider">
-                Enrolled
-              </span>
-            </div>
-            <h1 class="text-xl font-bold text-white leading-tight">
-              {{ courseData.title }}
-            </h1>
-            <div v-if="isEnrolled" class="mt-3">
-              <div class="flex items-center justify-between text-[10px] text-white/60 mb-1">
-                <span>Progress</span>
-                <span>{{ completedCount }}/{{ totalLevels }} levels</span>
+          <img :src="courseData.image" :alt="courseData.title" class="absolute inset-0 w-full h-full object-cover">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30" />
+          <div class="relative p-6 sm:p-8">
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-2">
+                  <span v-if="isEnrolled" class="px-2 py-0.5 rounded-md bg-emerald-500/90 backdrop-blur-sm text-white text-[9px] font-bold uppercase tracking-wider">
+                    Enrolled
+                  </span>
+                </div>
+                <h1 class="text-2xl font-bold text-white mb-2">
+                  {{ courseData.title }}
+                </h1>
+                <p v-if="courseData.description" class="text-white/70 text-sm leading-relaxed mb-3">
+                  {{ courseData.description }}
+                </p>
+                <div v-if="isEnrolled">
+                  <div class="flex items-center justify-between text-[10px] text-white/60 mb-1">
+                    <span>Progress</span>
+                    <span>{{ completedCount }}/{{ totalLevels }} levels</span>
+                  </div>
+                  <div class="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+                    <div class="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-500" :style="{ width: progressPercent + '%' }" />
+                  </div>
+                </div>
               </div>
-              <div class="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
-                <div class="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-500" :style="{ width: progressPercent + '%' }" />
+              <div class="shrink-0">
+                <UButton
+                  v-if="!isEnrolled"
+                  variant="outline"
+                  color="secondary"
+                  size="lg"
+                  @click="handleEnroll"
+                >
+                  Enroll in Course
+                </UButton>
+                <UButton
+                  v-else
+                  variant="solid"
+                  color="primary"
+                  size="lg"
+                  @click="handleUnenroll"
+                >
+                  Unenroll
+                </UButton>
               </div>
-            </div>
-            <div class="mt-3">
-              <UButton
-                v-if="!isEnrolled"
-                size="xs"
-                color="primary"
-                @click="handleEnroll"
-              >
-                <template #leading>
-                  <UIcon name="i-lucide-plus" class="size-3" />
-                </template>
-                Enroll in Course
-              </UButton>
-              <UButton
-                v-else
-                size="xs"
-                color="error"
-                variant="outline"
-                @click="handleUnenroll"
-              >
-                <template #leading>
-                  <UIcon name="i-lucide-minus" class="size-3" />
-                </template>
-                Unenroll
-              </UButton>
             </div>
           </div>
         </div>
@@ -145,7 +147,7 @@ const filteredCourses = computed(() => {
 const courseDegree = computed(() => {
   if (!allDegrees.value) return ''
   for (const degree of allDegrees.value) {
-    const levels = (degree as { levels?: unknown[] }).levels || []
+    const levels = (degree as { meta?: { levels?: unknown[] } }).meta?.levels || []
     for (const level of levels as { courses?: { slug?: string }[] }[]) {
       for (const course of level.courses || []) {
         if ((course as { slug?: string }).slug === slug.value) {
@@ -203,7 +205,15 @@ const levelGroups = computed(() => {
     else continue
     const gi = groups[groupIndex]
     if (gi) {
+      // Extract dependencies from course frontmatter meta
+      const rawDeps = (item as { meta?: { dependencies?: unknown[] } }).meta?.dependencies || []
       const dependencies: { course: string, level: number }[] = []
+      for (const dep of rawDeps) {
+        const d = dep as { class?: string, level?: number }
+        if (d.class && d.level != null) {
+          dependencies.push({ course: d.class, level: d.level })
+        }
+      }
       let description = ''
       const body = typeof (item as unknown as { body?: unknown }).body === 'string' ? (item as unknown as { body: string }).body : ''
       if (body) {

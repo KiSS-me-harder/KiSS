@@ -16,7 +16,7 @@ export type CourseItem = { stem: string, meta?: { dependencies?: { course: strin
 export function findCourseDegree(allDegrees: unknown[] | undefined, courseSlug: string): string {
   if (!allDegrees) return ''
   for (const degree of allDegrees) {
-    const levels = (degree as { levels?: unknown[] }).levels || []
+    const levels = (degree as { meta?: { levels?: unknown[] } }).meta?.levels || []
     for (const level of levels as { courses?: { slug?: string }[] }[]) {
       for (const course of level.courses || []) {
         if ((course as { slug?: string }).slug === courseSlug) {
@@ -44,7 +44,7 @@ export function checkLevelUnlocked(
 ): boolean {
   const item = levelItemMap.get(levelNum)
   if (!item) return false
-  const deps = (item as { dependencies?: { course: string, level: number }[] }).dependencies || []
+  const deps = (item as { meta?: { dependencies?: { course: string, level: number }[] } }).meta?.dependencies || []
   if (!deps.length) return true
   return store.areDependenciesMet(courseSlug, levelNum, deps)
 }

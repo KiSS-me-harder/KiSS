@@ -69,6 +69,36 @@ export function isCourseEligible(
 }
 
 /**
+ * Generates an abbreviated label for a dependency (e.g., "AF100" from "anal-fundamentals" at level 100).
+ * Takes the first letter of each word in the course slug, uppercases them, and appends the level number.
+ * @param dep - The dependency object with course slug and level.
+ * @returns Abbreviated label string (e.g., "AF100").
+ */
+export function getAbbreviatedLabel(dep: { course: string, level: number }): string {
+  const abbr = dep.course.split('-').map(w => w.charAt(0).toUpperCase()).join('')
+  return `${abbr}${dep.level}`
+}
+
+/**
+ * Gets the first unmet dependency for a course level entry.
+ * @param item - The course level entry.
+ * @param store - Enrollment store instance.
+ * @returns The first unmet dependency or null if all are met.
+ */
+export function getFirstUnmetDependency(
+  item: CourseLevelEntry,
+  store: ReturnType<typeof useEnrollmentStore>
+): { course: string, level: number } | null {
+  if (!item.dependencies.length) return null
+  for (const dep of item.dependencies) {
+    if (!store.isLevelCompleted(dep.course, dep.level)) {
+      return dep
+    }
+  }
+  return null
+}
+
+/**
  * Builds course entries for a specific tier level.
  * @param coursesData - All course content items.
  * @param tierLevel - The tier level (100, 200, 300).
@@ -96,7 +126,7 @@ export function buildTierEntries(
     const title = (item as { title?: string }).title || ''
     const degree = courseDegrees.get(courseName) || ''
     // Extract dependencies from course frontmatter meta
-    const rawDeps = (item as { dependencies?: unknown[] }).dependencies || []
+    const rawDeps = (item as { meta?: { dependencies?: unknown[] } }).meta?.dependencies || []
     const dependencies: { course: string, level: number }[] = []
     for (const dep of rawDeps) {
       const d = dep as { class?: string, level?: number }
@@ -138,7 +168,7 @@ export function buildLevelGroups(
   if (allDegrees) {
     for (const degree of allDegrees) {
       const degreeSlug = (degree as { stem?: string }).stem?.split('/').pop() || ''
-      const levels = (degree as { levels?: unknown[] }).levels || []
+      const levels = (degree as { meta?: { levels?: unknown[] } }).meta?.levels || []
       for (const level of levels as { courses?: { slug?: string }[] }[]) {
         for (const course of level.courses || []) {
           const courseSlug = (course as { slug?: string }).slug as string

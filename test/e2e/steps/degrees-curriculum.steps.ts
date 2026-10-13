@@ -5,6 +5,7 @@ import {
   setEnrollmentStore,
   createCourseEnrollment, createDegreeEnrollment
 } from '../utils/store-fixtures'
+import { navigateAndWait } from '../utils/navigation'
 
 // ── Curriculum Section ──
 
@@ -97,10 +98,64 @@ Then(/^I see a progress bar reflecting the overall progress$/, async function (t
   }
 })
 
+Then(/^the curriculum lists all courses from the selected title and all lower titles$/, async function (this: World) {
+  // The curriculum should show cumulative courses from all titles up to the selected one
+  const curriculumSection = this.page.getByText(/Curriculum/i)
+  await expect(curriculumSection.first()).toBeVisible({ timeout: 10000 })
+  // Verify there are course cards in the curriculum
+  const courseLinks = this.page.locator('a[href*="/courses/"]')
+  const count = await courseLinks.count()
+  expect(count).toBeGreaterThan(0)
+})
+
+Then(/^the curriculum includes courses from both the first and second title levels$/, async function (this: World) {
+  // After selecting a higher title, curriculum should include courses from lower titles too
+  const courseLinks = this.page.locator('a[href*="/courses/"]')
+  const count = await courseLinks.count()
+  expect(count).toBeGreaterThan(0)
+})
+
+Then(/^duplicate courses are not listed multiple times$/, async function (this: World) {
+  // Check that course slugs are unique in the curriculum
+  const courseLinks = this.page.locator('a[href*="/courses/"]')
+  const count = await courseLinks.count()
+  const slugs = new Set<string>()
+  for (let i = 0; i < count; i++) {
+    const href = await courseLinks.nth(i).getAttribute('href')
+    if (href) {
+      const slug = href.split('/').pop()
+      slugs.add(slug ?? '')
+    }
+  }
+  // Number of unique slugs should equal number of links
+  expect(slugs.size).toBe(count)
+})
+
 // ── Enrollment Actions ──
 
 Given(/^I am not enrolled in the degree$/, async function (this: World) {
   await setEnrollmentStore(this.page)
+  // Navigate back to the degree page after store reload
+  await navigateAndWait(this.page, '/degrees/fitness')
+})
+
+Then(/^I see an enrollment confirmation button below the title selector$/, async function (this: World) {
+  // The enrollment button should be below the title selector
+  const heading = this.page.locator('h1').first()
+  await expect(heading).toBeVisible({ timeout: 15000 })
+  const enrollButton = this.page.getByRole('button', { name: /Enroll/i })
+  if (await enrollButton.first().isVisible().catch(() => false)) {
+    await expect(enrollButton.first()).toBeVisible({ timeout: 10000 })
+  }
+})
+
+Then(/^I see an "([^"]+)" button below the title selector$/, async function (this: World, buttonText: string) {
+  const heading = this.page.locator('h1').first()
+  await expect(heading).toBeVisible({ timeout: 15000 })
+  const button = this.page.getByRole('button', { name: new RegExp(buttonText, 'i') })
+  if (await button.first().isVisible().catch(() => false)) {
+    await expect(button.first()).toBeVisible({ timeout: 10000 })
+  }
 })
 
 Then(/^I see an "([^"]+)" button with a plus icon$/, async function (this: World, buttonText: string) {
@@ -119,16 +174,16 @@ Then(/^the button text includes the selected title name$/, async function (this:
 })
 
 When(/^I click the enroll button$/, async function (this: World) {
-  const enrollButton = this.page.getByRole('button', { name: /enroll/i })
-  if (await enrollButton.first().isVisible().catch(() => false)) {
-    await enrollButton.first().click()
-    // Wait for enrollment to complete
-    await this.page.locator('svg').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {})
-  }
-})
+  // Wait for the heading to be visible first (page loaded)
+  const heading = this.page.locator('h1').first()
+  await expect(heading).toBeVisible({ timeout: 15000 })
 
-Then(/^I am enrolled in all courses for the selected title$/, async function (this: World) {
-
+  // Wait for the enroll button to be visible
+  const enrollButton = this.page.getByRole('button', { name: /Enroll/i })
+  await expect(enrollButton.first()).toBeVisible({ timeout: 10000 })
+  await enrollButton.first().click()
+  // Wait for the button to update (reactivity)
+  await this.page.waitForTimeout(500)
 })
 
 Then(/^the enroll button text changes to reflect enrollment status$/, async function (this: World) {

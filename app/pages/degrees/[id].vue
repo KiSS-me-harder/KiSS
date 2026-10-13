@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useDegreePage } from '~/composables/useDegreePage'
+import DegreeHeroImage from '~/components/degrees/DegreeHeroImage.vue'
 import DegreeTitleSelector from '~/components/degrees/DegreeTitleSelector.vue'
-import DegreeTargetGoal from '~/components/degrees/DegreeTargetGoal.vue'
 import DegreeCurriculum from '~/components/degrees/DegreeCurriculum.vue'
 import DegreeActions from '~/components/degrees/DegreeActions.vue'
 
@@ -13,10 +13,10 @@ const {
   home, title, description, body, items,
   degreeLevels, selectedLevelIndex, selectedLevel,
   courseInfos, isDegreeFullyEnrolled, isDegreePartiallyEnrolled,
-  overallProgress, handleEnrollInDegree, handleUnenrollFromDegree,
-  isTitleCompleted, getTierColor, getTierLabel,
+  overallProgress, handleEnrollInDegree, handleCompleteEnrollment, handleUnenrollFromDegree,
+  isTitleCompleted,
   levelNameColors, levelBadgeColors
-} = await useDegreePage(id)
+} = useDegreePage(id)
 </script>
 
 <template>
@@ -35,13 +35,10 @@ const {
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
           <!-- Left: Hero Image -->
           <div class="lg:col-span-2">
-            <div class="relative rounded-lg overflow-hidden sticky top-4">
-              <img
-                :src="`${app.baseURL}img/degrees/${id}.webp`"
-                :alt="title"
-                class="w-full object-cover"
-              >
-            </div>
+            <DegreeHeroImage
+              :image-url="`${app.baseURL}img/degrees/${id}.webp`"
+              :title="title"
+            />
           </div>
 
           <!-- Right: Content -->
@@ -65,30 +62,24 @@ const {
               :is-title-completed="isTitleCompleted"
               :level-name-colors="levelNameColors"
               :level-badge-colors="levelBadgeColors"
+              :is-degree-fully-enrolled="isDegreeFullyEnrolled"
+              :is-degree-partially-enrolled="isDegreePartiallyEnrolled"
+              :selected-level-name="selectedLevel?.name"
               @update:selected-level-index="selectedLevelIndex = $event"
-            />
-
-            <DegreeTargetGoal
-              :selected-level="selectedLevel"
-              :course-infos="courseInfos"
-              :get-tier-color="getTierColor"
-              :get-tier-label="getTierLabel"
+              @enroll="handleEnrollInDegree"
+              @complete-enrollment="handleCompleteEnrollment"
             />
 
             <DegreeCurriculum
               :selected-level="selectedLevel"
               :course-infos="courseInfos"
-              :get-tier-color="getTierColor"
-              :get-tier-label="getTierLabel"
               :overall-progress="overallProgress"
             />
 
             <DegreeActions
-              :is-degree-fully-enrolled="isDegreeFullyEnrolled"
               :is-degree-partially-enrolled="isDegreePartiallyEnrolled"
               :selected-level-name="selectedLevel?.name"
               :overall-progress="overallProgress"
-              @enroll="handleEnrollInDegree"
               @unenroll="handleUnenrollFromDegree"
             />
           </div>

@@ -1,16 +1,15 @@
 <script setup lang="ts">
 /**
- * Shows the enrollment action buttons and final grade section for a degree page.
+ * Shows the unenroll button and final grade section for a degree page.
  */
 const props = defineProps<{
-  isDegreeFullyEnrolled: boolean
   isDegreePartiallyEnrolled: boolean
   selectedLevelName: string | undefined
   overallProgress: number
 }>()
 
 const emit = defineEmits<{
-  (e: 'enroll' | 'unenroll'): void
+  (e: 'unenroll'): void
 }>()
 
 const gradeLabel = computed(() => {
@@ -27,18 +26,6 @@ const gradeLabel = computed(() => {
 <template>
   <div class="pt-1 space-y-2">
     <UButton
-      v-if="!isDegreeFullyEnrolled"
-      size="md"
-      color="primary"
-      class="w-full sm:w-auto"
-      @click="emit('enroll')"
-    >
-      <template #leading>
-        <UIcon name="i-lucide-plus" class="size-4" />
-      </template>
-      {{ isDegreePartiallyEnrolled ? 'Complete Enrollment for' : 'Enroll in' }} {{ selectedLevelName || 'this title' }}
-    </UButton>
-    <UButton
       v-if="isDegreePartiallyEnrolled"
       variant="outline"
       color="error"
@@ -51,9 +38,6 @@ const gradeLabel = computed(() => {
       </template>
       Unenroll from all classes
     </UButton>
-    <p v-if="isDegreePartiallyEnrolled && !isDegreeFullyEnrolled" class="text-[11px] text-muted">
-      You're partially enrolled. Click above to enroll in the remaining classes.
-    </p>
   </div>
 
   <UCard class="mt-4">

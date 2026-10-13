@@ -42,7 +42,7 @@ Use `pnpm generate` (not `pnpm build`) — it prerenders all routes and catches 
 - If port 3000 is **not** in use, start the dev server first: `pnpm dev` (in the background), then run `pnpm test`.
 - The test suite (`test/e2e/`) connects to the running dev server — it does not start one automatically.
 
-**Run targeted feature files, not the full suite.** When checking console logs or behavior for a specific page, run only that page's feature file (e.g., `pnpm test:e2e features/pages/study-plan.feature`) instead of the entire suite of 118 scenarios. Console logs are captured per-feature-file in `test/reports/`. Feature files are organized under `features/pages/` and `features/components/` with potentially deep nesting — use glob search to locate the correct file. See `.junie/guidelines/mistakes.md` for the full pitfall description.
+**Run targeted feature files, not the full suite.** `pnpm test:e2e` always runs the full test suite. When checking console logs or behavior for a specific page, use `pnpm test:e2e:single` with the feature file path (e.g., `pnpm test:e2e:single features/pages/study-plan.feature`) instead of the entire suite of 118 scenarios. Console logs are captured per-feature-file in `test/reports/`. Feature files are organized under `features/pages/` and `features/components/` with potentially deep nesting — use glob search to locate the correct file. See `.junie/guidelines/mistakes.md` for the full pitfall description.
 
 ### Other useful commands
 
@@ -50,6 +50,9 @@ Use `pnpm generate` (not `pnpm build`) — it prerenders all routes and catches 
 - `pnpm preview` — Preview generated static site
 - `pnpm typecheck` — TypeScript type checking
 - `pnpm lint` — ESLint
+- `pnpm test:e2e` — Full E2E test suite (**always** runs all scenarios)
+- `pnpm test:e2e:single` — Run a single feature file (e.g., `pnpm test:e2e:single features/pages/study-plan.feature`)
+- `pnpm test:e2e:rerun` — Run only previously failed tests from `@rerun.txt`
 
 ## State Management
 

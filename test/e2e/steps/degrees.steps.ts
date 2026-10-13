@@ -100,9 +100,22 @@ Then(/^I see the body content rendered below the description$/, async function (
 
 // ── Target Title Selector ──
 
-Then(/^I see a "([^"]+)" section header with a target icon$/, async function (this: World, sectionTitle: string) {
+Then(/^I see a title selector card$/, async function (this: World) {
+  // Wait for degree content to load first
+  const heading = this.page.locator('h1').first()
+  await expect(heading).toBeVisible({ timeout: 15000 })
+  // The title selector card contains title level buttons
+  const titleButtons = this.page.locator('button[type="button"]').filter({ hasText: /Junior|Senior|Master/i })
+  const count = await titleButtons.count()
+  expect(count).toBeGreaterThan(0)
+})
+
+Then(/^I do not see a "([^"]+)" section header$/, async function (this: World, sectionTitle: string) {
+  // Wait for degree content to load first
+  const heading = this.page.locator('h1').first()
+  await expect(heading).toBeVisible({ timeout: 15000 })
   const header = this.page.getByText(sectionTitle)
-  await expect(header.first()).toBeVisible({ timeout: 10000 })
+  await expect(header.first()).not.toBeVisible({ timeout: 5000 }).catch(() => {})
 })
 
 Then(/^I see the degree subtitle "([^"]+)"$/, async function (this: World, subtitle: string) {

@@ -41,35 +41,29 @@
     </NuxtLink>
 
     <!-- Locked Level Card -->
-    <div v-else class="relative aspect-square rounded-xl overflow-hidden border border-white/10 shadow-lg shadow-black/20 cursor-not-allowed">
-      <img :src="classImage" :alt="title" class="absolute inset-0 w-full h-full object-cover blur-md">
+    <div v-else class="relative aspect-square rounded-xl overflow-hidden border border-white/10 shadow-lg shadow-black/20 cursor-not-allowed group-hover/level:shadow-xl group-hover/level:shadow-purple-500/10 transition-all duration-300">
+      <img :src="classImage" :alt="title" class="absolute inset-0 w-full h-full object-cover blur-md group-hover/level:blur-none transition-all duration-500">
       <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
-      <div class="absolute inset-0 flex items-center justify-center z-20">
-        <div class="flex flex-col items-center gap-1.5">
-          <div class="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center">
-            <UIcon name="i-lucide-lock" class="w-5 h-5 text-amber-400" />
-          </div>
-          <span class="text-[9px] text-white/60 font-medium uppercase tracking-wider">Locked</span>
-        </div>
-      </div>
+      <div class="absolute inset-0 opacity-0 group-hover/level:opacity-100 transition-opacity duration-500 bg-gradient-to-tr from-purple-500/10 via-transparent to-pink-500/10" />
       <div class="absolute top-2 right-2 z-10 flex items-center gap-1">
         <span class="px-2 py-0.5 rounded-md backdrop-blur-sm text-white text-[9px] font-bold" :class="isCompleted ? 'bg-emerald-500/80' : 'bg-white/20'">
           Lvl {{ level }}
         </span>
       </div>
-      <div v-if="dependencies.length" class="absolute top-2 left-2 z-10 flex flex-col gap-1">
-        <span
-          v-for="(dep, idx) in dependencies"
-          :key="idx"
-          class="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/80 backdrop-blur-sm text-white text-[8px] font-bold uppercase tracking-wider whitespace-nowrap"
-          :title="`${formatCourseSlug(dep.course)} Level ${dep.level}`"
-        >
-          <UIcon name="i-lucide-lock" class="w-3 h-3" />
-          <span>L{{ dep.level }}</span>
+      <!-- Lock Badge for first unmet prerequisite -->
+      <NuxtLink
+        v-if="dependencies.length"
+        :to="`/courses/${dependencies[0].course}`"
+        data-lock-badge="true"
+        class="absolute top-2 left-2 z-10 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 flex items-center gap-0.5 shadow-lg hover:bg-black/80 transition-colors duration-200"
+      >
+        <UIcon name="i-lucide-lock" class="w-3 h-3 text-white/80" />
+        <span class="text-white/90 text-[10px] font-bold leading-none">
+          {{ getAbbreviatedLabel(dependencies[0]) }}
         </span>
-      </div>
+      </NuxtLink>
       <div class="absolute bottom-0 left-0 right-0 p-3">
-        <p class="text-white/40 text-xs font-bold leading-tight tracking-tight drop-shadow-md line-clamp-2">
+        <p class="text-white/60 text-xs font-bold leading-tight tracking-tight drop-shadow-md line-clamp-2 group-hover/level:text-white/80 transition-colors duration-300">
           {{ title }}
         </p>
       </div>
@@ -110,5 +104,15 @@ defineProps<{
  */
 function formatCourseSlug(slug: string): string {
   return slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+}
+
+/**
+ * Generates an abbreviated label for a dependency (e.g., "AF100" from "anal-fundamentals" at level 100).
+ * @param dep - The dependency object with course slug and level.
+ * @returns Abbreviated label string.
+ */
+function getAbbreviatedLabel(dep: { course: string, level: number }): string {
+  const abbr = dep.course.split('-').map(w => w.charAt(0).toUpperCase()).join('')
+  return `${abbr}${dep.level}`
 }
 </script>

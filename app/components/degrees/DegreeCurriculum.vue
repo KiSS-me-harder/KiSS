@@ -8,8 +8,6 @@ import type { DegreeCourseInfo, DegreeLevel } from '~/utils/degreePageHelpers'
 defineProps<{
   selectedLevel: DegreeLevel | null
   courseInfos: DegreeCourseInfo[]
-  getTierColor: (maxLevel: number) => string
-  getTierLabel: (maxLevel: number) => string
   overallProgress: number
 }>()
 </script>
@@ -56,11 +54,11 @@ defineProps<{
               </span>
             </div>
             <div class="flex items-center gap-2 text-[10px] text-muted">
-              <span class="px-1.5 py-0.5 rounded font-bold" :class="getTierColor(courseInfo.maxLevel)">
-                {{ getTierLabel(courseInfo.maxLevel) }}
-              </span>
-              <span>·</span>
               <span>{{ courseInfo.totalLevels }} levels</span>
+            </div>
+            <div v-if="courseInfo.prerequisites.length" class="mt-1 flex items-center gap-1">
+              <UIcon name="i-lucide-link" class="w-3 h-3 text-amber-400/60" />
+              <span class="text-[10px] text-amber-400/60">{{ courseInfo.prerequisites.length }} prerequisite{{ courseInfo.prerequisites.length > 1 ? 's' : '' }}</span>
             </div>
             <div v-if="courseInfo.isEnrolled" class="mt-2">
               <div class="flex items-center justify-between text-[10px] text-muted mb-0.5">

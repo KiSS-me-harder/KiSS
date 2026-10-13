@@ -60,9 +60,14 @@ export function parseActivities(allActivities: unknown[]): ActivityEntryType[] {
   for (const item of allActivities) {
     const stem = (item as { stem?: string }).stem || ''
     const parts = stem.split('/')
-    if (parts.length < 3) continue
-    const activitySlug = parts[1]
-    if (!activitySlug || parts[2] !== '_index') continue
+    // Support both flat (activities/[slug]) and nested (activities/[slug]/_index) patterns
+    let activitySlug: string | undefined
+    if (parts.length >= 3 && parts[2] === '_index') {
+      activitySlug = parts[1]
+    } else if (parts.length === 2 && parts[0] === 'activities') {
+      activitySlug = parts[1]
+    }
+    if (!activitySlug) continue
     const meta = (item as { meta?: Record<string, unknown> }).meta || {}
     const fields = meta.fields || []
     const contribs = meta.contributions || []

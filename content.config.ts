@@ -1,4 +1,5 @@
-import { defineContentConfig, defineCollection } from '@nuxt/content'
+import { defineContentConfig, defineCollection, property } from '@nuxt/content'
+import z from 'zod'
 
 export default defineContentConfig({
   collections: {
@@ -12,7 +13,26 @@ export default defineContentConfig({
     }),
     courses: defineCollection({
       type: 'page',
-      source: 'courses/**/*.md'
+      source: 'courses/**/*.md',
+      schema: z.object({
+        flashcards: property(z.array(z.object({
+          question: z.string(),
+          options: z.array(z.string()),
+          correctIndex: z.number()
+        }))).optional(),
+        exam: property(z.array(z.union([
+          z.string(),
+          z.object({
+            type: z.string(),
+            text: z.string(),
+            metric: z.string().optional(),
+            field: z.string().optional(),
+            target: z.number().optional(),
+            label: z.string().optional(),
+            unit: z.string().optional()
+          })
+        ]))).optional()
+      })
     }),
     clubs: defineCollection({
       type: 'page',

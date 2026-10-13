@@ -2,19 +2,24 @@
 /**
  * Displays the target title selector for a degree program.
  * Allows the user to choose which title/level to target.
+ * Includes an enrollment confirmation button below the title options.
  */
 import type { DegreeLevel } from '~/utils/degreePageHelpers'
 
-defineProps<{
+const props = defineProps<{
   degreeLevels: DegreeLevel[]
   selectedLevelIndex: number
   isTitleCompleted: (index: number) => boolean
   levelNameColors: string[]
   levelBadgeColors: string[]
+  isDegreeFullyEnrolled?: boolean
+  isDegreePartiallyEnrolled?: boolean
+  selectedLevelName?: string
 }>()
 
 const emit = defineEmits<{
   (e: 'update:selectedLevelIndex', index: number): void
+  (e: 'enroll' | 'complete-enrollment'): void
 }>()
 </script>
 
@@ -24,15 +29,10 @@ const emit = defineEmits<{
       <div class="flex items-center gap-2">
         <UIcon name="i-lucide-target" class="size-4 text-purple-400" />
         <h2 class="text-base font-semibold">
-          Target Title
+          Title
         </h2>
       </div>
     </template>
-
-    <p class="text-xs text-muted mb-3">
-      Choose your target title for this degree. Each title represents a milestone with specific class requirements.
-    </p>
-
     <div class="space-y-2">
       <button
         v-for="(level, index) in degreeLevels"
@@ -64,11 +64,6 @@ const emit = defineEmits<{
                 name="i-lucide-trophy"
                 class="size-3.5 text-amber-400 shrink-0"
               />
-              <UIcon
-                v-else-if="index > 0 && !isTitleCompleted(index - 1) && !isTitleCompleted(index)"
-                name="i-lucide-lock"
-                class="size-3.5 text-muted/60 shrink-0"
-              />
             </div>
             <p class="text-[11px] text-muted mt-0.5 line-clamp-1">
               {{ level.description }}
@@ -81,6 +76,24 @@ const emit = defineEmits<{
           />
         </div>
       </button>
+    </div>
+
+    <!-- Enrollment button below title selector -->
+    <div v-if="!props.isDegreeFullyEnrolled" class="mt-4 pt-4 border-t border-white/10">
+      <UButton
+        size="md"
+        color="primary"
+        class="w-full"
+        @click="props.isDegreePartiallyEnrolled ? emit('complete-enrollment') : emit('enroll')"
+      >
+        <template #leading>
+          <UIcon name="i-lucide-plus" class="size-4" />
+        </template>
+        {{ props.isDegreePartiallyEnrolled ? 'Complete Enrollment' : `Enroll in ${props.selectedLevelName ?? 'this Degree'}` }}
+      </UButton>
+      <p v-if="props.isDegreePartiallyEnrolled" class="text-xs text-muted mt-1 text-center">
+        You're partially enrolled
+      </p>
     </div>
   </UCard>
 </template>

@@ -21,7 +21,7 @@ Write Cucumber/Playwright E2E tests in `test/e2e/steps/` matching Gherkin featur
 4. **Write step definitions** — Use `Given`, `When`, `Then` from `@cucumber/cucumber`.
 5. **Use the World class** — Cast `this` to `World` for `page`, `context`, `browser` access.
 6. **Configure cucumber** — Update `cucumber.config.ts` `paths` to include the feature file.
-7. **Run tests** — `pnpm test:e2e` starts dev server and runs Cucumber.
+7. **Run tests** — Use `pnpm test:e2e:single features/pages/<name>.feature` to run a single feature file, or `pnpm test:e2e` to run the full suite (which always executes all scenarios).
 
 ## Step Definition Pattern
 
@@ -60,7 +60,10 @@ Then(/^I see "Expected Text"$/, async function () {
 ## Running Tests
 
 ```bash
-# Full E2E suite (starts dev server + runs Cucumber)
+# Run a single feature file (requires dev server on port 3000)
+pnpm test:e2e:single features/pages/study-plan.feature
+
+# Full E2E suite — always runs all scenarios (requires dev server on port 3000)
 pnpm test:e2e
 
 # Playwright-only (if using Playwright directly)
