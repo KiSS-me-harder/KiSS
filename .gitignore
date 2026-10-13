@@ -1,0 +1,35 @@
+id_ed25519
+id_ed25519.pub
+
+*.tsbuildinfo
+@rerun.txt
+/test/results/
+/test/output.txt
+
+# Nuxt dev/build outputs
+.output
+.data
+.nuxt
+.nitro
+.cache
+dist
+
+# Node dependencies
+node_modules
+
+# Logs
+logs
+*.log
+
+# Misc
+.DS_Store
+.fleet
+.idea
+
+# Local env files
+.env
+.env.*
+!.env.example
+
+# VSC
+.history

@@ -1,0 +1,32 @@
+{
+  "default": {
+    "import": [
+      "./test/e2e/support/setup.ts",
+      "./test/e2e/steps/**/*.ts"
+    ],
+    "format": ["progress-bar", "rerun:@rerun.txt", "html:test/results/cucumber.html"],
+    "formatOptions": {
+      "snippetInterface": "async-await"
+    },
+    "parallel": 8,
+    "paths": [
+      "./features/**/*.feature"
+    ],
+    "publishQuiet": true,
+    "strict": true
+  },
+  "rerun": {
+    "import": [
+      "./test/e2e/support/setup.ts",
+      "./test/e2e/steps/**/*.ts"
+    ],
+    "format": ["progress-bar", "rerun:@rerun.txt"],
+    "formatOptions": {
+      "snippetInterface": "async-await"
+    },
+    "parallel": 8,
+    "paths": ["@rerun.txt"],
+    "publishQuiet": true,
+    "strict": true
+  }
+}
