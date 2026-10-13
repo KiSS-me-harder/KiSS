@@ -24,8 +24,8 @@
         <!-- Canvas container -->
         <div
           ref="canvasContainerRef"
-          class="rounded-xl border border-white/10 bg-black/50 flex items-center justify-center relative"
-          :style="{ minHeight: '400px' }"
+          class="rounded-xl border border-white/10 bg-black/50 flex items-center justify-center relative m-auto mb-7"
+          :style="{ minHeight: '400px', maxWidth: '1200px' }"
         >
           <!-- Fullscreen button (hidden when fullscreen) -->
           <NButton
