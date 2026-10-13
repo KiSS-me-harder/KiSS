@@ -125,6 +125,7 @@
 
 <script setup lang="ts">
 import type { SpiralLayer } from './SpiralLayers.vue'
+import TemplateSelector from './TemplateSelector.vue'
 import { isThemeColorName, resolveThemeColor } from '~/utils/spiralDrawing'
 
 const props = defineProps<{

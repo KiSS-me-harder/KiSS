@@ -35,7 +35,7 @@ import LayerItem from './LayerItem.vue'
 
 export interface SpiralLayer {
   id: number
-  template: 'classic' | 'concentric' | 'wave' | 'double'
+  template: 'classic' | 'concentric' | 'wave' | 'double' | 'fractal' | 'helix' | 'starburst' | 'galaxy' | 'mandala' | 'dna' | 'kaleidoscope' | 'vortex'
   color: string
   size: number
   speed: number
