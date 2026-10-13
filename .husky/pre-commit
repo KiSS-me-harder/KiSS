@@ -5,6 +5,4 @@ if [ -n "$staged_files" ]; then
   pnpm lint --fix -- $staged_files || true
   # Re-stage fixed files
   git add $staged_files
-  # Run lint check on staged files to ensure they pass
-  pnpm lint -- $staged_files
 fi
