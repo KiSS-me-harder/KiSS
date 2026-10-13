@@ -91,7 +91,7 @@ export function createDefaultFocusConfig(): FocusConfig {
  * @param ctx - Canvas rendering context.
  * @param x - X coordinate.
  * @param y - Y coordinate.
- * @param color - Hex color string.
+ * @param color - Color string (hex or HSL).
  * @param size - Diameter in pixels.
  */
 export function drawDotFocus(
@@ -104,12 +104,14 @@ export function drawDotFocus(
   const radius = size / 2
   const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius * 2)
   gradient.addColorStop(0, color)
-  gradient.addColorStop(0.5, color + '80')
+  gradient.addColorStop(0.5, color)
   gradient.addColorStop(1, 'transparent')
   ctx.beginPath()
   ctx.arc(x, y, radius * 2, 0, Math.PI * 2)
+  ctx.globalAlpha = 0.5
   ctx.fillStyle = gradient
   ctx.fill()
+  ctx.globalAlpha = 1.0
 
   ctx.beginPath()
   ctx.arc(x, y, radius, 0, Math.PI * 2)

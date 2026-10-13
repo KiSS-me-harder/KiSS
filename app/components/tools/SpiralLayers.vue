@@ -41,6 +41,7 @@ export interface SpiralLayer {
   speed: number
   direction: 'forward' | 'backward'
   angle: number
+  cumulativeAngle?: number
   intensity: number
 }
 

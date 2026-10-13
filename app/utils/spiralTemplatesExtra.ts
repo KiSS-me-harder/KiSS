@@ -211,11 +211,13 @@ export function drawKaleidoscopeSpiral(
 
 /**
  * Draws a vortex tunnel pattern that creates a depth illusion.
+ * Uses cumulative angle (unwrapped) for smooth looping — the ring rotation
+ * is multiplied by depth, so a wrapped angle would cause visible jumps at 360°.
  * @param ctx - The canvas rendering context.
  * @param centerX - Center X coordinate.
  * @param centerY - Center Y coordinate.
  * @param color - The spiral color in hex format.
- * @param angle - The current rotation angle in degrees.
+ * @param cumulativeAngle - The total rotation angle in degrees (not wrapped at 360).
  * @param sizePercent - Size as a percentage of the viewport diagonal (10 to 300).
  * @param viewportDiagonal - The diagonal of the viewport in pixels.
  * @param arms - Number of spiral arms (1 to 12).
@@ -225,7 +227,7 @@ export function drawVortexTunnel(
   centerX: number,
   centerY: number,
   color: string,
-  angle: number,
+  cumulativeAngle: number,
   sizePercent: number = 100,
   viewportDiagonal: number = 800,
   arms: number = 1
@@ -239,7 +241,7 @@ export function drawVortexTunnel(
   for (let i = rings; i >= 0; i--) {
     const t = i / rings
     const radius = t * size * 0.5
-    const ringAngle = angle * (1 - t) * 0.5
+    const ringAngle = cumulativeAngle * (1 - t) * 0.5
 
     const alpha = 0.1 + t * 0.6
     ctx.beginPath()
@@ -258,7 +260,7 @@ export function drawVortexTunnel(
     // Draw spiral connectors
     if (i < rings) {
       const nextRadius = ((i + 1) / rings) * size * 0.5
-      const nextAngle = angle * (1 - (i + 1) / rings) * 0.5
+      const nextAngle = cumulativeAngle * (1 - (i + 1) / rings) * 0.5
 
       for (let arm = 0; arm < arms; arm++) {
         const armAngle = (360 / arms) * arm

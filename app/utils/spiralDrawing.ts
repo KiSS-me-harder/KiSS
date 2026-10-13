@@ -112,7 +112,8 @@ export function resolveThemeColor(color: string): string {
  * @param centerY - Center Y coordinate.
  * @param width - Canvas width.
  * @param color - The spiral color in hex format.
- * @param angle - The current rotation angle in degrees.
+ * @param angle - The current rotation angle in degrees (wrapped 0-360).
+ * @param cumulativeAngle - The total rotation angle in degrees (unwrapped, for smooth looping).
  * @param sizePercent - Size as a percentage of the viewport diagonal (10 to 300).
  * @param viewportDiagonal - The diagonal of the viewport in pixels.
  * @param arms - Number of spiral arms (1 to 12).
@@ -125,6 +126,7 @@ export function drawSpiralTemplate(
   width: number,
   color: string,
   angle: number,
+  cumulativeAngle: number,
   sizePercent: number = 100,
   viewportDiagonal: number = 800,
   arms: number = 1
@@ -143,7 +145,7 @@ export function drawSpiralTemplate(
       drawDoubleSpiral(ctx, centerX, centerY, color, angle, sizePercent, viewportDiagonal, arms)
       break
     case 'fractal':
-      drawFractalSpiral(ctx, centerX, centerY, color, angle, sizePercent, viewportDiagonal, arms)
+      drawFractalSpiral(ctx, centerX, centerY, color, cumulativeAngle, sizePercent, viewportDiagonal, arms)
       break
     case 'helix':
       drawHelixSpiral(ctx, centerX, centerY, color, angle, sizePercent, viewportDiagonal, arms)
@@ -164,7 +166,7 @@ export function drawSpiralTemplate(
       drawKaleidoscopeSpiral(ctx, centerX, centerY, color, angle, sizePercent, viewportDiagonal, arms)
       break
     case 'vortex':
-      drawVortexTunnel(ctx, centerX, centerY, color, angle, sizePercent, viewportDiagonal, arms)
+      drawVortexTunnel(ctx, centerX, centerY, color, cumulativeAngle, sizePercent, viewportDiagonal, arms)
       break
   }
 }
@@ -176,6 +178,7 @@ export interface SpiralLayerData {
   template: string
   color: string
   angle: number
+  cumulativeAngle: number
   size: number
   speed: number
   direction: 'forward' | 'backward'
@@ -215,6 +218,7 @@ export function drawSpiralLayers(
       width,
       resolvedColor,
       layer.angle,
+      layer.cumulativeAngle,
       layer.size,
       viewportDiagonal,
       layer.intensity
@@ -224,12 +228,17 @@ export function drawSpiralLayers(
 
 /**
  * Updates angles for all layers based on speed and direction.
+ * The wrapped angle (0-360) is used for standard rotation, while the cumulative
+ * angle tracks total rotation without wrapping for templates that need smooth
+ * continuous animation (e.g., vortex tunnel depth effects).
  * @param layers - Array of spiral layer data to update.
  */
 export function updateLayerAngles(layers: SpiralLayerData[]) {
   for (const layer of layers) {
     const dirMultiplier = layer.direction === 'forward' ? 1 : -1
-    layer.angle += layer.speed * 0.5 * dirMultiplier
+    const delta = layer.speed * 0.05 * dirMultiplier
+    layer.angle += delta
+    layer.cumulativeAngle += delta
     if (layer.angle >= 360) layer.angle -= 360
     if (layer.angle < 0) layer.angle += 360
   }

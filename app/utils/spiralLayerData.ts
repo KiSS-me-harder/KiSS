@@ -11,6 +11,7 @@ export function mapLayerData(layers: SpiralLayer[]): SpiralLayerData[] {
     template: l.template,
     color: l.color,
     angle: l.angle,
+    cumulativeAngle: l.cumulativeAngle ?? l.angle,
     size: l.size,
     speed: l.speed,
     direction: l.direction,

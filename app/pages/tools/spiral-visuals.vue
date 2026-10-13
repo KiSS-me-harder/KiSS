@@ -24,12 +24,23 @@
         <!-- Canvas container -->
         <div
           ref="canvasContainerRef"
-          class="rounded-xl border border-white/10 bg-black/50 p-4 flex items-center justify-center relative"
+          class="rounded-xl border border-white/10 bg-black/50 flex items-center justify-center relative"
           :style="{ minHeight: '400px' }"
         >
+          <!-- Fullscreen button (hidden when fullscreen) -->
+          <NButton
+            v-if="!isFullscreen"
+            class="absolute top-4 right-4 z-30"
+            color="gray"
+            variant="ghost"
+            size="sm"
+            @click="toggleFullscreen"
+          >
+            <UIcon name="i-lucide-maximize-2" class="w-4 h-4" />
+          </NButton>
           <canvas
             ref="canvasRef"
-            class="w-full h-full rounded-lg"
+            class="w-full h-full rounded-xl"
           />
           <!-- Centered play/pause button overlay -->
           <div
@@ -90,33 +101,39 @@ import type { SpiralPreset } from '~/components/tools/SpiralPresets.vue'
 import { createDefaultFocusConfig } from '~/utils/spiralFocus'
 import type { FocusConfig } from '~/utils/spiralFocus'
 import { isThemeColorName, resolveThemeColor, themeColorNames } from '~/utils/spiralDrawing'
+import { readSpiralHashFromUrl, restoreLayer } from '~/utils/spiralHashState'
+import { useSpiralHashState } from '~/composables/useSpiralHashState'
 
 const breadcrumbs = [
   { label: 'Tools', to: '/tools' },
   { label: 'Spiral Visuals Creator' }
 ]
 
-const layers = ref<SpiralLayer[]>([
-  {
-    id: Date.now(),
-    template: 'classic',
-    color: 'primary',
-    size: 100,
-    speed: 50,
-    direction: 'forward',
-    angle: 0,
-    intensity: 1
-  }
-])
+// Load state from URL hash if present, otherwise use defaults
+const hashState = readSpiralHashFromUrl()
+const layers = ref<SpiralLayer[]>(
+  hashState
+    ? hashState.layers.map((hl, i) => restoreLayer(hl, Date.now() + i))
+    : [{
+        id: Date.now(),
+        template: 'classic',
+        color: 'primary',
+        size: 100,
+        speed: 50,
+        direction: 'forward',
+        angle: 0,
+        intensity: 1
+      }]
+)
 
-const focusConfig = ref<FocusConfig>(createDefaultFocusConfig())
+const focusConfig = ref<FocusConfig>(hashState ? hashState.focus : createDefaultFocusConfig())
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const canvasContainerRef = ref<HTMLDivElement | null>(null)
 
 const {
   isPlaying,
-  isFullscreen: _isFullscreen,
+  isFullscreen,
   startAnimation,
   stopAnimation,
   toggleFullscreen,
@@ -126,6 +143,8 @@ const {
   loadFocusImage,
   setupMouseTracking
 } = useSpiralAnimation(canvasRef, canvasContainerRef, layers, focusConfig)
+
+const { updateHash, setupListener, cleanupListener } = useSpiralHashState(layers, focusConfig, drawSpiral)
 
 /**
  * Toggles play/pause state.
@@ -178,6 +197,7 @@ function addLayer() {
   if (!isPlaying.value) {
     drawSpiral()
   }
+  updateHash()
 }
 
 /**
@@ -192,6 +212,7 @@ function removeLayer(id: number) {
     if (!isPlaying.value) {
       drawSpiral()
     }
+    updateHash()
   }
 }
 
@@ -208,6 +229,7 @@ function updateLayer(id: number, key: string, value: unknown) {
     if (!isPlaying.value) {
       drawSpiral()
     }
+    updateHash()
   }
 }
 
@@ -232,6 +254,7 @@ function applyPreset(preset: SpiralPreset) {
   if (!isPlaying.value) {
     drawSpiral()
   }
+  updateHash()
 }
 
 /**
@@ -251,6 +274,7 @@ function updateFocusConfig(config: FocusConfig) {
   if (!isPlaying.value) {
     drawSpiral()
   }
+  updateHash()
 }
 
 // Setup keyboard listener and canvas
@@ -264,6 +288,8 @@ onMounted(() => {
   init()
   if (import.meta.client) {
     document.addEventListener('keydown', onKeydown)
+    updateHash()
+    setupListener()
   }
 })
 
@@ -272,6 +298,7 @@ onUnmounted(() => {
   cleanup()
   if (import.meta.client) {
     document.removeEventListener('keydown', onKeydown)
+    cleanupListener()
   }
 })
 

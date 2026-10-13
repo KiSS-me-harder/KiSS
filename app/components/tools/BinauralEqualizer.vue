@@ -1,5 +1,22 @@
 <template>
   <div class="binaural-equalizer">
+    <!-- Master Volume Slider -->
+    <div class="flex items-center gap-3 mb-4 px-4">
+      <UIcon name="i-lucide-volume-1" class="w-5 h-5 text-white/60" />
+      <input
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        :value="props.masterVolume"
+        class="flex-1 h-2 rounded-lg appearance-none cursor-pointer accent-white"
+        @input="(e: Event) => emit('masterVolumeChange', parseFloat((e.target as HTMLInputElement).value))"
+      >
+      <span class="text-xs text-white/60 w-10 text-right">
+        {{ Math.round(props.masterVolume * 100) }}%
+      </span>
+    </div>
+
     <!-- Frequency Band Sliders -->
     <div class="flex justify-between items-end mb-6 px-2">
       <div
@@ -131,10 +148,12 @@ import type { FrequencyBand } from '~/composables/useBinauralBeats'
 const props = defineProps<{
   bands: FrequencyBand[]
   playing: boolean
+  masterVolume: number
   presets?: { name: string, icon: string }[]
 }>()
 
 const emit = defineEmits<{
+  masterVolumeChange: [value: number]
   volumeChange: [index: number, value: number]
   frequencyChange: [index: number, value: string]
   play: []
@@ -174,3 +193,34 @@ function reset() {
   emit('reset')
 }
 </script>
+
+<style scoped>
+/* Master volume slider track styling */
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+}
+input[type="range"]::-moz-range-track {
+  height: 8px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+}
+</style>

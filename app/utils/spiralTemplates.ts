@@ -193,11 +193,13 @@ export function adjustColorBrightness(hex: string, amount: number): string {
 
 /**
  * Draws a fractal-like spiral with self-similar branching arms.
+ * Uses cumulative angle (unwrapped) for arm rotation to avoid jumps at 360° boundaries.
+ * Uses a periodic sine-based sway for branch modulation so the pattern loops smoothly.
  * @param ctx - The canvas rendering context.
  * @param centerX - Center X coordinate.
  * @param centerY - Center Y coordinate.
  * @param color - The spiral color in hex format.
- * @param angle - The current rotation angle in degrees.
+ * @param cumulativeAngle - The total rotation angle in degrees (not wrapped at 360).
  * @param sizePercent - Size as a percentage of the viewport diagonal (10 to 300).
  * @param viewportDiagonal - The diagonal of the viewport in pixels.
  * @param arms - Number of spiral arms (1 to 12).
@@ -207,7 +209,7 @@ export function drawFractalSpiral(
   centerX: number,
   centerY: number,
   color: string,
-  angle: number,
+  cumulativeAngle: number,
   sizePercent: number = 100,
   viewportDiagonal: number = 800,
   arms: number = 1
@@ -216,6 +218,9 @@ export function drawFractalSpiral(
   const r = parseInt(color.slice(1, 3), 16)
   const g = parseInt(color.slice(3, 5), 16)
   const b = parseInt(color.slice(5, 7), 16)
+
+  // Periodic sway that loops smoothly — completes one full cycle every 360° of rotation
+  const sway = Math.sin(cumulativeAngle * (Math.PI / 180)) * 0.5
 
   function drawBranch(x: number, y: number, theta: number, length: number, depth: number) {
     if (depth <= 0 || length < 2) return
@@ -233,12 +238,12 @@ export function drawFractalSpiral(
 
     const branchAngle = Math.PI / 4
     const shrinkFactor = 0.7
-    drawBranch(endX, endY, theta - branchAngle + angle * 0.01, length * shrinkFactor, depth - 1)
-    drawBranch(endX, endY, theta + branchAngle + angle * 0.01, length * shrinkFactor, depth - 1)
+    drawBranch(endX, endY, theta - branchAngle + sway, length * shrinkFactor, depth - 1)
+    drawBranch(endX, endY, theta + branchAngle - sway, length * shrinkFactor, depth - 1)
   }
 
   for (let arm = 0; arm < arms; arm++) {
-    const armAngle = (360 / arms) * arm * (Math.PI / 180)
+    const armAngle = (360 / arms) * arm * (Math.PI / 180) + cumulativeAngle * (Math.PI / 180)
     drawBranch(centerX, centerY, armAngle, size * 0.3, 5)
   }
 }
@@ -279,7 +284,7 @@ export function drawHelixSpiral(
       const radius = t * size * 0.5
       // 3D helix projection: modulate x with cosine to simulate depth
       const depth = Math.cos(theta)
-      const x = centerX + radius * Math.cos(theta) * (0.5 + 0.5 * depth)
+      const x = centerX + radius * Math.cos(theta) * (1 + 0.5 * depth)
       const y = centerY + radius * Math.sin(theta)
 
       const alpha = 0.3 + 0.7 * ((depth + 1) / 2)

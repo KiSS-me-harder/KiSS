@@ -10,7 +10,8 @@ export default defineNuxtConfig({
     '@nuxt/test-utils',
     '@pinia/nuxt',
     '@nuxtjs/seo',
-    '@nuxt/fonts'
+    '@nuxt/fonts',
+    '@vite-pwa/nuxt'
   ],
   ssr: false,
   devtools: {
@@ -44,6 +45,41 @@ export default defineNuxtConfig({
   },
   ogImage: {
     enabled: false
+  },
+  pwa: {
+    registerType: 'autoUpdate',
+    manifest: {
+      id: '/KiSS/',
+      name: 'KiSS Academy',
+      short_name: 'KiSS',
+      description: 'KiSS Academy - A gamified learning platform for personal transformation and self-improvement.',
+      theme_color: '#000000',
+      background_color: '#000000',
+      display: 'standalone',
+      start_url: '/KiSS/',
+      icons: [
+        {
+          src: '/KiSS/logo_dark.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'any'
+        },
+        {
+          src: '/KiSS/logo_light.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'maskable'
+        }
+      ]
+    },
+    workbox: {
+      globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
+      cleanupOutdatedCaches: true,
+      clientsClaim: true
+    },
+    devOptions: {
+      enabled: false
+    }
   },
   robots: {
     robotsTxt: false,

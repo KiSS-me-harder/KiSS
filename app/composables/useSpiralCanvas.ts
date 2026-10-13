@@ -25,9 +25,8 @@ export function useSpiralCanvas(
     const container = canvasContainerRef.value
     if (!canvas || !container) return
     const rect = container.getBoundingClientRect()
-    const padding = 32
-    const width = Math.floor(rect.width - padding * 2)
-    const height = Math.floor(rect.height - padding * 2)
+    const width = Math.floor(rect.width)
+    const height = Math.floor(rect.height)
     if (canvas.width !== width || canvas.height !== height) {
       canvas.width = width
       canvas.height = height
@@ -51,6 +50,7 @@ export function useSpiralCanvas(
         const data = layerData[i]
         if (layer && data) {
           layer.angle = data.angle
+          layer.cumulativeAngle = data.cumulativeAngle
         }
       }
       animationId = requestAnimationFrame(drawSpiral)

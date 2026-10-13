@@ -27,8 +27,10 @@
             :bands="bands"
             :playing="isPlaying"
             :presets="presets"
+            :master-volume="masterVolume"
             @volume-change="onVolumeChange"
             @frequency-change="onFrequencyChange"
+            @master-volume-change="onMasterVolumeChange"
             @play="startPlayback"
             @stop="stopPlayback"
             @increase-volume="increaseAllVolumes"
@@ -91,87 +93,81 @@ const presets = PRESETS
 const activePreset = ref<number>(-1)
 const isPlaying = ref(false)
 const showDownloadDialog = ref(false)
+const masterVolume = ref(0.5)
 
 // Web Audio API context and oscillators
 let audioContext: AudioContext | null = null
+let masterGain: GainNode | null = null
 let oscillators: OscillatorNode[] = []
 let gainNodes: GainNode[] = []
 let panners: StereoPannerNode[] = []
 
-/**
- * Handles preset selection.
- * @param index - The preset index.
- */
+/** Handles preset selection. @param index - The preset index. */
 function onPresetSelect(index: number) {
   activePreset.value = index
   applyPreset(PRESETS[index]!)
 }
 
-/**
- * Handles volume slider input for a frequency band.
- * @param index - The band index.
- * @param value - The slider value (0.0-1.0).
- */
+/** Handles volume slider input. @param index - Band index. @param value - Slider value (0-1). */
 function onVolumeChange(index: number, value: number) {
   const band = bands.value[index]
   if (band) {
     band.volume = Math.max(0, Math.min(1, value))
-    updateGain(index)
+    if (isPlaying.value) updateGain(index)
   }
 }
 
-/**
- * Handles frequency slider input for a band's beat offset.
- * @param index - The band index.
- * @param value - The beat frequency value.
- */
+/** Handles master volume slider input. @param value - Master volume (0-1). */
+function onMasterVolumeChange(value: number) {
+  masterVolume.value = Math.max(0, Math.min(1, value))
+  if (isPlaying.value && masterGain && audioContext) {
+    masterGain.gain.setTargetAtTime(masterVolume.value, audioContext.currentTime, 0.01)
+  }
+}
+
+/** Handles frequency slider input. @param index - Band index. @param value - Beat frequency. */
 function onFrequencyChange(index: number, value: string) {
   const band = bands.value[index]
   if (band) {
     band.beat = parseFloat(value)
-    updateFrequency(index)
+    if (isPlaying.value) updateFrequency(index)
   }
 }
 
-/**
- * Updates the gain node for a specific band while playing.
- * @param index - The band index.
- */
+/** Updates gain nodes for a band (left and right channels). @param index - Band index. */
 function updateGain(index: number) {
   const band = bands.value[index]
-  if (gainNodes[index] && audioContext && band) {
-    gainNodes[index].gain.setTargetAtTime(band.volume * 0.1, audioContext.currentTime, 0.1)
-  }
+  if (!audioContext || !band) return
+  const leftGain = gainNodes[index * 2]
+  const rightGain = gainNodes[index * 2 + 1]
+  const targetVolume = band.volume
+  if (leftGain) leftGain.gain.setTargetAtTime(targetVolume, audioContext.currentTime, 0.01)
+  if (rightGain) rightGain.gain.setTargetAtTime(targetVolume, audioContext.currentTime, 0.01)
 }
 
-/**
- * Updates the oscillator frequency for a specific band while playing.
- * @param index - The band index.
- */
+/** Updates oscillator frequencies for a band (left and right). @param index - Band index. */
 function updateFrequency(index: number) {
   const band = bands.value[index]
-  if (oscillators[index] && audioContext && band) {
-    oscillators[index].frequency.setTargetAtTime(band.frequency, audioContext.currentTime, 0.1)
-  }
+  if (!audioContext || !band) return
+  const leftOsc = oscillators[index * 2]
+  const rightOsc = oscillators[index * 2 + 1]
+  if (leftOsc) leftOsc.frequency.setTargetAtTime(band.frequency, audioContext.currentTime, 0.01)
+  if (rightOsc) rightOsc.frequency.setTargetAtTime(band.frequency + band.beat, audioContext.currentTime, 0.01)
 }
 
-/**
- * Increases all band volumes by 0.1.
- */
+/** Increases all band volumes by 0.1. */
 function increaseAllVolumes() {
   bands.value.forEach((band, i) => {
     band.volume = Math.min(1, band.volume + 0.1)
-    updateGain(i)
+    if (isPlaying.value) updateGain(i)
   })
 }
 
-/**
- * Decreases all band volumes by 0.1.
- */
+/** Decreases all band volumes by 0.1. */
 function decreaseAllVolumes() {
   bands.value.forEach((band, i) => {
     band.volume = Math.max(0, band.volume - 0.1)
-    updateGain(i)
+    if (isPlaying.value) updateGain(i)
   })
 }
 
@@ -182,7 +178,10 @@ function randomize() {
   bands.value.forEach((band, i) => {
     band.volume = Math.random() * 0.8 + 0.1
     band.beat = Math.floor(Math.random() * 40 * 2) / 2 + 1
-    updateGain(i)
+    if (isPlaying.value) {
+      updateGain(i)
+      updateFrequency(i)
+    }
   })
 }
 
@@ -209,38 +208,41 @@ function startPlayback() {
     gainNodes = []
     panners = []
 
+    // Master gain node controls overall volume
+    masterGain = audioContext.createGain()
+    masterGain.gain.value = masterVolume.value
+    masterGain.connect(audioContext.destination)
+
     bands.value.forEach((band) => {
-      if (band.volume > 0) {
-        // Left ear oscillator
-        const leftOsc = audioContext!.createOscillator()
-        const leftGain = audioContext!.createGain()
-        const leftPanner = audioContext!.createStereoPanner()
-        leftOsc.frequency.value = band.frequency
-        leftOsc.type = 'sine'
-        leftGain.gain.value = band.volume * 0.1
-        leftPanner.pan.value = -1
-        leftOsc.connect(leftGain)
-        leftGain.connect(leftPanner)
-        leftPanner.connect(audioContext!.destination)
-        leftOsc.start()
+      // Left ear oscillator
+      const leftOsc = audioContext!.createOscillator()
+      const leftGain = audioContext!.createGain()
+      const leftPanner = audioContext!.createStereoPanner()
+      leftOsc.frequency.value = band.frequency
+      leftOsc.type = 'sine'
+      leftGain.gain.value = band.volume
+      leftPanner.pan.value = -1
+      leftOsc.connect(leftGain)
+      leftGain.connect(leftPanner)
+      leftPanner.connect(masterGain!)
+      leftOsc.start()
 
-        // Right ear oscillator
-        const rightOsc = audioContext!.createOscillator()
-        const rightGain = audioContext!.createGain()
-        const rightPanner = audioContext!.createStereoPanner()
-        rightOsc.frequency.value = band.frequency + band.beat
-        rightOsc.type = 'sine'
-        rightGain.gain.value = band.volume * 0.1
-        rightPanner.pan.value = 1
-        rightOsc.connect(rightGain)
-        rightGain.connect(rightPanner)
-        rightPanner.connect(audioContext!.destination)
-        rightOsc.start()
+      // Right ear oscillator
+      const rightOsc = audioContext!.createOscillator()
+      const rightGain = audioContext!.createGain()
+      const rightPanner = audioContext!.createStereoPanner()
+      rightOsc.frequency.value = band.frequency + band.beat
+      rightOsc.type = 'sine'
+      rightGain.gain.value = band.volume
+      rightPanner.pan.value = 1
+      rightOsc.connect(rightGain)
+      rightGain.connect(rightPanner)
+      rightPanner.connect(masterGain!)
+      rightOsc.start()
 
-        oscillators.push(leftOsc, rightOsc)
-        gainNodes.push(leftGain, rightGain)
-        panners.push(leftPanner, rightPanner)
-      }
+      oscillators.push(leftOsc, rightOsc)
+      gainNodes.push(leftGain, rightGain)
+      panners.push(leftPanner, rightPanner)
     })
 
     isPlaying.value = true
@@ -259,6 +261,10 @@ function stopPlayback() {
   })
   gainNodes.forEach(gain => gain.disconnect())
   panners.forEach(panner => panner.disconnect())
+  if (masterGain) {
+    masterGain.disconnect()
+    masterGain = null
+  }
   if (audioContext) {
     audioContext.close()
     audioContext = null
