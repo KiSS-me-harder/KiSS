@@ -211,8 +211,12 @@ export function parseLessonData(
   const className = slug.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
   const degreeLabel = degree.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
   const flashcards = ((item as { flashcards?: unknown }).flashcards as { question: string, options: string[], correctIndex: number }[]) || []
-  const exam: (string | { type: string, text: string, metric: string, field: string, target: number, label: string, unit: string })[] = ((item as { exam?: unknown }).exam as (string | { type: string, text: string, metric: string, field: string, target: number, label: string, unit: string })[]) || []
-  const metrics: { id: string, label: string, target: number, unit: string }[] = []
+  // Homework: checklist items (strings)
+  const homework: string[] = ((item as { homework?: unknown }).homework as string[]) || []
+  // Exam: activity slug references (strings)
+  const exam: string[] = ((item as { exam?: unknown }).exam as string[]) || []
+  // Metrics: milestone references (strings in format "metric-slug/milestone-id")
+  const metrics: string[] = ((item as { metrics?: unknown }).metrics as string[]) || []
   const body = typeof (item as { body?: unknown }).body === 'string' ? (item as { body: string }).body : ''
   return {
     title: (item as { title?: string }).title || '',
@@ -224,6 +228,7 @@ export function parseLessonData(
     body,
     contentItem: item,
     flashcards,
+    homework,
     exam,
     metrics
   }

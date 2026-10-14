@@ -15,12 +15,30 @@ const props = defineProps<{
   isDegreeFullyEnrolled?: boolean
   isDegreePartiallyEnrolled?: boolean
   selectedLevelName?: string
+  enrolledTitleName?: string
 }>()
 
 const emit = defineEmits<{
   (e: 'update:selectedLevelIndex', index: number): void
   (e: 'enroll' | 'complete-enrollment'): void
 }>()
+
+const isSwitchingTitle = computed(() => {
+  return props.isDegreePartiallyEnrolled
+    && props.enrolledTitleName
+    && props.selectedLevelName
+    && props.enrolledTitleName !== props.selectedLevelName
+})
+
+const buttonLabel = computed(() => {
+  if (isSwitchingTitle.value) {
+    return `Switch to ${props.selectedLevelName}`
+  }
+  if (props.isDegreePartiallyEnrolled) {
+    return 'Complete Enrollment'
+  }
+  return `Enroll in ${props.selectedLevelName ?? 'this Degree'}`
+})
 </script>
 
 <template>
@@ -84,14 +102,17 @@ const emit = defineEmits<{
         size="md"
         color="primary"
         class="w-full"
-        @click="props.isDegreePartiallyEnrolled ? emit('complete-enrollment') : emit('enroll')"
+        @click="emit('enroll')"
       >
         <template #leading>
-          <UIcon name="i-lucide-plus" class="size-4" />
+          <UIcon :name="isSwitchingTitle ? 'i-lucide-arrow-right-left' : 'i-lucide-plus'" class="size-4" />
         </template>
-        {{ props.isDegreePartiallyEnrolled ? 'Complete Enrollment' : `Enroll in ${props.selectedLevelName ?? 'this Degree'}` }}
+        {{ buttonLabel }}
       </UButton>
-      <p v-if="props.isDegreePartiallyEnrolled" class="text-xs text-muted mt-1 text-center">
+      <p v-if="isSwitchingTitle" class="text-xs text-muted mt-1 text-center">
+        Currently enrolled in {{ props.enrolledTitleName }}. This will update your enrollment.
+      </p>
+      <p v-else-if="props.isDegreePartiallyEnrolled" class="text-xs text-muted mt-1 text-center">
         You're partially enrolled
       </p>
     </div>

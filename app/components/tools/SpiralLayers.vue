@@ -23,8 +23,11 @@
         :index="index + 1"
         :layer="layer"
         :can-remove="layers.length > 1"
+        :total-layers="layers.length"
         @update="(key, value) => $emit('updateLayer', layer.id, key, value)"
         @remove="$emit('removeLayer', layer.id)"
+        @move-up="$emit('moveLayer', index, -1)"
+        @move-down="$emit('moveLayer', index, 1)"
       />
     </div>
   </div>
@@ -55,5 +58,6 @@ defineEmits<{
   addLayer: []
   removeLayer: [id: number]
   updateLayer: [id: number, key: string, value: unknown]
+  moveLayer: [index: number, direction: number]
 }>()
 </script>

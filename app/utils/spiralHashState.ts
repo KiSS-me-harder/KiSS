@@ -111,7 +111,11 @@ export function readSpiralHashFromUrl(): SpiralHashState | null {
 export function writeSpiralHashToUrl(layers: SpiralLayer[], focus: FocusConfig): void {
   if (import.meta.server) return
   const hash = encodeSpiralHash(layers, focus)
-  window.location.hash = hash
+  // Use history.replaceState to avoid Vue Router's CSS selector validation on the hash fragment.
+  // Direct assignment to window.location.hash triggers Vue Router to parse it as a selector (#id),
+  // which fails because base64-encoded data contains characters like '=', '[', ']' that are invalid
+  // in CSS selectors.
+  history.replaceState(null, '', `#${hash}`)
 }
 
 /**

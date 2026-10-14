@@ -78,7 +78,12 @@ export async function useTodayTasks() {
   const { data: allActivities } = await useAsyncData('today-tasks-activities', () => queryCollection('activities').all())
 
   const clubActivitiesMap = computed(() => buildClubActivitiesMap(allClubs.value || []))
-  const subscribedActivitySlugs = computed(() => store.getClubActivitySlugs(clubActivitiesMap.value))
+  // Explicitly depend on store clubMemberships ref so the computed re-evaluates
+  // when loadFromStorage() populates them after hydration.
+  const subscribedActivitySlugs = computed(() => {
+    const _ = store.clubMemberships
+    return store.getClubActivitySlugs(clubActivitiesMap.value)
+  })
   const subscribedActivities = computed<ActivityItem[]>(() => filterSubscribedActivities((allActivities.value || []) as ActivityItem[], subscribedActivitySlugs.value))
 
   function getActivitySlug(activity: ActivityItem): string {

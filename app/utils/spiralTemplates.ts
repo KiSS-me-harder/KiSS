@@ -3,6 +3,8 @@
  * Extracted from spiralDrawing.ts to keep file sizes within ESLint limits.
  */
 
+import { DEG_TO_RAD, parseHexColor, adjustColorBrightness } from './spiralColorUtils'
+
 /**
  * Draws the classic spiral pattern with multiple arms.
  * @param ctx - The canvas rendering context.
@@ -25,14 +27,16 @@ export function drawClassicSpiral(
   arms: number = 1
 ) {
   const size = viewportDiagonal * (sizePercent / 100)
+  const sizeFactor = 0.7 * (size / 360)
+  ctx.strokeStyle = color
+  ctx.lineWidth = 2
   for (let arm = 0; arm < arms; arm++) {
     const armAngle = (360 / arms) * arm
+    const baseAngle = (angle + armAngle) * DEG_TO_RAD
     ctx.beginPath()
-    ctx.strokeStyle = color
-    ctx.lineWidth = 2
     for (let i = 0; i < 360; i++) {
-      const theta = (i + angle + armAngle) * (Math.PI / 180)
-      const radius = i * 0.7 * (size / 360)
+      const theta = i * DEG_TO_RAD + baseAngle
+      const radius = i * sizeFactor
       const x = centerX + radius * Math.cos(theta)
       const y = centerY + radius * Math.sin(theta)
       if (i === 0) ctx.moveTo(x, y)
@@ -68,9 +72,8 @@ export function drawConcentricRings(
   const maxRadius = (viewportDiagonal / 2) * (sizePercent / 100)
   const ringCount = 20
   const ringSpacing = maxRadius / ringCount
-  const r = parseInt(color.slice(1, 3), 16)
-  const g = parseInt(color.slice(3, 5), 16)
-  const b = parseInt(color.slice(5, 7), 16)
+  const [r, g, b] = parseHexColor(color)
+  const twoPi = Math.PI * 2
   for (let arm = 0; arm < arms; arm++) {
     const armAngle = (360 / arms) * arm
     for (let i = ringCount; i >= 0; i--) {
@@ -79,7 +82,7 @@ export function drawConcentricRings(
       const t = i / ringCount
       const alpha = 0.3 + t * 0.7
       ctx.beginPath()
-      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
+      ctx.arc(centerX, centerY, radius, 0, twoPi)
       ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`
       ctx.lineWidth = ringSpacing * 0.6
       ctx.stroke()
@@ -109,15 +112,17 @@ export function drawWaveSpiral(
   arms: number = 1
 ) {
   const size = viewportDiagonal * (sizePercent / 100)
+  const sizeFactor = size / 720
+  ctx.strokeStyle = color
+  ctx.lineWidth = 2
   for (let arm = 0; arm < arms; arm++) {
     const armAngle = (360 / arms) * arm
+    const baseAngle = (angle + armAngle) * DEG_TO_RAD
     ctx.beginPath()
-    ctx.strokeStyle = color
-    ctx.lineWidth = 2
     for (let i = 0; i < 720; i++) {
-      const theta = (i + angle + armAngle) * (Math.PI / 180)
+      const theta = i * DEG_TO_RAD + baseAngle
       const wave = Math.sin(i * 0.1) * 20
-      const radius = (i * 0.35 + wave) * (size / 720)
+      const radius = (i * 0.35 + wave) * sizeFactor
       const x = centerX + radius * Math.cos(theta)
       const y = centerY + radius * Math.sin(theta)
       if (i === 0) ctx.moveTo(x, y)
@@ -149,14 +154,17 @@ export function drawDoubleSpiral(
   arms: number = 1
 ) {
   const size = viewportDiagonal * (sizePercent / 100)
+  const sizeFactor = 0.5 * (size / 360)
   ctx.lineWidth = 2
   for (let arm = 0; arm < arms; arm++) {
     const armAngle = (360 / arms) * arm
+    const baseAngle = (angle + armAngle) * DEG_TO_RAD
+    const baseAngle2 = (angle + armAngle + 180) * DEG_TO_RAD
     ctx.beginPath()
     ctx.strokeStyle = color
     for (let i = 0; i < 360; i++) {
-      const theta = (i + angle + armAngle) * (Math.PI / 180)
-      const radius = i * 0.5 * (size / 360)
+      const theta = i * DEG_TO_RAD + baseAngle
+      const radius = i * sizeFactor
       const x = centerX + radius * Math.cos(theta)
       const y = centerY + radius * Math.sin(theta)
       if (i === 0) ctx.moveTo(x, y)
@@ -167,8 +175,8 @@ export function drawDoubleSpiral(
     const darkerColor = adjustColorBrightness(color, -40)
     ctx.strokeStyle = darkerColor
     for (let i = 0; i < 360; i++) {
-      const theta = (i + angle + armAngle + 180) * (Math.PI / 180)
-      const radius = i * 0.5 * (size / 360)
+      const theta = i * DEG_TO_RAD + baseAngle2
+      const radius = i * sizeFactor
       const x = centerX + radius * Math.cos(theta)
       const y = centerY + radius * Math.sin(theta)
       if (i === 0) ctx.moveTo(x, y)
@@ -176,19 +184,6 @@ export function drawDoubleSpiral(
     }
     ctx.stroke()
   }
-}
-
-/**
- * Adjusts the brightness of a hex color.
- * @param hex - The hex color string.
- * @param amount - The brightness adjustment amount (-255 to 255).
- * @returns The adjusted hex color string.
- */
-export function adjustColorBrightness(hex: string, amount: number): string {
-  const r = Math.max(0, Math.min(255, parseInt(hex.slice(1, 3), 16) + amount))
-  const g = Math.max(0, Math.min(255, parseInt(hex.slice(3, 5), 16) + amount))
-  const b = Math.max(0, Math.min(255, parseInt(hex.slice(5, 7), 16) + amount))
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
 }
 
 /**
@@ -215,12 +210,11 @@ export function drawFractalSpiral(
   arms: number = 1
 ) {
   const size = viewportDiagonal * (sizePercent / 100)
-  const r = parseInt(color.slice(1, 3), 16)
-  const g = parseInt(color.slice(3, 5), 16)
-  const b = parseInt(color.slice(5, 7), 16)
+  const [r, g, b] = parseHexColor(color)
 
   // Periodic sway that loops smoothly — completes one full cycle every 360° of rotation
-  const sway = Math.sin(cumulativeAngle * (Math.PI / 180)) * 0.5
+  const sway = Math.sin(cumulativeAngle * DEG_TO_RAD) * 0.5
+  const cumulativeRad = cumulativeAngle * DEG_TO_RAD
 
   function drawBranch(x: number, y: number, theta: number, length: number, depth: number) {
     if (depth <= 0 || length < 2) return
@@ -243,7 +237,7 @@ export function drawFractalSpiral(
   }
 
   for (let arm = 0; arm < arms; arm++) {
-    const armAngle = (360 / arms) * arm * (Math.PI / 180) + cumulativeAngle * (Math.PI / 180)
+    const armAngle = (360 / arms) * arm * DEG_TO_RAD + cumulativeRad
     drawBranch(centerX, centerY, armAngle, size * 0.3, 5)
   }
 }
@@ -270,26 +264,27 @@ export function drawHelixSpiral(
   arms: number = 1
 ) {
   const size = viewportDiagonal * (sizePercent / 100)
-  const r = parseInt(color.slice(1, 3), 16)
-  const g = parseInt(color.slice(3, 5), 16)
-  const b = parseInt(color.slice(5, 7), 16)
+  const [r, g, b] = parseHexColor(color)
+  const halfSize = size * 0.5
 
   for (let arm = 0; arm < arms; arm++) {
     const armAngle = (360 / arms) * arm
+    const baseAngle = (angle + armAngle) * DEG_TO_RAD
     ctx.beginPath()
 
     for (let i = 0; i < 1000; i++) {
       const t = i / 1000
-      const theta = (i * 0.5 + angle + armAngle) * (Math.PI / 180)
-      const radius = t * size * 0.5
+      const theta = i * 0.5 * DEG_TO_RAD + baseAngle
+      const radius = t * halfSize
       // 3D helix projection: modulate x with cosine to simulate depth
-      const depth = Math.cos(theta)
-      const x = centerX + radius * Math.cos(theta) * (1 + 0.5 * depth)
+      const cosTheta = Math.cos(theta)
+      const depth = cosTheta
+      const x = centerX + radius * cosTheta * (1 + 0.5 * depth)
       const y = centerY + radius * Math.sin(theta)
 
-      const alpha = 0.3 + 0.7 * ((depth + 1) / 2)
-      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`
-      ctx.lineWidth = 1 + 2 * ((depth + 1) / 2)
+      const depthFactor = (depth + 1) * 0.5
+      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.3 + 0.7 * depthFactor})`
+      ctx.lineWidth = 1 + 2 * depthFactor
 
       if (i === 0) {
         ctx.moveTo(x, y)
@@ -324,13 +319,13 @@ export function drawStarburstSpiral(
   arms: number = 1
 ) {
   const size = viewportDiagonal * (sizePercent / 100)
-  const r = parseInt(color.slice(1, 3), 16)
-  const g = parseInt(color.slice(3, 5), 16)
-  const b = parseInt(color.slice(5, 7), 16)
+  const [cr, cg, cb] = parseHexColor(color)
   const rays = arms * 6
+  const halfSize = size * 0.5
+  const twoPi = Math.PI * 2
 
   for (let i = 0; i < rays; i++) {
-    const theta = (360 / rays) * i + angle
+    const theta = ((360 / rays) * i + angle) * DEG_TO_RAD
 
     ctx.beginPath()
     ctx.strokeStyle = color
@@ -338,10 +333,11 @@ export function drawStarburstSpiral(
 
     for (let j = 0; j < 200; j++) {
       const t = j / 200
-      const spiralOffset = t * 90
-      const r = t * size * 0.5
-      const x = centerX + r * Math.cos((theta + spiralOffset) * (Math.PI / 180))
-      const y = centerY + r * Math.sin((theta + spiralOffset) * (Math.PI / 180))
+      const spiralOffset = t * 90 * DEG_TO_RAD
+      const radius = t * halfSize
+      const angle = theta + spiralOffset
+      const x = centerX + radius * Math.cos(angle)
+      const y = centerY + radius * Math.sin(angle)
 
       if (j === 0) {
         ctx.moveTo(x, y)
@@ -355,12 +351,12 @@ export function drawStarburstSpiral(
 
   // Draw connecting arcs
   for (let ring = 1; ring <= 5; ring++) {
-    const radius = (ring / 5) * size * 0.5
+    const radius = (ring / 5) * halfSize
     const alpha = 0.2 + (ring / 5) * 0.3
     ctx.beginPath()
-    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`
+    ctx.strokeStyle = `rgba(${cr}, ${cg}, ${cb}, ${alpha})`
     ctx.lineWidth = 1
-    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
+    ctx.arc(centerX, centerY, radius, 0, twoPi)
     ctx.stroke()
   }
 }
@@ -387,27 +383,30 @@ export function drawGalaxySpiral(
   arms: number = 1
 ) {
   const size = viewportDiagonal * (sizePercent / 100)
-  const r = parseInt(color.slice(1, 3), 16)
-  const g = parseInt(color.slice(3, 5), 16)
-  const b = parseInt(color.slice(5, 7), 16)
+  const [r, g, b] = parseHexColor(color)
+  const halfSize = size * 0.5
+  const twoPi = Math.PI * 2
+  const coreRadius = size * 0.15
 
   // Draw core glow
-  const coreGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, size * 0.15)
+  const coreGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, coreRadius)
   coreGradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.8)`)
   coreGradient.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, 0.2)`)
   coreGradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
   ctx.fillStyle = coreGradient
-  ctx.fillRect(centerX - size * 0.15, centerY - size * 0.15, size * 0.3, size * 0.3)
+  ctx.fillRect(centerX - coreRadius, centerY - coreRadius, coreRadius * 2, coreRadius * 2)
 
   // Draw spiral arms with scattered dots
   const dotsPerArm = 200
+  const scatterRange = size * 0.05
   for (let arm = 0; arm < arms; arm++) {
     const armAngle = (360 / arms) * arm
+    const baseAngle = (angle + armAngle) * DEG_TO_RAD
     for (let i = 0; i < dotsPerArm; i++) {
       const t = i / dotsPerArm
-      const theta = (i * 2 + angle + armAngle) * (Math.PI / 180)
-      const radius = t * size * 0.5
-      const scatter = (Math.random() - 0.5) * size * 0.05
+      const theta = i * 2 * DEG_TO_RAD + baseAngle
+      const radius = t * halfSize
+      const scatter = (Math.random() - 0.5) * scatterRange
 
       const x = centerX + (radius + scatter) * Math.cos(theta)
       const y = centerY + (radius + scatter) * Math.sin(theta)
@@ -417,7 +416,7 @@ export function drawGalaxySpiral(
 
       ctx.beginPath()
       ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`
-      ctx.arc(x, y, dotSize, 0, Math.PI * 2)
+      ctx.arc(x, y, dotSize, 0, twoPi)
       ctx.fill()
     }
   }

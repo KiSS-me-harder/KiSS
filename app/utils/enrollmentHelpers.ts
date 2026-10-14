@@ -281,3 +281,19 @@ export function hasActivityLoggedToday(metricProgress: MetricProgress[], activit
   }
   return false
 }
+
+/**
+ * Checks whether an activity was logged within the last 24 hours.
+ * @param metricProgress - All metric progress records.
+ * @param activitySlug - The activity to check.
+ * @returns True if the activity was logged within the previous 24 hours.
+ */
+export function hasActivityLoggedRecently(metricProgress: MetricProgress[], activitySlug: string): boolean {
+  const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000
+  for (const progress of metricProgress) {
+    for (const dp of progress.dataPoints) {
+      if (dp.activitySlug === activitySlug && dp.timestamp >= twentyFourHoursAgo) return true
+    }
+  }
+  return false
+}

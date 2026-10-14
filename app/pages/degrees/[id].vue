@@ -14,7 +14,7 @@ const {
   degreeLevels, selectedLevelIndex, selectedLevel,
   courseInfos, isDegreeFullyEnrolled, isDegreePartiallyEnrolled,
   overallProgress, handleEnrollInDegree, handleCompleteEnrollment, handleUnenrollFromDegree,
-  isTitleCompleted,
+  isTitleCompleted, enrolledTitleName,
   levelNameColors, levelBadgeColors
 } = useDegreePage(id)
 </script>
@@ -65,6 +65,7 @@ const {
               :is-degree-fully-enrolled="isDegreeFullyEnrolled"
               :is-degree-partially-enrolled="isDegreePartiallyEnrolled"
               :selected-level-name="selectedLevel?.name"
+              :enrolled-title-name="enrolledTitleName"
               @update:selected-level-index="selectedLevelIndex = $event"
               @enroll="handleEnrollInDegree"
               @complete-enrollment="handleCompleteEnrollment"

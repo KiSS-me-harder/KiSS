@@ -2,7 +2,6 @@
  * Helper functions for lesson page state management.
  * Extracted from useLessonPage to keep the composable within line limits.
  */
-import type { ExamTask } from '~/utils/lessonExamHelpers'
 import type { useEnrollmentStore } from '~/stores/enrollment'
 
 export type CourseItem = { stem: string, meta?: { dependencies?: { course: string, level: number }[] } }
@@ -144,32 +143,6 @@ export function getFlashcardOptionClassWrapper(
 ) {
   if (!answered) return 'border-white/10 bg-white/5 text-white/40 cursor-not-allowed'
   return getFlashcardOptionClassUtil(answered, isCorrect, correctIndex)
-}
-
-/**
- * Calculates the number of completed exam tasks.
- * @param exam - Array of exam tasks.
- * @param isExamTaskDone - Function to check if a task is done.
- * @param isMilestoneAchieved - Function to check milestone achievement.
- * @param getExamTaskType - Function to get task type.
- * @returns Number of completed tasks.
- */
-export function countExamCompleted(
-  exam: ExamTask[] | undefined,
-  isExamTaskDone: (index: number) => boolean,
-  isMilestoneAchieved: (task: ExamTask) => boolean,
-  getExamTaskType: (task: ExamTask) => string
-): number {
-  if (!exam) return 0
-  let count = 0
-  for (let i = 0; i < exam.length; i++) {
-    const task = exam[i]
-    if (!task) continue
-    if (getExamTaskType(task) === 'checklist') {
-      if (isExamTaskDone(i)) count++
-    } else if (isMilestoneAchieved(task)) count++
-  }
-  return count
 }
 
 /**

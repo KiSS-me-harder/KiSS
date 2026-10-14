@@ -15,7 +15,10 @@ export function useStudyPlanFilters(
   planStore: ReturnType<typeof import('~/stores/studyPlan').useStudyPlanStore>,
   store: ReturnType<typeof useEnrollmentStore>
 ) {
+  // Explicitly depend on store enrollment refs so the computed re-evaluates
+  // when loadFromStorage() populates them after hydration.
   const enrollableCoursesCount = computed(() => {
+    const _ = store.enrollments
     let count = 0
     for (const [key] of courseMap.value) {
       if (!titleCourseSet.value.has(key)) continue

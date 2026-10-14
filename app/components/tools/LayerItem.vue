@@ -1,9 +1,31 @@
 <template>
   <div class="rounded-lg border border-white/10 bg-white/5 p-4 space-y-3">
     <div class="flex items-center justify-between">
-      <span class="text-sm font-medium text-white/80">
-        Layer {{ index }}
-      </span>
+      <div class="flex items-center gap-2">
+        <div class="flex flex-col">
+          <NButton
+            size="xs"
+            color="gray"
+            variant="subtle"
+            :disabled="index === 1"
+            @click="$emit('moveUp')"
+          >
+            <UIcon name="i-lucide-chevron-up" class="w-3 h-3" />
+          </NButton>
+          <NButton
+            size="xs"
+            color="gray"
+            variant="subtle"
+            :disabled="index === totalLayers"
+            @click="$emit('moveDown')"
+          >
+            <UIcon name="i-lucide-chevron-down" class="w-3 h-3" />
+          </NButton>
+        </div>
+        <span class="text-sm font-medium text-white/80">
+          Layer {{ index }}
+        </span>
+      </div>
       <NButton
         size="xs"
         color="error"
@@ -132,13 +154,16 @@ const props = defineProps<{
   index: number
   layer: SpiralLayer
   canRemove: boolean
+  totalLayers: number
 }>()
 
-const { layer } = toRefs(props)
+const { layer, index } = toRefs(props)
 
 defineEmits<{
   update: [key: string, value: unknown]
   remove: []
+  moveUp: []
+  moveDown: []
 }>()
 
 /**

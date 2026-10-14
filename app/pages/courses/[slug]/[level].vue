@@ -70,18 +70,29 @@
               :get-flashcard-option-class="getFlashcardOptionClass"
             />
 
-            <!-- Exam tasks / Metrics -->
+            <!-- Homework section -->
+            <LessonHomework
+              v-if="lessonData?.homework?.length"
+              :homework="lessonData.homework"
+              :is-homework-done="isHomeworkDone"
+              :toggle-homework-done="toggleHomeworkDone"
+              :homework-completed-count="homeworkCompletedCount"
+            />
+
+            <!-- Exam activities -->
             <LessonExam
               v-if="lessonData?.exam?.length"
               :exam="lessonData.exam"
-              :get-exam-task-type="getExamTaskType"
-              :get-exam-task-text="getExamTaskText"
-              :get-exam-task-metric="getExamTaskMetric"
-              :is-exam-task-done="isExamTaskDone"
-              :toggle-exam-task-done="toggleExamTaskDone"
+              :is-exam-activity-done="isExamActivityDone"
               :get-exam-completed-count="getExamCompletedCount"
-              :get-milestone-current-value="getMilestoneCurrentValue"
+            />
+
+            <!-- Metrics milestones -->
+            <LessonMetrics
+              v-if="lessonData?.metrics?.length"
+              :metrics="lessonData.metrics"
               :is-milestone-achieved="isMilestoneAchieved"
+              :get-metrics-completed-count="getMetricsCompletedCount"
             />
 
             <!-- Level navigation -->
@@ -95,7 +106,7 @@
               </NuxtLink>
               <div v-else />
               <NuxtLink
-                v-if="lessonData.nextLevel"
+                v-if="canProceedToNext && lessonData.nextLevel"
                 :to="lessonData.nextLevel.path"
                 class="text-sm text-primary hover:underline"
               >
@@ -133,14 +144,14 @@ const flashcardAnswered = lessonPage.flashcardAnswered
 const flashcardsCorrect = lessonPage.flashcardsCorrect
 const answerFlashcard = lessonPage.answerFlashcard
 const getFlashcardOptionClass = lessonPage.getFlashcardOptionClass
-const getExamTaskType = lessonPage.getExamTaskType
-const getExamTaskText = lessonPage.getExamTaskText
-const getExamTaskMetric = lessonPage.getExamTaskMetric
-const isExamTaskDone = lessonPage.isExamTaskDone
-const toggleExamTaskDone = lessonPage.toggleExamTaskDone
+const isHomeworkDone = lessonPage.isHomeworkDone
+const toggleHomeworkDone = lessonPage.toggleHomeworkDone
+const homeworkCompletedCount = lessonPage.homeworkCompletedCount
+const isExamActivityDone = lessonPage.isExamActivityDone
 const getExamCompletedCount = lessonPage.getExamCompletedCount
-const getMilestoneCurrentValue = lessonPage.getMilestoneCurrentValue
 const isMilestoneAchieved = lessonPage.isMilestoneAchieved
+const getMetricsCompletedCount = lessonPage.getMetricsCompletedCount
+const canProceedToNext = lessonPage.canProceedToNext
 
 const sidebarRef = ref<InstanceType<typeof import('~/components/LessonSectionNavSidebar.vue')>>()
 

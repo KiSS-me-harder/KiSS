@@ -51,9 +51,42 @@ const defaultThemeColors: Record<string, string> = {
 }
 
 /**
+ * Cache for resolved theme colors to avoid repeated lookups.
+ */
+const resolvedColorCache: Record<string, string> = {}
+
+/**
+ * Converts an rgb/rgba CSS color value to a hex string.
+ * @param value - The CSS color value (e.g. "rgb(255, 0, 0)" or "rgba(255, 0, 0, 1)").
+ * @returns The hex color string, or null if parsing fails.
+ */
+function rgbToHex(value: string): string | null {
+  const rgbMatch = value.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/)
+  if (!rgbMatch || !rgbMatch[1] || !rgbMatch[2] || !rgbMatch[3]) return null
+  const r = parseInt(rgbMatch[1], 10)
+  const g = parseInt(rgbMatch[2], 10)
+  const b = parseInt(rgbMatch[3], 10)
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+}
+
+/**
+ * Resolves a CSS custom property value from the root element without DOM manipulation.
+ * @param propertyName - The CSS property name (e.g. "--ui-primary").
+ * @returns The resolved color value as a string, or empty string if not found.
+ */
+function resolveCssVariable(propertyName: string): string {
+  if (!import.meta.client) {
+    return ''
+  }
+  const rootStyles = getComputedStyle(document.documentElement)
+  return rootStyles.getPropertyValue(propertyName).trim()
+}
+
+/**
  * Resolves a theme color name or hex value to a hex color string.
  * For primary and neutral, reads the CSS variable at runtime (customizable via app.config.ts).
  * For other colors, uses Nuxt UI default hex values.
+ * Results are cached so repeated calls return instantly.
  * @param color - A theme color name or hex color string.
  * @returns The resolved hex color string.
  */
@@ -68,40 +101,57 @@ export function resolveThemeColor(color: string): string {
     return color
   }
 
+  // Return from cache if already resolved
+  if (resolvedColorCache[color]) {
+    return resolvedColorCache[color]
+  }
+
   // For non-customizable colors, return the default hex value directly
   if (defaultThemeColors[color]) {
-    return defaultThemeColors[color]
+    resolvedColorCache[color] = defaultThemeColors[color]
+    return resolvedColorCache[color]
   }
 
   // Only resolve primary and neutral from CSS variables (they are customizable)
   if (!import.meta.client) {
-    return color === 'neutral' ? '#5c5c7b' : '#ec4899' // SSR fallbacks
+    const fallback = color === 'neutral' ? '#5c5c7b' : '#ec4899'
+    resolvedColorCache[color] = fallback
+    return fallback
   }
 
   const cssVar = color === 'neutral' ? '--ui-neutral' : '--ui-primary'
-  const tempElement = document.createElement('div')
-  tempElement.style.cssText = `color: ${cssVar}`
-  document.body.appendChild(tempElement)
-  const computedStyle = getComputedStyle(tempElement)
-  const value = computedStyle.color.trim()
-  document.body.removeChild(tempElement)
+  const value = resolveCssVariable(cssVar)
 
-  // If the value is already a hex color, return it
+  if (!value) {
+    const fallback = color === 'neutral' ? '#5c5c7b' : '#ec4899'
+    resolvedColorCache[color] = fallback
+    return fallback
+  }
+
+  // If the value is already a hex color, cache and return it
   if (value.startsWith('#')) {
+    resolvedColorCache[color] = value
     return value
   }
 
-  // If it's an rgb/rgba value, convert to hex
-  const rgbMatch = value.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/)
-  if (rgbMatch) {
-    const r = parseInt(rgbMatch[1], 10)
-    const g = parseInt(rgbMatch[2], 10)
-    const b = parseInt(rgbMatch[3], 10)
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+  // If it's an rgb/rgba value, convert to hex, cache, and return
+  const hex = rgbToHex(value)
+  if (hex) {
+    resolvedColorCache[color] = hex
+    return hex
   }
 
   // Fallback
-  return color === 'neutral' ? '#5c5c7b' : '#ec4899'
+  const fallback = color === 'neutral' ? '#5c5c7b' : '#ec4899'
+  resolvedColorCache[color] = fallback
+  return fallback
+}
+
+/**
+ * Clears the resolved color cache. Call this when the theme changes to force re-resolution.
+ */
+export function clearResolvedColorCache() {
+  Object.assign(resolvedColorCache, {})
 }
 
 /**

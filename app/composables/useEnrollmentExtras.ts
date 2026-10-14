@@ -1,7 +1,7 @@
 import type { CardSpacedRep, MetricProgress } from '~/types/enrollment'
 import { createCardRep, updateCardRep, getDueCards, getDegreeKnowledgeScore, getKnowledgeBreakdown,
   getMetricValueField, getMetricDataPoints, getMetricLatestValues,
-  isMilestoneAchievedForMetric, hasActivityLoggedToday
+  isMilestoneAchievedForMetric, hasActivityLoggedToday, hasActivityLoggedRecently
 } from '~/utils/enrollmentHelpers'
 
 export function useSpacedRepetition(cardSpacedRep: Ref<CardSpacedRep[]>, flashcardAnswers: Ref<{ cardId: number, courseName: string, level: number, correct: boolean, answeredAt: number }[]>) {
@@ -80,5 +80,8 @@ export function useMetrics(metricProgress: Ref<MetricProgress[]>) {
   function hasActivityLoggedTodayFn(activitySlug: string): boolean {
     return hasActivityLoggedToday(metricProgress.value, activitySlug)
   }
-  return { getMetricProgressFn, getMetricValueFieldFn, getMetricDataPointsFn, getMetricLatestValuesFn, isMilestoneAchievedFn, getAchievedMilestoneCount, logActivity, deleteDataPoint, hasActivityLoggedTodayFn }
+  function isActivityDoneRecentlyFn(activitySlug: string): boolean {
+    return hasActivityLoggedRecently(metricProgress.value, activitySlug)
+  }
+  return { getMetricProgressFn, getMetricValueFieldFn, getMetricDataPointsFn, getMetricLatestValuesFn, isMilestoneAchievedFn, getAchievedMilestoneCount, logActivity, deleteDataPoint, hasActivityLoggedTodayFn, isActivityDoneRecentlyFn }
 }

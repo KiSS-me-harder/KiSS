@@ -10,19 +10,8 @@ export type {
 export const useEnrollmentStore = defineStore('enrollment', () => {
   const logic = useEnrollmentLogic()
 
-  // Load from localStorage after Nuxt hydration
-  if (import.meta.client) {
-    const nuxtApp = useNuxtApp()
-    if (nuxtApp.isHydrated) {
-      logic.loadFromStorage()
-    } else {
-      watch(() => nuxtApp.isHydrated, (hydrated) => {
-        if (hydrated) {
-          logic.loadFromStorage()
-        }
-      }, { once: true })
-    }
-  }
+  // Note: localStorage loading is handled by the enrollment-loader plugin
+  // to ensure it runs after hydration regardless of when the store was created.
 
   watch([
     logic.profile, logic.enrollments, logic.degreeEnrollments,
@@ -89,11 +78,13 @@ export const useEnrollmentStore = defineStore('enrollment', () => {
     logActivity: logic.logActivity,
     deleteDataPoint: logic.deleteDataPoint,
     hasActivityLoggedToday: logic.hasActivityLoggedTodayFn,
+    isActivityDoneRecently: logic.isActivityDoneRecentlyFn,
     joinClub: logic.joinClub,
     leaveClub: logic.leaveClub,
     isClubMember: logic.isClubMember,
     getClubActivitySlugs: logic.getClubActivitySlugs,
     toggleExamTask: logic.toggleExamTask,
-    isExamTaskCompleted: logic.isExamTaskCompleted
+    isExamTaskCompleted: logic.isExamTaskCompleted,
+    loadFromStorage: logic.loadFromStorage
   }
 })

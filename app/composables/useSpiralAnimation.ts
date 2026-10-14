@@ -54,6 +54,7 @@ export function useSpiralAnimation(
     if (resizeObserver) {
       resizeObserver.disconnect()
     }
+    canvas.cleanup()
     focusOverlay.cleanup()
   }
 

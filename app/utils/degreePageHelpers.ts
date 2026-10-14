@@ -42,13 +42,7 @@ export interface DegreeCourseInfo {
 }
 
 /**
- * Builds a single DegreeCourseInfo object for a given course and level.
- * @param dc - The degree level course.
- * @param allCourses - All course content entries.
- * @param degreeId - The current degree slug.
- * @param baseURL - Base URL for assets.
- * @param store - The enrollment store.
- * @returns Degree course info object.
+ * Builds a single DegreeCourseInfo for a course and level.
  */
 function buildSingleCourseInfo(
   dc: DegreeLevelCourse,
@@ -107,12 +101,6 @@ function buildSingleCourseInfo(
 
 /**
  * Builds course info array for a selected degree level.
- * @param selectedLevel - The selected degree level.
- * @param allCourses - All course content entries.
- * @param degreeId - The current degree slug.
- * @param baseURL - Base URL for assets.
- * @param store - The enrollment store.
- * @returns Array of degree course info objects.
  */
 export function buildCourseInfos(
   selectedLevel: DegreeLevel | null,
@@ -134,15 +122,7 @@ export function buildCourseInfos(
 }
 
 /**
- * Builds cumulative course info array including all courses from the selected title
- * and all lower titles, deduplicated by course slug (keeping the highest level).
- * @param degreeLevels - All degree levels ordered from lowest to highest.
- * @param selectedLevelIndex - The index of the selected title level.
- * @param allCourses - All course content entries.
- * @param degreeId - The current degree slug.
- * @param baseURL - Base URL for assets.
- * @param store - The enrollment store.
- * @returns Array of degree course info objects with cumulative courses.
+ * Builds cumulative course info including all courses from the selected title and lower titles.
  */
 export function buildCumulativeCourseInfos(
   degreeLevels: DegreeLevel[],
@@ -182,11 +162,7 @@ export function buildCumulativeCourseInfos(
 }
 
 /**
- * Extracts prerequisites for a course up to the given level from all course content.
- * @param courseName - The course slug.
- * @param maxLevel - The maximum level to include.
- * @param allCourses - All course content entries.
- * @returns Array of prerequisite objects.
+ * Extracts prerequisites for a course up to the given level.
  */
 export function getCoursePrerequisites(
   courseName: string,
@@ -225,13 +201,29 @@ export function getCoursePrerequisites(
 }
 
 /**
- * Handles enrolling in a degree and its courses, respecting prerequisites (page-level).
- * Only enrolls in courses whose prerequisites are currently met.
- * @param degreeId - The degree slug.
- * @param titleName - The title/level name.
- * @param selectedLevel - The selected degree level.
- * @param allCourses - All course content entries.
- * @param store - The enrollment store.
+ * Enrolls in a single course for a degree, respecting prerequisites.
+ */
+function enrollSingleCourseForDegree(
+  courseName: string, dc: DegreeLevelCourse, allCourses: unknown[], degreeId: string, store: ReturnType<typeof useEnrollmentStore>
+) {
+  if (store.isEnrolled(courseName)) return
+  const prerequisites = getCoursePrerequisites(courseName, dc.level, allCourses)
+  const externalPrerequisites = prerequisites.filter(p => p.course !== courseName)
+  if (externalPrerequisites.length > 0 && !store.areDependenciesMet(courseName, dc.level, externalPrerequisites)) return
+  const prefix = `courses/${courseName}/`
+  const levels = allCourses
+    .filter(item => (item as { stem?: string }).stem?.startsWith(prefix))
+    .map((item) => {
+      const parts = (item as { stem?: string }).stem?.split('/') || []
+      return parts.length >= 3 ? parseInt(parts[2] ?? '', 10) : NaN
+    })
+    .filter(l => !isNaN(l) && l <= dc.level)
+    .sort((a, b) => a - b)
+  store.enrollInCourse(courseName, courseName, degreeId, levels)
+}
+
+/**
+ * Enrolls in a degree and its courses, respecting prerequisites.
  */
 export function enrollInDegreeForPage(
   degreeId: string,
@@ -242,34 +234,12 @@ export function enrollInDegreeForPage(
 ) {
   store.enrollInDegree(degreeId, titleName)
   for (const dc of selectedLevel.courses) {
-    const courseName = dc.slug
-    if (!store.isEnrolled(courseName)) {
-      // Extract prerequisites for this course up to the selected level
-      const prerequisites = getCoursePrerequisites(courseName, dc.level, allCourses)
-      // Only enroll if prerequisites are met
-      if (prerequisites.length === 0 || store.areDependenciesMet(courseName, dc.level, prerequisites)) {
-        const prefix = `courses/${courseName}/`
-        const levels = allCourses
-          .filter(item => (item as { stem?: string }).stem?.startsWith(prefix))
-          .map((item) => {
-            const parts = (item as { stem?: string }).stem?.split('/') || []
-            return parts.length >= 3 ? parseInt(parts[2] ?? '', 10) : NaN
-          })
-          .filter(l => !isNaN(l) && l <= dc.level)
-          .sort((a, b) => a - b)
-        store.enrollInCourse(courseName, courseName, degreeId, levels)
-      }
-    }
+    enrollSingleCourseForDegree(dc.slug, dc, allCourses, degreeId, store)
   }
 }
 
 /**
- * Checks and enrolls in any newly available courses for a degree whose prerequisites are now met.
- * Used for auto-enrollment on course completion and "Complete Enrollment" button.
- * @param degreeId - The degree slug.
- * @param selectedLevel - The selected degree level.
- * @param allCourses - All course content entries.
- * @param store - The enrollment store.
+ * Checks and enrolls in newly available courses whose prerequisites are now met.
  */
 export function checkAndEnrollAvailableCourses(
   degreeId: string,
@@ -278,142 +248,65 @@ export function checkAndEnrollAvailableCourses(
   store: ReturnType<typeof useEnrollmentStore>
 ) {
   for (const dc of selectedLevel.courses) {
-    const courseName = dc.slug
-    if (!store.isEnrolled(courseName)) {
-      const prerequisites = getCoursePrerequisites(courseName, dc.level, allCourses)
-      if (prerequisites.length === 0 || store.areDependenciesMet(courseName, dc.level, prerequisites)) {
-        const prefix = `courses/${courseName}/`
-        const levels = allCourses
-          .filter(item => (item as { stem?: string }).stem?.startsWith(prefix))
-          .map((item) => {
-            const parts = (item as { stem?: string }).stem?.split('/') || []
-            return parts.length >= 3 ? parseInt(parts[2] ?? '', 10) : NaN
-          })
-          .filter(l => !isNaN(l) && l <= dc.level)
-          .sort((a, b) => a - b)
-        store.enrollInCourse(courseName, courseName, degreeId, levels)
-      }
-    }
+    enrollSingleCourseForDegree(dc.slug, dc, allCourses, degreeId, store)
   }
 }
 
 /**
- * Handles unenrolling from a degree and all its courses (page-level).
- * @param degreeId - The degree slug.
- * @param titleName - The title/level name.
- * @param selectedLevel - The selected degree level.
- * @param store - The enrollment store.
+ * Collects all unique course slugs up to the given level index.
+ */
+export function getCumulativeCourseSlugs(degreeLevels: DegreeLevel[], upToIndex: number): Set<string> {
+  const slugs = new Set<string>()
+  for (let i = 0; i <= upToIndex && i < degreeLevels.length; i++) {
+    for (const dc of degreeLevels[i].courses) {
+      slugs.add(dc.slug)
+    }
+  }
+  return slugs
+}
+
+/**
+ * Unenrolls from a degree and all its cumulative courses.
  */
 export function unenrollFromDegreeForPage(
+  degreeId: string, enrolledLevelIndex: number, degreeLevels: DegreeLevel[], store: ReturnType<typeof useEnrollmentStore>
+) {
+  const courseSlugs = getCumulativeCourseSlugs(degreeLevels, enrolledLevelIndex)
+  for (const courseName of courseSlugs) {
+    if (store.isEnrolled(courseName)) store.unenrollFromCourse(courseName)
+  }
+  store.unenrollFromDegree(degreeId)
+}
+
+/**
+ * Leaves all clubs that require a specific degree.
+ */
+export function leaveClubsForDegree(
   degreeId: string,
-  titleName: string,
-  selectedLevel: DegreeLevel,
+  clubs: { requiredDegree?: string, _path?: string }[],
   store: ReturnType<typeof useEnrollmentStore>
 ) {
-  store.unenrollFromDegree(degreeId)
-  for (const dc of selectedLevel.courses) {
-    const courseName = dc.slug
-    if (store.isEnrolled(courseName)) {
-      store.unenrollFromCourse(courseName)
-    }
-  }
-}
-
-/**
- * Checks if a title/level is fully completed.
- * @param titleIndex - The index of the title to check.
- * @param degreeLevels - Array of degree levels.
- * @param allCourses - All course content entries.
- * @param store - The enrollment store.
- * @returns True if all courses and levels are completed.
- */
-export function checkTitleCompleted(
-  titleIndex: number,
-  degreeLevels: DegreeLevel[],
-  allCourses: unknown[],
-  store: ReturnType<typeof useEnrollmentStore>
-): boolean {
-  if (titleIndex >= degreeLevels.length) return false
-  const title = degreeLevels[titleIndex]
-  if (!title || !allCourses.length) return false
-  for (const dc of title.courses) {
-    const courseName = dc.slug
-    if (!store.isEnrolled(courseName)) return false
-    const prefix = `courses/${courseName}/`
-    const levels = allCourses
-      .filter(item => (item as { stem?: string }).stem?.startsWith(prefix))
-      .map((item) => {
-        const parts = (item as { stem?: string }).stem?.split('/') || []
-        return parts.length >= 3 ? parseInt(parts[2] ?? '', 10) : NaN
-      })
-      .filter(l => !isNaN(l) && l <= dc.level)
-      .sort((a, b) => a - b)
-    for (const level of levels) {
-      if (!store.isLevelCompleted(courseName, level)) return false
-    }
-  }
-  return true
-}
-
-/**
- * Returns the tier color class for a max level.
- * @param maxLevel - The maximum level number.
- * @returns Tailwind CSS background color class.
- */
-export function getTierColor(maxLevel: number): string {
-  if (maxLevel >= 300) return 'bg-red-500'
-  if (maxLevel >= 200) return 'bg-blue-500'
-  return 'bg-green-500'
-}
-
-/**
- * Returns the tier label for a max level.
- * @param maxLevel - The maximum level number.
- * @returns Tier label string.
- */
-export function getTierLabel(maxLevel: number): string {
-  if (maxLevel >= 300) return 'Tier 3'
-  if (maxLevel >= 200) return 'Tier 2'
-  return 'Tier 1'
-}
-
-/**
- * Builds structured data JSON-LD for a degree page.
- * @param degreeId - The degree slug.
- * @param title - The degree title.
- * @param description - The degree description.
- * @returns JSON string of structured data.
- */
-export function buildDegreeStructuredData(degreeId: string, title: string | undefined, description: string | undefined): string {
-  return JSON.stringify({
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'Course',
-        '@id': `https://kiss-academy.github.io/KiSS/degrees/${degreeId}#course`,
-        'url': `https://kiss-academy.github.io/KiSS/degrees/${degreeId}`,
-        'name': title,
-        'description': description,
-        'inLanguage': 'en',
-        'provider': { '@type': 'Organization', 'name': 'KiSS Academy', 'url': 'https://kiss-academy.github.io/KiSS/' }
-      },
-      {
-        '@type': 'WebPage',
-        '@id': `https://kiss-academy.github.io/KiSS/degrees/${degreeId}#webpage`,
-        'url': `https://kiss-academy.github.io/KiSS/degrees/${degreeId}`,
-        'name': title,
-        'description': description,
-        'inLanguage': 'en',
-        'isPartOf': { '@id': 'https://kiss-academy.github.io/KiSS/#website' }
-      },
-      {
-        '@type': 'WebSite',
-        '@id': 'https://kiss-academy.github.io/KiSS/#website',
-        'url': 'https://kiss-academy.github.io/KiSS/',
-        'name': 'KiSS Academy',
-        'description': 'KiSS Academy - A gamified learning platform for personal transformation and self-improvement.',
-        'inLanguage': 'en'
+  for (const club of clubs) {
+    if (club.requiredDegree === degreeId) {
+      const clubSlug = club._path?.split('/').pop()
+      if (clubSlug && store.isClubMember(clubSlug)) {
+        store.leaveClub(clubSlug)
       }
-    ]
-  })
+    }
+  }
+}
+
+/**
+ * Unenrolls from courses removed when switching degree titles.
+ */
+export function unenrollRemovedCourses(
+  degreeLevels: DegreeLevel[], oldTitleIndex: number, newTitleIndex: number, store: ReturnType<typeof useEnrollmentStore>
+) {
+  const oldCourses = getCumulativeCourseSlugs(degreeLevels, oldTitleIndex)
+  const newCourses = getCumulativeCourseSlugs(degreeLevels, newTitleIndex)
+  for (const slug of oldCourses) {
+    if (!newCourses.has(slug) && store.isEnrolled(slug)) {
+      store.unenrollFromCourse(slug)
+    }
+  }
 }

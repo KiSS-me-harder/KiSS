@@ -16,4 +16,27 @@ contributions:
     map:
       underbust: "underbust"
       overbust: "overbust"
+relatedCourses:
+  - "feminine-enhancement"
+  - "feminine-transformation"
+relatedDegrees:
+  - "fitness"
 ---
+
+Breast measurement tracks changes in bust size over time — an important part of documenting your physical transformation journey.
+
+### Getting Started
+
+Use a soft measuring tape. Measure underbust snugly around the rib cage, then overbust at the fullest part of the bust. Keep your posture consistent.
+
+### Tips for Progress
+
+- Measure weekly at the same time of day for consistency.
+- Track both underbust and overbust to see complete changes.
+- Combine with photos for a fuller picture of your progress.
+
+### Progressing
+
+Check out the **[Feminine Enhancement](/courses/feminine-enhancement)** course for structured lessons on body development, or **[Feminine Transformation](/courses/feminine-transformation)** for a comprehensive approach to physical change.
+
+For a comprehensive path, the **[Fitness](/degrees/fitness)** degree program covers all aspects of physical training from beginner to advanced levels.

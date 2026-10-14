@@ -11,8 +11,16 @@ export async function useFlashcards() {
 
   const { data: allCourses } = await useAsyncData('flashcards-courses', () => queryCollection('courses').all())
 
-  const allDeckCards = computed(() => buildFlashcardDeck(allCourses.value || [], store))
-  const knowledgeBreakdown = computed(() => store.getKnowledgeBreakdown())
+  // Explicitly depend on store enrollment refs so the computed re-evaluates
+  // when loadFromStorage() populates them after hydration.
+  const allDeckCards = computed(() => {
+    const _ = store.enrollments
+    return buildFlashcardDeck(allCourses.value || [], store)
+  })
+  const knowledgeBreakdown = computed(() => {
+    const _ = store.enrollments
+    return store.getKnowledgeBreakdown()
+  })
 
   const statsSummary = computed(() => {
     const totalCards = allDeckCards.value.length

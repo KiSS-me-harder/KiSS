@@ -15,7 +15,6 @@ import {
   areDependenciesMet as areDependenciesMetFn, canEnroll as canEnrollFn,
   isDegreeEnrolledFn, getDegreeEnrollmentFn,
   enrollInDegree as enrollInDegreeFn, unenrollFromDegree as unenrollFromDegreeFn,
-  hasDegreeEnrollment as hasDegreeEnrollmentFn,
   joinClubFn, leaveClubFn, isClubMemberFn, getClubActivitySlugsFn,
   toggleExamTaskFn, isExamTaskCompletedFn,
   saveEnrollmentToStorage, loadEnrollmentFromStorage,
@@ -64,45 +63,36 @@ export function useEnrollmentLogic() {
   const checkAchievements = () => checkAchievementsFn(profile)
   const getUnlockedAchievements = () => getUnlockedAchievementsFn(profile)
 
-  // Helper: wrap a mutating function so it auto-saves after execution
-  const saveAfter = (fn: (...args: unknown[]) => void) => {
-    return (...args: unknown[]) => {
-      fn(...args)
-      saveToStorage()
-    }
-  }
-
   // Enrollment helpers — delegated to utility functions
-  const enrollInCourse = saveAfter((...a: [string, string, string, number[]]) => enrollInCourseFn(enrollments, ...a)) as (s: string, n: string, d: string, l: number[]) => void
-  const unenrollFromCourse = saveAfter((...a: [string]) => unenrollFromCourseFn(enrollments, ...a)) as (s: string) => void
+  // Auto-save is handled by the store's watch, not here
+  const enrollInCourse = (s: string, n: string, d: string, l: number[]) => enrollInCourseFn(enrollments, s, n, d, l)
+  const unenrollFromCourse = (s: string) => unenrollFromCourseFn(enrollments, s)
   const isEnrolled = (s: string) => isEnrolledFn(enrollments, s)
   const getEnrollment = (s: string) => getEnrollmentFn(enrollments, s)
-  const completeLevel = saveAfter((...a: [string, number]) => completeLevelFn(enrollments, ...a)) as (s: string, l: number) => void
-  const resetLevel = saveAfter((...a: [string, number]) => resetLevelFn(enrollments, ...a)) as (s: string, l: number) => void
+  const completeLevel = (s: string, l: number) => completeLevelFn(enrollments, s, l)
+  const resetLevel = (s: string, l: number) => resetLevelFn(enrollments, s, l)
   const isLevelCompleted = (s: string, l: number) => isLevelCompletedFn(enrollments, s, l)
   const areDependenciesMet = (_s: string, _l: number, d: { course: string, level: number }[]) => areDependenciesMetFn(enrollments, d)
   const canEnroll = (s: string, d: { course: string, level: number }[]) => canEnrollFn(enrollments, s, d)
 
   const isDegreeEnrolled = (s: string) => isDegreeEnrolledFn(degreeEnrollments, s)
   const getDegreeEnrollment = (s: string) => getDegreeEnrollmentFn(degreeEnrollments, s)
-  const enrollInDegree = saveAfter((...a: [string, string]) => enrollInDegreeFn(degreeEnrollments, ...a)) as (s: string, t: string) => void
-  const unenrollFromDegree = saveAfter((...a: [string]) => unenrollFromDegreeFn(degreeEnrollments, ...a)) as (s: string) => void
-  const hasDegreeEnrollment = (s: string) => hasDegreeEnrollmentFn(enrollments, s)
+  const enrollInDegree = (s: string, t: string) => enrollInDegreeFn(degreeEnrollments, s, t)
+  const unenrollFromDegree = (s: string) => unenrollFromDegreeFn(degreeEnrollments, s)
+  const hasDegreeEnrollment = (s: string) => isDegreeEnrolledFn(degreeEnrollments, s)
 
-  const joinClub = saveAfter((...a: [string, string?]) => joinClubFn(clubMemberships, a[0] as string, !a[1] || hasDegreeEnrollmentFn(enrollments, a[1] as string))) as (s: string, r?: string) => void
-  const leaveClub = saveAfter((...a: [string]) => leaveClubFn(clubMemberships, ...a)) as (s: string) => void
+  const joinClub = (s: string, r?: string) => joinClubFn(clubMemberships, s, !r || isDegreeEnrolledFn(degreeEnrollments, r))
+  const leaveClub = (s: string) => leaveClubFn(clubMemberships, s)
   const isClubMember = (s: string) => isClubMemberFn(clubMemberships, s)
   const getClubActivitySlugs = (m: Record<string, string[]>) => getClubActivitySlugsFn(clubMemberships, m)
-  const toggleExamTask = saveAfter((...a: [string, number, number]) => toggleExamTaskFn(examTasks, ...a)) as (c: string, l: number, t: number) => void
+  const toggleExamTask = (c: string, l: number, t: number) => toggleExamTaskFn(examTasks, c, l, t)
   const isExamTaskCompleted = (c: string, l: number, t: number) => isExamTaskCompletedFn(examTasks, c, l, t)
 
   function recordFlashcardAnswer(cardId: number, courseName: string, level: number, correct: boolean) {
     flashcardAnswers.value.push({ cardId, courseName, level, correct, answeredAt: Date.now() })
-    saveToStorage()
   }
   function addDetention() {
     detentionCount.value++
-    saveToStorage()
   }
 
   const spacedRep = useSpacedRepetition(cardSpacedRep, flashcardAnswers)

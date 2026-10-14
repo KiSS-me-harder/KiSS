@@ -58,7 +58,10 @@ export async function useClubPage(slug: ComputedRef<string>) {
     })
   })
 
-  const isMember = computed(() => store.isClubMember(slug.value))
+  const isMember = computed(() => {
+    const _ = store.clubMemberships
+    return store.isClubMember(slug.value)
+  })
   const joinFailed = ref(false)
 
   function toggleMembership() {

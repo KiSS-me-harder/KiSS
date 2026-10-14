@@ -1,9 +1,9 @@
 import { useEnrollmentStore } from '~/stores/enrollment'
-import { getExamTaskType, getExamTaskText, getExamTaskMetric, isMilestoneAchieved, getMilestoneCurrentValue } from '~/utils/lessonExamHelpers'
 import { getFlashcardOptionClass as getFlashcardOptionClassUtil } from '~/utils/lessonFlashcardHelpers'
 import { buildSortedLevels, findPreviousLevel, findNextLevel, getLevelBadgeColor, parseLessonData } from '~/utils/lessonLevelHelpers'
-import { buildLevelItemMap, checkLevelUnlocked, doEnrollInCourse, doCompleteLevel, doResetLevel, countExamCompleted, createFlashcardAnswerHandler, createFlashcardOptionClassHandler, setupLessonSeoMeta, findCourseDegree } from '~/utils/lessonPageHelpers'
-import type { ExamTask } from '~/utils/lessonExamHelpers'
+import { buildLevelItemMap, checkLevelUnlocked, doEnrollInCourse, createFlashcardAnswerHandler, createFlashcardOptionClassHandler, setupLessonSeoMeta, findCourseDegree } from '~/utils/lessonPageHelpers'
+import { createLessonCompleted, setupAutoComplete, createCanProceedToNext, createHomeworkState, createLevelActions } from '~/utils/lessonCompletionHelpers'
+import { createExamCheckers, createMetricsCheckers } from '~/utils/lessonExamMetricsHelpers'
 import type { CourseItem } from '~/utils/lessonPageHelpers'
 
 /**
@@ -49,19 +49,27 @@ export async function useLessonPage() {
   }
 
   const currentLevelDeps = computed(() => {
-    const item = currentLevelItem.value as { dependencies?: { course: string, level: number }[] } | null
+    const item = currentLevelItem.value as { meta?: { dependencies?: { course: string, level: number }[] } } | null
     if (!item) return []
-    return item.dependencies || []
+    return item.meta?.dependencies || []
   })
 
+  // Explicitly depend on store enrollment refs so the computed re-evaluates
+  // when loadFromStorage() populates them after hydration.
   const isLevelUnlocked = computed(() => {
+    const _ = store.enrollments
     if (!currentLevelDeps.value.length) return true
     return store.areDependenciesMet(slug.value, levelParam.value, currentLevelDeps.value)
   })
 
+  const isEnrolledInCourse = computed(() => {
+    const _ = store.enrollments
+    return store.isEnrolled(slug.value)
+  })
+
   if (import.meta.client) {
-    watch([isLevelUnlocked, currentLevelItem], ([unlocked, item]) => {
-      if (item && !unlocked) {
+    watch([isLevelUnlocked, isEnrolledInCourse, currentLevelItem], ([unlocked, enrolled, item]) => {
+      if (item && (!enrolled || !unlocked)) {
         navigateTo(`/courses/${slug.value}`, { replace: true })
       }
     }, { immediate: true })
@@ -80,19 +88,11 @@ export async function useLessonPage() {
   })
 
   const levelBadgeColor = computed(() => getLevelBadgeColor(levelParam.value))
-  const isEnrolled = computed(() => store.isEnrolled(classSlug.value))
-
-  function isLevelCompleted(level?: number) {
-    return store.isLevelCompleted(classSlug.value, level ?? levelParam.value)
-  }
-
-  function completeCurrentLevel() {
-    doCompleteLevel(classSlug.value, levelParam.value, store)
-  }
-
-  function resetCurrentLevel() {
-    doResetLevel(classSlug.value, levelParam.value, store)
-  }
+  const isEnrolled = computed(() => {
+    const _ = store.enrollments
+    return store.isEnrolled(classSlug.value)
+  })
+  const { isLevelCompleted, completeCurrentLevel, resetCurrentLevel } = createLevelActions(classSlug, levelParam, store)
 
   function handleEnroll() {
     const levels = sortedLevelsData.value.map(l => l.level)
@@ -105,20 +105,20 @@ export async function useLessonPage() {
   const answerFlashcard = createFlashcardAnswerHandler(lessonData, flashcardAnswered, store)
   const getFlashcardOptionClassWrapper = createFlashcardOptionClassHandler(lessonData, flashcardAnswered, getFlashcardOptionClassUtil)
 
-  function isExamTaskDone(taskIndex: number): boolean {
-    return store.isExamTaskCompleted(classSlug.value, levelParam.value, taskIndex)
-  }
+  const { homeworkCompleted, toggleHomeworkDone, isHomeworkDone, homeworkCompletedCount } = createHomeworkState()
+  const { isExamActivityDone, countExamCompleted } = createExamCheckers(store)
+  const { isMilestoneAchieved, countMetricsCompleted } = createMetricsCheckers()
 
-  function toggleExamTaskDone(taskIndex: number) {
-    store.toggleExamTask(classSlug.value, levelParam.value, taskIndex)
-  }
+  const getExamCompletedCount = computed(() => lessonData.value?.exam ? countExamCompleted(lessonData.value.exam) : 0)
+  const getMetricsCompletedCount = computed(() => lessonData.value?.metrics ? countMetricsCompleted(lessonData.value.metrics) : 0)
 
-  const storeWithMetrics = store as typeof store & { getMetricValueField: (metricSlug: string, fieldId: string) => number }
+  const lessonIsCompleted = createLessonCompleted(
+    lessonData, flashcardAnswered, homeworkCompleted,
+    isExamActivityDone, isMilestoneAchieved
+  )
 
-  const getExamCompletedCount = computed(() => {
-    return countExamCompleted(lessonData.value?.exam, isExamTaskDone, t => isMilestoneAchieved(t, storeWithMetrics), getExamTaskType)
-  })
-
+  setupAutoComplete(lessonIsCompleted, classSlug, levelParam, store)
+  const canProceedToNext = createCanProceedToNext(lessonData, lessonIsCompleted)
   setupLessonSeoMeta(lessonData)
 
   return {
@@ -129,9 +129,9 @@ export async function useLessonPage() {
     isEnrolled, isLevelCompleted, completeCurrentLevel,
     resetCurrentLevel, handleEnroll,
     flashcardAnswered, flashcardsCorrect, answerFlashcard, getFlashcardOptionClass: getFlashcardOptionClassWrapper,
-    getExamTaskType, getExamTaskText, getExamTaskMetric,
-    isExamTaskDone, toggleExamTaskDone, getExamCompletedCount,
-    getMilestoneCurrentValue: (t: ExamTask) => getMilestoneCurrentValue(t, storeWithMetrics),
-    isMilestoneAchieved: (t: ExamTask) => isMilestoneAchieved(t, storeWithMetrics)
+    homeworkCompleted, toggleHomeworkDone, isHomeworkDone, homeworkCompletedCount,
+    isExamActivityDone, getExamCompletedCount,
+    isMilestoneAchieved, getMetricsCompletedCount,
+    lessonIsCompleted, canProceedToNext
   }
 }

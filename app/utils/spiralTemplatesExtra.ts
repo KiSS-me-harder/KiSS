@@ -3,7 +3,7 @@
  * Extracted from spiralDrawing.ts to keep file sizes within ESLint limits.
  */
 
-import { adjustColorBrightness } from './spiralTemplates'
+import { DEG_TO_RAD, parseHexColor, adjustColorBrightness } from './spiralColorUtils'
 
 /**
  * Draws a mandala pattern with symmetrical geometric shapes.
@@ -27,17 +27,20 @@ export function drawMandalaSpiral(
   arms: number = 1
 ) {
   const size = viewportDiagonal * (sizePercent / 100)
-  const r = parseInt(color.slice(1, 3), 16)
-  const g = parseInt(color.slice(3, 5), 16)
-  const b = parseInt(color.slice(5, 7), 16)
+  const [r, g, b] = parseHexColor(color)
   const segments = arms * 2
+  const halfSize = size * 0.5
+  const petalSize = size * 0.05
+  const twoPi = Math.PI * 2
+  const halfPi = Math.PI / 2
 
   for (let ring = 1; ring <= 8; ring++) {
-    const radius = (ring / 8) * size * 0.5
+    const radius = (ring / 8) * halfSize
     const alpha = 0.3 + (ring / 8) * 0.5
+    const direction = ring % 2 === 0 ? 1 : -1
 
     for (let i = 0; i < segments; i++) {
-      const theta = ((360 / segments) * i + angle * (ring % 2 === 0 ? 1 : -1)) * (Math.PI / 180)
+      const theta = (((360 / segments) * i + angle * direction)) * DEG_TO_RAD
       const x = centerX + radius * Math.cos(theta)
       const y = centerY + radius * Math.sin(theta)
 
@@ -46,10 +49,9 @@ export function drawMandalaSpiral(
       ctx.lineWidth = 1.5
 
       // Draw petal shapes
-      const petalSize = size * 0.05
       ctx.ellipse(
         x, y, petalSize, petalSize * 0.5,
-        theta + Math.PI / 2, 0, Math.PI * 2
+        theta + halfPi, 0, twoPi
       )
       ctx.stroke()
 
@@ -66,7 +68,7 @@ export function drawMandalaSpiral(
     ctx.beginPath()
     ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 0.5})`
     ctx.lineWidth = 1
-    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
+    ctx.arc(centerX, centerY, radius, 0, twoPi)
     ctx.stroke()
   }
 }
@@ -93,24 +95,26 @@ export function drawDNAHelix(
   arms: number = 1
 ) {
   const size = viewportDiagonal * (sizePercent / 100)
-  const r = parseInt(color.slice(1, 3), 16)
-  const g = parseInt(color.slice(3, 5), 16)
-  const b = parseInt(color.slice(5, 7), 16)
+  const [r, g, b] = parseHexColor(color)
 
   const points = 300
   const helixWidth = size * 0.15
+  const sizeFactor = size * 0.8
+  const startY = centerY - size * 0.4
+  const fourPi = Math.PI * 4
 
   for (let arm = 0; arm < arms; arm++) {
     const armOffset = (360 / arms) * arm
+    const angleRad = angle * 0.02
 
     // Draw backbone strands
     ctx.beginPath()
     ctx.strokeStyle = color
     ctx.lineWidth = 2
     for (let i = 0; i < points; i++) {
-      const t = (i / points) * Math.PI * 4
-      const y = centerY - size * 0.4 + (i / points) * size * 0.8
-      const x = centerX + Math.cos(t + angle * 0.02 + armOffset) * helixWidth
+      const t = (i / points) * fourPi
+      const y = startY + (i / points) * sizeFactor
+      const x = centerX + Math.cos(t + angleRad + armOffset) * helixWidth
 
       if (i === 0) {
         ctx.moveTo(x, y)
@@ -125,9 +129,9 @@ export function drawDNAHelix(
     ctx.strokeStyle = darkerColor
     ctx.lineWidth = 2
     for (let i = 0; i < points; i++) {
-      const t = (i / points) * Math.PI * 4
-      const y = centerY - size * 0.4 + (i / points) * size * 0.8
-      const x = centerX + Math.cos(t + angle * 0.02 + armOffset + Math.PI) * helixWidth
+      const t = (i / points) * fourPi
+      const y = startY + (i / points) * sizeFactor
+      const x = centerX + Math.cos(t + angleRad + armOffset + Math.PI) * helixWidth
 
       if (i === 0) {
         ctx.moveTo(x, y)
@@ -139,10 +143,10 @@ export function drawDNAHelix(
 
     // Draw connecting rungs
     for (let i = 0; i < points; i += 10) {
-      const t = (i / points) * Math.PI * 4
-      const y = centerY - size * 0.4 + (i / points) * size * 0.8
-      const x1 = centerX + Math.cos(t + angle * 0.02 + armOffset) * helixWidth
-      const x2 = centerX + Math.cos(t + angle * 0.02 + armOffset + Math.PI) * helixWidth
+      const t = (i / points) * fourPi
+      const y = startY + (i / points) * sizeFactor
+      const x1 = centerX + Math.cos(t + angleRad + armOffset) * helixWidth
+      const x2 = centerX + Math.cos(t + angleRad + armOffset + Math.PI) * helixWidth
 
       const alpha = 0.3 + 0.3 * Math.abs(Math.cos(t))
       ctx.beginPath()
@@ -177,31 +181,32 @@ export function drawKaleidoscopeSpiral(
   arms: number = 1
 ) {
   const size = viewportDiagonal * (sizePercent / 100)
-  const r = parseInt(color.slice(1, 3), 16)
-  const g = parseInt(color.slice(3, 5), 16)
-  const b = parseInt(color.slice(5, 7), 16)
+  const [r, g, b] = parseHexColor(color)
   const segments = arms * 2
+  const halfSize = size * 0.5
+  const curveRange = size * 0.05
+  const dotSize = size * 0.02
+  const twoPi = Math.PI * 2
 
   for (let seg = 0; seg < segments; seg++) {
-    const segAngle = (360 / segments) * seg + angle
-    const segRad = segAngle * (Math.PI / 180)
+    const segAngle = ((360 / segments) * seg + angle) * DEG_TO_RAD
 
     ctx.save()
     ctx.translate(centerX, centerY)
-    ctx.rotate(segRad)
+    ctx.rotate(segAngle)
 
     // Draw one segment's pattern
     for (let i = 0; i < 50; i++) {
       const t = i / 50
-      const radius = t * size * 0.5
-      const curve = Math.sin(i * 0.3) * size * 0.05
+      const radius = t * halfSize
+      const curve = Math.sin(i * 0.3) * curveRange
 
       const alpha = 0.3 + t * 0.5
       ctx.beginPath()
       ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`
       ctx.lineWidth = 1.5
 
-      ctx.arc(curve, radius, size * 0.02 * (1 - t), 0, Math.PI * 2)
+      ctx.arc(curve, radius, dotSize * (1 - t), 0, twoPi)
       ctx.stroke()
     }
 
@@ -233,14 +238,15 @@ export function drawVortexTunnel(
   arms: number = 1
 ) {
   const size = viewportDiagonal * (sizePercent / 100)
-  const r = parseInt(color.slice(1, 3), 16)
-  const g = parseInt(color.slice(3, 5), 16)
-  const b = parseInt(color.slice(5, 7), 16)
+  const [r, g, b] = parseHexColor(color)
 
   const rings = 30
+  const halfSize = size * 0.5
+  const twoPi = Math.PI * 2
+
   for (let i = rings; i >= 0; i--) {
     const t = i / rings
-    const radius = t * size * 0.5
+    const radius = t * halfSize
     const ringAngle = cumulativeAngle * (1 - t) * 0.5
 
     const alpha = 0.1 + t * 0.6
@@ -251,23 +257,24 @@ export function drawVortexTunnel(
     // Draw elliptical rings rotated to create tunnel effect
     ctx.save()
     ctx.translate(centerX, centerY)
-    ctx.rotate(ringAngle * (Math.PI / 180))
+    ctx.rotate(ringAngle * DEG_TO_RAD)
     ctx.scale(1, 0.3)
-    ctx.arc(0, 0, radius, 0, Math.PI * 2)
+    ctx.arc(0, 0, radius, 0, twoPi)
     ctx.restore()
     ctx.stroke()
 
     // Draw spiral connectors
     if (i < rings) {
-      const nextRadius = ((i + 1) / rings) * size * 0.5
-      const nextAngle = cumulativeAngle * (1 - (i + 1) / rings) * 0.5
+      const nextT = (i + 1) / rings
+      const nextRadius = nextT * halfSize
+      const nextAngle = cumulativeAngle * (1 - nextT) * 0.5
 
       for (let arm = 0; arm < arms; arm++) {
         const armAngle = (360 / arms) * arm
-        const x1 = centerX + radius * Math.cos((armAngle + ringAngle) * (Math.PI / 180))
-        const y1 = centerY + radius * Math.sin((armAngle + ringAngle) * (Math.PI / 180)) * 0.3
-        const x2 = centerX + nextRadius * Math.cos((armAngle + nextAngle) * (Math.PI / 180))
-        const y2 = centerY + nextRadius * Math.sin((armAngle + nextAngle) * (Math.PI / 180)) * 0.3
+        const x1 = centerX + radius * Math.cos((armAngle + ringAngle) * DEG_TO_RAD)
+        const y1 = centerY + radius * Math.sin((armAngle + ringAngle) * DEG_TO_RAD) * 0.3
+        const x2 = centerX + nextRadius * Math.cos((armAngle + nextAngle) * DEG_TO_RAD)
+        const y2 = centerY + nextRadius * Math.sin((armAngle + nextAngle) * DEG_TO_RAD) * 0.3
 
         ctx.beginPath()
         ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 0.3})`

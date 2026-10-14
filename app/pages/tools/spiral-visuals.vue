@@ -74,6 +74,7 @@
           @add-layer="addLayer"
           @remove-layer="removeLayer"
           @update-layer="updateLayer"
+          @move-layer="reorderLayers"
         />
 
         <!-- Info -->
@@ -97,12 +98,11 @@ import SpiralLayers from '~/components/tools/SpiralLayers.vue'
 import SpiralPresets from '~/components/tools/SpiralPresets.vue'
 import FocusSettings from '~/components/tools/FocusSettings.vue'
 import type { SpiralLayer } from '~/components/tools/SpiralLayers.vue'
-import type { SpiralPreset } from '~/components/tools/SpiralPresets.vue'
 import { createDefaultFocusConfig } from '~/utils/spiralFocus'
 import type { FocusConfig } from '~/utils/spiralFocus'
-import { isThemeColorName, resolveThemeColor, themeColorNames } from '~/utils/spiralDrawing'
 import { readSpiralHashFromUrl, restoreLayer } from '~/utils/spiralHashState'
 import { useSpiralHashState } from '~/composables/useSpiralHashState'
+import { useSpiralLayers } from '~/composables/useSpiralLayers'
 
 const breadcrumbs = [
   { label: 'Tools', to: '/tools' },
@@ -146,6 +146,15 @@ const {
 
 const { updateHash, setupListener, cleanupListener } = useSpiralHashState(layers, focusConfig, drawSpiral)
 
+const {
+  addLayer,
+  removeLayer,
+  updateLayer,
+  reorderLayers,
+  applyPreset,
+  resolveThemeColors
+} = useSpiralLayers(layers, isPlaying, drawSpiral, updateHash)
+
 /**
  * Toggles play/pause state.
  */
@@ -173,101 +182,14 @@ function onKeydown(event: KeyboardEvent) {
 }
 
 /**
- * Adds a new spiral layer with default settings.
- * New layers cycle through theme colors so they don't all default to primary.
- */
-function addLayer() {
-  const layerCount = layers.value.length
-  const colorIndex = layerCount % themeColorNames.length
-  const themeColor = themeColorNames[colorIndex]
-  layers.value.push({
-    id: Date.now(),
-    template: 'classic',
-    color: themeColor,
-    size: 100,
-    speed: 50,
-    direction: 'forward',
-    angle: 0,
-    intensity: 1
-  })
-  // Resolve theme color name to hex value on client side
-  if (import.meta.client && isThemeColorName(themeColor)) {
-    layers.value[layers.value.length - 1].color = resolveThemeColor(themeColor)
-  }
-  if (!isPlaying.value) {
-    drawSpiral()
-  }
-  updateHash()
-}
-
-/**
- * Removes a spiral layer by ID.
- * @param id - The layer ID to remove.
- */
-function removeLayer(id: number) {
-  if (layers.value.length <= 1) return
-  const index = layers.value.findIndex(l => l.id === id)
-  if (index !== -1) {
-    layers.value.splice(index, 1)
-    if (!isPlaying.value) {
-      drawSpiral()
-    }
-    updateHash()
-  }
-}
-
-/**
- * Updates a specific property of a spiral layer.
- * @param id - The layer ID to update.
- * @param key - The property name to update.
- * @param value - The new value.
- */
-function updateLayer(id: number, key: string, value: unknown) {
-  const layer = layers.value.find(l => l.id === id)
-  if (layer) {
-    ;(layer as Record<string, unknown>)[key] = value
-    if (!isPlaying.value) {
-      drawSpiral()
-    }
-    updateHash()
-  }
-}
-
-/**
- * Applies a preset configuration, replacing all current layers.
- * @param preset - The preset to apply.
- */
-function applyPreset(preset: SpiralPreset) {
-  layers.value = preset.layers.map((layer, index) => ({
-    ...layer,
-    id: Date.now() + index,
-    angle: 0
-  }))
-  // Resolve theme color names to hex values on client side
-  if (import.meta.client) {
-    for (const layer of layers.value) {
-      if (isThemeColorName(layer.color)) {
-        layer.color = resolveThemeColor(layer.color)
-      }
-    }
-  }
-  if (!isPlaying.value) {
-    drawSpiral()
-  }
-  updateHash()
-}
-
-/**
  * Updates the focus configuration and triggers side effects.
  * @param config - The new focus configuration.
  */
 function updateFocusConfig(config: FocusConfig) {
   focusConfig.value = config
-  // Reload image if URL changed
   if (config.type === 'image' && config.imageUrl) {
     loadFocusImage()
   }
-  // Re-setup mouse tracking if position mode changed
   if (config.positionMode === 'cursor' && config.enabled) {
     setupMouseTracking()
   }
@@ -279,12 +201,7 @@ function updateFocusConfig(config: FocusConfig) {
 
 // Setup keyboard listener and canvas
 onMounted(() => {
-  // Resolve theme color names to their actual hex values
-  for (const layer of layers.value) {
-    if (isThemeColorName(layer.color)) {
-      layer.color = resolveThemeColor(layer.color)
-    }
-  }
+  resolveThemeColors()
   init()
   if (import.meta.client) {
     document.addEventListener('keydown', onKeydown)

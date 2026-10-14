@@ -6,11 +6,12 @@
 import type { BreadcrumbItem } from '@nuxt/ui'
 import { useEnrollmentStore } from '~/stores/enrollment'
 import {
-  buildCumulativeCourseInfos, enrollInDegreeForPage, unenrollFromDegreeForPage, checkTitleCompleted,
-  checkAndEnrollAvailableCourses,
-  getTierColor, getTierLabel, buildDegreeStructuredData
+  buildCumulativeCourseInfos, enrollInDegreeForPage,
+  checkAndEnrollAvailableCourses, unenrollRemovedCourses
 } from '~/utils/degreePageHelpers'
 import type { DegreeLevel } from '~/utils/degreePageHelpers'
+import { getTierColor, getTierLabel, buildDegreeStructuredData } from '~/utils/degreeMetadata'
+import { useDegreeActions } from '~/composables/useDegreeActions'
 
 export function useDegreePage(id: ComputedRef<string>) {
   const store = useEnrollmentStore()
@@ -45,16 +46,37 @@ export function useDegreePage(id: ComputedRef<string>) {
     (home.value as { meta?: { levels?: DegreeLevel[] } })?.meta?.levels || []
   )
 
+  // Restore selectedLevelIndex from the stored degree enrollment, if any
+  // Explicitly depend on store degreeEnrollments ref so the computed re-evaluates
+  // when loadFromStorage() populates them after hydration.
+  const storedEnrollment = computed(() => {
+    const _ = store.degreeEnrollments
+    return store.getDegreeEnrollment(id.value)
+  })
+  const enrolledTitleName = computed(() => storedEnrollment.value?.title)
   const selectedLevelIndex = ref(0)
+
+  // Update selectedLevelIndex once degree data loads and we can match the stored title
+  watch([degreeLevels, storedEnrollment], ([levels, enrollment]) => {
+    if (enrollment?.title && levels.length > 0) {
+      const idx = levels.findIndex(l => l.name === enrollment.title)
+      if (idx >= 0) {
+        selectedLevelIndex.value = idx
+      }
+    }
+  }, { immediate: true })
   const selectedLevel = computed<DegreeLevel | null>(() => {
     if (degreeLevels.value.length === 0) return null
     const idx = Math.min(selectedLevelIndex.value, degreeLevels.value.length - 1)
     return degreeLevels.value[idx] ?? null
   })
 
-  const courseInfos = computed(() =>
-    buildCumulativeCourseInfos(degreeLevels.value, selectedLevelIndex.value, allCourses.value || [], id.value, app.baseURL, store)
-  )
+  // Explicitly depend on store enrollment refs so the computed re-evaluates when
+  // loadFromStorage() populates them after hydration.
+  const courseInfos = computed(() => {
+    const _ = [store.enrollments, store.degreeEnrollments]
+    return buildCumulativeCourseInfos(degreeLevels.value, selectedLevelIndex.value, allCourses.value || [], id.value, app.baseURL, store)
+  })
 
   const isDegreeFullyEnrolled = computed(() =>
     courseInfos.value.length > 0 && courseInfos.value.every(c => c.isEnrolled)
@@ -69,10 +91,17 @@ export function useDegreePage(id: ComputedRef<string>) {
   })
 
   /**
-   * Handles enrolling in a degree, only enrolling in courses with met prerequisites.
+   * Handles enrolling in a degree or switching to a different title.
    */
   function handleEnrollInDegree() {
     if (!selectedLevel.value) return
+    const currentEnrollment = store.getDegreeEnrollment(id.value)
+    if (currentEnrollment) {
+      const oldTitleIndex = degreeLevels.value.findIndex(l => l.name === currentEnrollment.title)
+      if (oldTitleIndex >= 0 && oldTitleIndex !== selectedLevelIndex.value) {
+        unenrollRemovedCourses(degreeLevels.value, oldTitleIndex, selectedLevelIndex.value, store)
+      }
+    }
     enrollInDegreeForPage(id.value, selectedLevel.value.name, selectedLevel.value, allCourses.value || [], store)
   }
 
@@ -84,29 +113,9 @@ export function useDegreePage(id: ComputedRef<string>) {
     checkAndEnrollAvailableCourses(id.value, selectedLevel.value, allCourses.value || [], store)
   }
 
-  // Auto-enrollment: watch for enrollment changes and check for newly available courses
-  watch(
-    () => (store.enrollments as unknown as CourseEnrollment[]).map(
-      (e: { slug: string, levels: { level: number, completed: boolean }[] }) => ({
-        slug: e.slug,
-        levels: e.levels.map((l: { level: number, completed: boolean }) => ({ level: l.level, completed: l.completed }))
-      })
-    ),
-    () => {
-      if (!selectedLevel.value) return
-      checkAndEnrollAvailableCourses(id.value, selectedLevel.value, allCourses.value || [], store)
-    },
-    { deep: true }
+  const { handleUnenrollFromDegree, isTitleCompleted } = useDegreeActions(
+    id, degreeLevels, selectedLevelIndex, selectedLevel, allCourses
   )
-
-  function handleUnenrollFromDegree() {
-    if (!selectedLevel.value) return
-    unenrollFromDegreeForPage(id.value, selectedLevel.value.name, selectedLevel.value, store)
-  }
-
-  function isTitleCompleted(titleIndex: number): boolean {
-    return checkTitleCompleted(titleIndex, degreeLevels.value, allCourses.value || [], store)
-  }
 
   const levelNameColors = ['text-amber-400', 'text-blue-400', 'text-purple-400']
   const levelBadgeColors = [
@@ -117,7 +126,7 @@ export function useDegreePage(id: ComputedRef<string>) {
 
   return {
     home, title, description, body, items,
-    degreeLevels, selectedLevelIndex, selectedLevel,
+    degreeLevels, selectedLevelIndex, selectedLevel, enrolledTitleName,
     courseInfos, isDegreeFullyEnrolled, isDegreePartiallyEnrolled,
     overallProgress, handleEnrollInDegree, handleCompleteEnrollment, handleUnenrollFromDegree,
     isTitleCompleted, getTierColor, getTierLabel,

@@ -234,8 +234,16 @@ const items = computed<BreadcrumbItem[]>(() => [
   { label: courseData.value?.title, to: `/courses/${slug.value}` }
 ])
 
-const isEnrolled = computed(() => store.isEnrolled(slug.value))
-const enrollment = computed(() => store.getEnrollment(slug.value))
+// Explicitly depend on store enrollment refs so the computed re-evaluates
+// when loadFromStorage() populates them after hydration.
+const isEnrolled = computed(() => {
+  const _ = store.enrollments
+  return store.isEnrolled(slug.value)
+})
+const enrollment = computed(() => {
+  const _ = store.enrollments
+  return store.getEnrollment(slug.value)
+})
 const totalLevels = computed(() => filteredCourses.value.filter(item => !item.stem?.endsWith('/_index')).length)
 
 const completedCount = computed(() => {
