@@ -55,7 +55,7 @@
   },
   "devDependencies": {
     "@cucumber/cucumber": "13.2.1",
-    "@cucumber/messages": "^34.2.1",
+    "@cucumber/messages": "^35.0.0",
     "@cucumber/pretty-formatter": "^4.1.0",
     "@nuxt/eslint": "^1.17.0",
     "@nuxt/test-utils": "^4.3.3",
